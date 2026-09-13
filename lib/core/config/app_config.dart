@@ -7,7 +7,6 @@ class AppConfig {
     switch (environment) {
       case Environment.dev:
         return 'http://0.0.0.0:8000/api/v1/';
-
       case Environment.test:
         return 'http://JHR-staging-env.eba-gkjaypcc.ap-south-1.elasticbeanstalk.com/api/v1/';
 

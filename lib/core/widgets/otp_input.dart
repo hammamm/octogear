@@ -58,7 +58,7 @@ class _OtpInputState extends State<OtpInput> {
         }
       }
     } else if (index > 0) {
-      _focusNodes[index - 1].requestFocus();
+      // _focusNodes[index - 1].requestFocus();
     }
   }
 

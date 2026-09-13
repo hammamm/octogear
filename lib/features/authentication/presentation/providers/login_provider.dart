@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sahala/dependency_injection.dart';
 import 'package:sahala/features/authentication/domain/use_cases/login_use_case.dart';
 
-final loginProvider = NotifierProvider<LoginNotifer, LoginState>(
-  LoginNotifer.new,
+final loginProvider = NotifierProvider<LoginNotifier, LoginState>(
+  LoginNotifier.new,
 );
 
 class LoginState {
@@ -21,7 +21,7 @@ class LoginState {
   }
 }
 
-class LoginNotifer extends Notifier<LoginState> {
+class LoginNotifier extends Notifier<LoginState> {
   late final LoginUseCase _loginUseCase;
   final phoneController = TextEditingController();
   @override

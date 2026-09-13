@@ -1,24 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:sahala/core/widgets/background.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sahala/core/widgets/app_background.dart';
+import 'package:sahala/core/widgets/app_scaffold.dart';
 import 'package:sahala/core/widgets/countdown_timer.dart';
 import 'package:sahala/core/widgets/otp_input.dart';
+import 'package:sahala/features/authentication/data/models/otp_verify_request_model.dart';
+import 'package:sahala/features/authentication/presentation/providers/otp_provider.dart';
 
-class OTPScreen extends StatefulWidget {
+class OTPScreen extends ConsumerStatefulWidget {
   const OTPScreen({super.key});
 
   @override
-  State<OTPScreen> createState() => _OTPScreenState();
+  ConsumerState<OTPScreen> createState() => _OTPScreenState();
 }
 
-class _OTPScreenState extends State<OTPScreen> {
+class _OTPScreenState extends ConsumerState<OTPScreen> {
   @override
   Widget build(BuildContext context) {
+    final otpNotifier = ref.read(otpProvider.notifier);
+    final otpState = ref.watch(otpProvider);
     final arguments = ModalRoute.of(context)?.settings.arguments;
     debugPrint('OTP arguments: $arguments');
     final phoneNumber =
         ModalRoute.of(context)!.settings.arguments as String? ?? "";
-    return AppBackground(
-      child: Padding(
+    return AppScaffold(
+      showAppBar: true,
+      title: "Verification",
+      body: Padding(
         padding: EdgeInsets.all(24.0),
 
         child: Container(
@@ -60,6 +68,12 @@ class _OTPScreenState extends State<OTPScreen> {
               OtpInput(
                 length: 4,
                 onCompleted: (value) {
+                  final body = OtpVerifyRequestModel(
+                    otp: value,
+                    mobileNumber: phoneNumber,
+                  );
+
+                  otpNotifier.otpVerify(body);
                   debugPrint(value);
                 },
               ),

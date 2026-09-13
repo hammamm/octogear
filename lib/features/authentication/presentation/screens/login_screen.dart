@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sahala/core/routing/app_routes.dart';
 import 'package:sahala/core/theme/app_colors.dart';
-import 'package:sahala/core/widgets/background.dart';
+import 'package:sahala/core/widgets/app_background.dart';
+import 'package:sahala/core/widgets/app_scaffold.dart';
 import 'package:sahala/features/authentication/presentation/providers/login_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -37,8 +38,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     });
 
-    return AppBackground(
-      child: Padding(
+    return AppScaffold(
+      body: Padding(
         padding: EdgeInsets.all(24.0),
         child: Container(
           padding: EdgeInsets.all(16),
@@ -110,6 +111,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
+      showAppBar: true,
+      title: "Login",
     );
   }
 }
