@@ -1,45 +1,239 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+# ============================================================
+# 🎯 Flutter / Dart
+# ============================================================
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
 .dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
 .pub/
-/build/
-/coverage/
+.pub-cache/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
 
-# Symbolication related
+# 📚 Generated documentation
+**/doc/api/
+doc/api/
+
+# 🏗️ Build output
+build/
+**/build/
+coverage/
+
+# ⚙️ Dart / Flutter generated files
+*.dart.js
+*.info.json
+
+# 🔐 Obfuscation / symbolication
 app.*.symbols
-
-# Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# 🌐 Flutter web generated files
+*.js_
+*.js.deps
+*.js.map
+
+
+# ============================================================
+# 🔑 Environment / Secrets
+# ============================================================
+
+.env
+.env.*
+!.env.example
+
+
+# ============================================================
+# 🍎 macOS
+# ============================================================
+
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+*.swp
+
+# 🖥️ macOS volume / system files
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# 🌐 macOS network / AFP
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# 🧩 macOS application folders
+.atom/
+
+
+# ============================================================
+# 🛠️ Xcode / iOS
+# ============================================================
+
+# 👤 Xcode user-specific data
+xcuserdata/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+
+# 🗑️ Xcode temporary / generated files
+*~.nib
+*.moved-aside
+*.hmap
+
+# 🏗️ Xcode build / derived data
+DerivedData/
+Builds/
+*.gcno
+
+# 📦 iOS build artifacts
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+# 🧪 Xcode playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# 📦 Swift Package Manager
+.swiftpm/
+.build/
+
+# 🫘 CocoaPods
+Pods/
+
+# ✅ Keep CocoaPods configuration
+!Podfile
+!Podfile.lock
+
+# 🧩 CocoaPods generated workspace
+*.xcworkspace
+
+# 💉 iOS Injection
+iOSInjectionProject/
+
+
+# ============================================================
+# 🤖 Android
+# ============================================================
+
+# 🐘 Android Studio / Gradle
+.gradle/
+**/.gradle/
+
+# 🏗️ Android build output
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ⚙️ Android generated files
+local.properties
+
+# 🔐 Android signing / keystore files
+*.jks
+*.keystore
+
+# 🧹 Android Studio caches
+captures/
+.externalNativeBuild/
+.cxx/
+
+# 🧩 Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+
+# ============================================================
+# 🧠 IntelliJ / Android Studio / JetBrains
+# ============================================================
+
+.idea/
+*.iml
+*.ipr
+*.iws
+
+
+# ============================================================
+# 💻 Visual Studio Code
+# ============================================================
+
+# Keep .vscode if your team shares workspace settings.
+# Uncomment the following if you want to ignore the entire folder:
+# .vscode/
+
+
+# ============================================================
+# 📝 Logs / Temporary Files
+# ============================================================
+
+*.log
+*.tmp
+*.temp
+*.bak
+*.class
+*.pyc
+
+
+# ============================================================
+# 🔄 Subversion / Other VCS
+# ============================================================
+
+.svn/
+.history
+migrate_working_dir/
+
+
+# ============================================================
+# 🚀 Fastlane
+# ============================================================
+
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+
+# ============================================================
+# 🐦 Carthage
+# ============================================================
+
+Carthage/Build
+
+
+# ============================================================
+# ⚡ Accio
+# ============================================================
+
+Dependencies/
+.accio/
+
+
+# ============================================================
+# 📖 Dartdoc
+# ============================================================
+
+doc/api/
+
+
+# ============================================================
+# 🔧 Flutter / Dart generated files
+# ============================================================
+
+# Do not commit generated plugin metadata
+.flutter-plugins
+.flutter-plugins-dependencies
