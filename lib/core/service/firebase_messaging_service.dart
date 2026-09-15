@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'dart:developer' as developer;
+import 'package:sahala/core/service/app_logger.dart';
 
 class FirebaseMessagingService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -14,7 +14,10 @@ class FirebaseMessagingService {
 
     final token = await _messaging.getToken();
 
-    developer.log('FCM Token: $token');
+    await AppLogger.log(
+      'FCM token ${token == null ? 'was not available' : 'was retrieved'}',
+      category: 'PUSH',
+    );
     _listenToTokenRefresh();
   }
 
@@ -25,9 +28,10 @@ class FirebaseMessagingService {
       sound: true,
     );
 
-    developer.log(
+    await AppLogger.log(
       'Notification permission: '
       '${settings.authorizationStatus}',
+      category: 'PUSH',
     );
   }
 
@@ -35,7 +39,7 @@ class FirebaseMessagingService {
     _tokenRefreshSubscription?.cancel();
 
     _tokenRefreshSubscription = _messaging.onTokenRefresh.listen((newToken) {
-      developer.log('FCM Token refreshed: $newToken');
+      AppLogger.log('FCM token refreshed', category: 'PUSH');
     });
   }
 

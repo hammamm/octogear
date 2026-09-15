@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:sahala/core/config/app_config.dart';
+import 'package:sahala/core/service/app_logger.dart';
 
 class ApiClient {
   final Dio dio;
@@ -16,15 +17,6 @@ class ApiClient {
           },
         ),
       ) {
-    dio.interceptors.add(
-      LogInterceptor(
-        request: true,
-        requestHeader: true,
-        requestBody: true,
-        responseHeader: true,
-        responseBody: true,
-        error: true,
-      ),
-    );
+    dio.interceptors.add(AppLogInterceptor());
   }
 }
