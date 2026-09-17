@@ -9,7 +9,7 @@ part of 'otp_verify_response_model.dart';
 OtpVerifyResponseModel _$OtpVerifyResponseModelFromJson(
   Map<String, dynamic> json,
 ) => OtpVerifyResponseModel(
-  customer: json['customer'],
+  customer: CustomerModel.fromJson(json['customer'] as Map<String, dynamic>),
   leadSourceList: json['leadSourceList'],
   token: json['token'] as String,
 );

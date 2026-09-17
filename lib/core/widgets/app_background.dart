@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sahala/core/routing/app_routes.dart';
 
 class AppBackground extends StatelessWidget {
   final Widget child;

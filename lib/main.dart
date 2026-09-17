@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sahala/core/routing/app_router.dart';
-import 'package:sahala/core/routing/app_routes.dart';
 import 'package:sahala/core/service/firebase_messaging_service.dart';
 import 'package:sahala/core/theme/app_theme.dart';
 import 'package:sahala/dependency_injection.dart';
-import 'package:sahala/features/authentication/presentation/screens/login_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';

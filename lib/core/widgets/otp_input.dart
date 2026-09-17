@@ -15,10 +15,10 @@ class OtpInput extends StatefulWidget {
   final ValueChanged<String>? onCompleted;
 
   @override
-  State<OtpInput> createState() => _OtpInputState();
+  State<OtpInput> createState() => OtpInputState();
 }
 
-class _OtpInputState extends State<OtpInput> {
+class OtpInputState extends State<OtpInput> {
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
 
@@ -43,37 +43,61 @@ class _OtpInputState extends State<OtpInput> {
   }
 
   void _onChanged(int index, String value) {
-    setState(() {});
-    final otp = _controllers.map((controller) => controller.text).join();
-
-    widget.onChanged?.call(otp);
-    debugPrint(value);
-    if (value.isNotEmpty) {
-      if (index < widget.length - 1) {
-        _focusNodes[index + 1].requestFocus();
-      } else {
-        _focusNodes[index].unfocus();
-        if (otp.length == widget.length) {
-          widget.onCompleted?.call(otp);
-        }
+    if (value.isEmpty) {
+      // Deleting a digit moves focus to the previous box.
+      if (index > 0) {
+        final previousController = _controllers[index - 1];
+        previousController.selection = TextSelection.collapsed(
+          offset: previousController.text.length,
+        );
+        _focusNodes[index - 1].requestFocus();
       }
-    } else if (index > 0) {
-      // _focusNodes[index - 1].requestFocus();
+    } else if (value.length > 1) {
+      // Example: "12" — keep "1" in the current box.
+      _controllers[index].value = TextEditingValue(
+        text: value[0],
+        selection: const TextSelection.collapsed(offset: 1),
+      );
+
+      // No next box: ignore the extra digit.
+      if (index == widget.length - 1) {
+        return;
+      }
+
+      // Put "2" in the next box, then focus that filled box.
+      _controllers[index + 1].value = TextEditingValue(
+        text: value[1],
+        selection: const TextSelection.collapsed(offset: 1),
+      );
+      _focusNodes[index + 1].requestFocus();
+    }
+    // Exactly one digit: keep focus where it is.
+
+    setState(() {});
+
+    final otp = _controllers.map((controller) => controller.text).join();
+    widget.onChanged?.call(otp);
+
+    if (value.isNotEmpty &&
+        _controllers.every((controller) => controller.text.length == 1)) {
+      widget.onCompleted?.call(otp);
     }
   }
 
-  KeyEventResult _onKeyEvent(int index, node, event) {
-    if (event is KeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.backspace &&
-        _controllers[index].text.isEmpty &&
-        index > 0) {
-      _controllers[index - 1].clear();
-      _focusNodes[index - 1].requestFocus();
+  void reset() {
+    if (!mounted) return;
 
-      return KeyEventResult.handled;
+    for (final controller in _controllers) {
+      controller.clear();
     }
 
-    return KeyEventResult.ignored;
+    setState(() {});
+
+    if (_focusNodes.isNotEmpty) {
+      _focusNodes.first.requestFocus();
+    }
+
+    widget.onChanged?.call('');
   }
 
   @override
@@ -87,48 +111,56 @@ class _OtpInputState extends State<OtpInput> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ...List.generate(widget.length, (index) {
+              //make the last input clickable only if the previous inputs have value
+              final canTap =
+                  index == widget.length - 1 &&
+                  _controllers
+                      .take(index)
+                      .every((controller) => controller.text.length == 1);
               return SizedBox(
                 width: boxWidth,
                 height: 55,
                 child: Focus(
-                  onKeyEvent: (node, event) {
-                    return _onKeyEvent(index, node, event);
-                  },
-                  child: TextField(
-                    controller: _controllers[index],
-                    focusNode: _focusNodes[index],
-                    maxLength: 1,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    textAlign: TextAlign.center,
-                    decoration: InputDecoration(
-                      filled: _controllers[index].text.isNotEmpty,
-                      fillColor: AppColors.primary.withValues(alpha: 0.1),
-                      counterText: '',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                  child: AbsorbPointer(
+                    absorbing: !canTap,
+                    child: TextField(
+                      showCursor: false,
+                      autofocus: index == 0,
+                      controller: _controllers[index],
+                      focusNode: _focusNodes[index],
+                      maxLength: 2,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      textAlign: TextAlign.center,
+                      decoration: InputDecoration(
+                        filled: _controllers[index].text.isNotEmpty,
+                        fillColor: AppColors.primary.withValues(alpha: 0.1),
+                        counterText: '',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
 
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: _controllers[index].text.isNotEmpty
-                              ? AppColors.primary
-                              : AppColors.border,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: _controllers[index].text.isNotEmpty
+                                ? AppColors.primary
+                                : AppColors.border,
+                          ),
+                        ),
+
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 1.5,
+                          ),
                         ),
                       ),
-
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.primary,
-                          width: 1.5,
-                        ),
-                      ),
+                      onChanged: (value) {
+                        _onChanged(index, value);
+                      },
                     ),
-                    onChanged: (value) {
-                      _onChanged(index, value);
-                    },
                   ),
                 ),
               );
