@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:sahala/core/api/api_client.dart';
 import 'package:sahala/core/api/api_response.dart';
+import 'package:sahala/core/service/app_logger.dart';
 import 'package:sahala/features/authentication/data/models/login_request_model.dart';
 import 'package:sahala/features/authentication/data/models/otp_verify_request_model.dart';
 import 'package:sahala/features/authentication/data/models/otp_verify_response_model.dart';
@@ -16,8 +17,13 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
         data: body.toJson(),
       );
       return response;
-    } on DioException catch (e) {
-      throw Exception(e.response?.data ?? e.message);
+    } on DioException catch (error, stackTrace) {
+      await AppLogger.error(
+        error,
+        stackTrace: stackTrace,
+        reason: 'Login API request failed',
+      );
+      throw Exception(error.response?.data ?? error.message);
     }
   }
 
@@ -39,9 +45,14 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
         );
       });
 
-      // return response.data;
-    } on DioException catch (e) {
-      throw Exception(e.response?.data ?? e.message);
+      //      return response.data;
+    } on DioException catch (error, stackTrace) {
+      await AppLogger.error(
+        error,
+        stackTrace: stackTrace,
+        reason: 'OTP verification API request failed',
+      );
+      throw Exception(error.response?.data ?? error.message);
     }
   }
 }

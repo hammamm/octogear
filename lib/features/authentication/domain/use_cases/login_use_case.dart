@@ -2,7 +2,7 @@ import 'package:sahala/core/service/firebase_messaging_service.dart';
 import 'package:sahala/features/authentication/data/models/login_request_model.dart';
 import 'package:sahala/features/authentication/domain/repositories/authentication_repository.dart';
 import 'dart:io';
-import 'dart:developer' as developer;
+import 'package:sahala/core/service/app_logger.dart';
 
 class LoginUseCase {
   final AuthenticationRepository repository;
@@ -23,7 +23,7 @@ class LoginUseCase {
       deviceToken: deviceToken,
     );
 
-    developer.log(body.toString());
+    await AppLogger.log('Submitting phone login request', category: 'AUTH');
 
     return await repository.login(body);
   }
