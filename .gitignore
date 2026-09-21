@@ -9,6 +9,10 @@
 .flutter-plugins
 .flutter-plugins-dependencies
 
+# pubspec.lock is committed for the app (pinning is desired) but not for
+# internal library packages under packages/, per pub.dev convention.
+packages/*/pubspec.lock
+
 # 📚 Generated documentation
 **/doc/api/
 doc/api/

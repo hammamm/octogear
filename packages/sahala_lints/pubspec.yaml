@@ -1,0 +1,12 @@
+name: sahala_lints
+description: Custom analyzer lint rules for the sahala app.
+publish_to: "none"
+version: 1.0.0
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  analyzer: ^8.4.0
+  custom_lint_builder: ^0.8.1
+

@@ -123,7 +123,7 @@ OTPScreen
   └─ four-digit OtpInput completion
        └─ OtpNotifier.otpVerify()
             └─ POST user/otpVerify
-                 └─ current code only prints the response
+                 └─ current code logs receipt only; it does not yet save a session or navigate
 ```
 
 ### Login request
@@ -185,6 +185,80 @@ For a new feature, keep request/response serialization in `data`, business orche
 - `CountdownTimer` is display-only today. It finishes after 36 seconds on the OTP screen, but no resend action is connected.
 - `AppTheme` provides Material 3 light and dark themes. The core brand colors are teal (`AppColors.primary`), pink (`secondary`), blue-gray (`tertiary`), and a gray border.
 - `pubspec.yaml` declares the `Poppins` font weights 400, 500, 600, and 700, as well as the `assets/images/` and `assets/icons/` directories.
+
+## Engineering guardrails
+
+These three project-level tools keep the codebase observable, consistent, and safe to share. They are part of the development workflow, not optional additions for individual features.
+
+### AppLogger: consistent logs and production diagnostics
+
+`lib/core/service/app_logger.dart` is the single logging entry point. Use it instead of `print`, `debugPrint` in feature code, `developer.log`, or Dio's `LogInterceptor`.
+
+| API / integration | Debug behavior | Profile and release behavior | Reason and benefit |
+| --- | --- | --- | --- |
+| `AppLogger.log(message, category: ...)` | Prints a boxed, emoji-labelled console log | Sends a Crashlytics breadcrumb | Makes normal application events easy to scan locally and useful when investigating a production crash. |
+| `AppLogger.network(data)` | Prints a redacted request/response log | Sends a redacted Crashlytics breadcrumb | Gives developers API visibility without permanently exposing common credentials. |
+| `AppLogger.error(error, stackTrace: ..., reason: ...)` | Prints the error, reason, and stack trace | Records a non-fatal Crashlytics event by default | Preserves the error context needed to fix problems users encounter without crashing the app. |
+| `AppLogger.installErrorHandlers()` | Prints framework and uncaught async errors | Records those errors as fatal Crashlytics events | Prevents unexpected framework/asynchronous failures from being invisible in production. |
+| `AppLogInterceptor` | Logs every Dio request, response, and error | Sends equivalent Crashlytics records | Keeps network observability centralized; repositories do not need custom request logging. |
+| `AppRouteObserver` | Logs `OPENED` / `CLOSED` for route changes | Sends the same navigation breadcrumbs | Reconstructs a user's screen journey before an error without adding log calls to every screen. |
+
+`main()` initializes Crashlytics collection and installs the global error handlers after Firebase initialization. `ApiClient` installs `AppLogInterceptor`, and `MyApp` installs the route observer. Do not add another instance of either integration.
+
+Network redaction currently masks values with keys containing `authorization`, `token`, `otp`, `password`, or `secret`. It does **not** automatically mask all personal data, including phone numbers. Do not put additional personal data, credentials, access tokens, or raw API bodies into `AppLogger.log`. Extend `_redact` before logging a new sensitive field.
+
+Use an error log when a failure is handled locally:
+
+```dart
+try {
+  await repository.saveProfile(body);
+} catch (error, stackTrace) {
+  await AppLogger.error(
+    error,
+    stackTrace: stackTrace,
+    reason: 'Saving profile failed',
+  );
+  rethrow;
+}
+```
+
+The main benefit is one predictable debugging experience: readable local logs during development, and actionable Crashlytics evidence after release. Crashlytics must be enabled in the Firebase Console before release reports can appear.
+
+### Lint rules: preventing common Flutter defects early
+
+`analysis_options.yaml` extends `package:flutter_lints/flutter.yaml` and adds stricter project rules. Run them with:
+
+```bash
+flutter analyze
+```
+
+The analyzer excludes generated/native platform directories (`build`, Android, iOS, web, macOS, Windows, Linux) so the report focuses on application Dart code that this team owns.
+
+| Rule group | Enabled rules | Why it matters / benefit |
+| --- | --- | --- |
+| Context and widget safety | `use_build_context_synchronously`, `use_key_in_widget_constructors`, `no_logic_in_create_state` | Avoids using a disposed `BuildContext`, makes widgets easier to identify/reuse, and keeps widget lifecycle code predictable. `use_build_context_synchronously` and lifecycle/resource risks are treated as errors. |
+| UI quality | `avoid_unnecessary_containers`, `use_colored_box`, `use_decorated_box`, `sized_box_for_whitespace`, `sort_child_properties_last`, `prefer_const_*`, `use_full_hex_values_for_flutter_colors` | Reduces unnecessary widget work, improves readability, and encourages immutable widget trees that Flutter can optimize. |
+| Async and resources | `cancel_subscriptions`, `close_sinks`, `unawaited_futures`, `avoid_web_libraries_in_flutter` | Finds memory leaks, unhandled async work, and platform-incompatible imports before they become runtime bugs. |
+| Maintainability | `avoid_print`, `document_ignores`, `file_names`, `curly_braces_in_flow_control_structures`, `depend_on_referenced_packages` | Enforces the AppLogger policy, makes any lint suppression accountable, and keeps imports/files/style consistent. |
+
+The configured severities intentionally make five high-risk issues errors: using context after `await`, forgotten stream subscriptions, forgotten sink closure, importing web libraries into Flutter code, and placing logic in `createState`. The remaining selected rules report warnings or info so they can be cleaned up steadily without hiding real correctness failures.
+
+Do not broadly disable lint rules to make analysis pass. If an exception is genuinely necessary, use the smallest `ignore` scope and add a reason; `document_ignores` exists to enforce that explanation. The benefit is earlier feedback in the IDE and CI, fewer lifecycle/resource bugs, and a more uniform codebase for humans and AI tools.
+
+### `.gitignore`: keeping the repository clean and safe
+
+`.gitignore` defines files that Git must leave local. It is grouped by platform and tool so it is easy to maintain.
+
+| Ignored category | Examples | Reason and benefit |
+| --- | --- | --- |
+| Flutter/Dart generated state | `.dart_tool/`, `.pub/`, `.flutter-plugins`, generated web output | Recreated by Flutter; excluding it prevents machine-specific noise and merge conflicts. |
+| Build/test outputs | `build/`, `**/build/`, `coverage/`, APK/IPA artifacts | Keeps large, reproducible binaries out of source control and makes reviews smaller. |
+| Secrets and local environment | `.env`, `.env.*`, `local.properties`, `*.jks`, `*.keystore` | Prevents API credentials, local SDK paths, and signing keys from accidentally entering Git. `.env.example` remains trackable as a safe template. |
+| iOS/macOS generated/local files | `Pods/`, `DerivedData/`, `xcuserdata/`, `*.xcworkspace`, `.DS_Store` | Prevents Xcode/CocoaPods caches and user-specific files from conflicting across developers. `Podfile` and `Podfile.lock` are explicitly retained. |
+| Android/IDE caches | `.gradle/`, `.idea/`, `captures/`, `.externalNativeBuild/`, `.cxx/` | Avoids committing local Gradle/IDE indexes and native build artifacts. |
+| General temporary files | `*.log`, `*.tmp`, `*.bak`, `.history` | Keeps debug leftovers and editor history out of commits. |
+
+`.gitignore` is preventive, not retroactive: it does not remove a file that Git already tracks. If a secret was committed, rotate it and remove it from repository history using the team's approved security process. Keep source configuration needed to build the app—such as `pubspec.lock`, `Podfile.lock`, and the Firebase configuration files—tracked unless the team deliberately adopts a secure alternative delivery method.
 
 ## Configuration, Firebase, and security
 
