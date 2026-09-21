@@ -1,6 +1,7 @@
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
 import 'src/avoid_debug_print.dart';
+import 'src/avoid_direct_storage_imports.dart';
 
 /// Entry point discovered by `custom_lint` (declared as a `custom_lint`
 /// dependency in the app's `analysis_options.yaml`).
@@ -10,5 +11,6 @@ class _SahalaLints extends PluginBase {
   @override
   List<LintRule> getLintRules(CustomLintConfigs configs) => const [
     AvoidDebugPrint(),
+    AvoidDirectStorageImports(),
   ];
 }

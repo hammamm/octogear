@@ -8,7 +8,7 @@ void main() {
 
   test('flags debugPrint() outside the allowlisted caller', () async {
     final errors = await rule.testAnalyzeAndRun(
-      File('test/fixtures/lib/features/some_screen.dart').absolute,
+      File('test_fixtures/lib/features/some_screen.dart').absolute,
     );
 
     expect(errors, hasLength(1));
@@ -17,7 +17,7 @@ void main() {
 
   test('does not flag debugPrint() inside app_logger.dart', () async {
     final errors = await rule.testAnalyzeAndRun(
-      File('test/fixtures/lib/core/service/app_logger.dart').absolute,
+      File('test_fixtures/lib/core/service/app_logger.dart').absolute,
     );
 
     expect(errors, isEmpty);

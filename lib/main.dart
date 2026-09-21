@@ -3,6 +3,7 @@ import 'package:sahala/core/routing/app_router.dart';
 import 'package:sahala/core/routing/app_routes.dart';
 import 'package:sahala/core/service/app_logger.dart';
 import 'package:sahala/core/service/firebase_messaging_service.dart';
+import 'package:sahala/core/service/local_storage_service.dart';
 import 'package:sahala/core/theme/app_theme.dart';
 import 'package:sahala/dependency_injection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +25,7 @@ void main() async {
   AppLogger.installErrorHandlers();
   setup();
 
+  await sl<LocalStorageService>().initialize();
   await sl<FirebaseMessagingService>().initialize();
 
   runApp(

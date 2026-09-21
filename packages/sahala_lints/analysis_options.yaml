@@ -1,0 +1,15 @@
+# test_fixtures/ holds deliberately synthetic snippets for lint rule tests
+# (avoid_debug_print_test.dart, avoid_direct_storage_imports_test.dart) -
+# some intentionally import packages this package doesn't depend on, since
+# the rules under test only look at import URI text/method names, not
+# whether they resolve. It's deliberately NOT under test/ (a sibling
+# directory instead), since AvoidDirectStorageImports exempts files under
+# /test/ (test setup code needing the real package directly, e.g.
+# SharedPreferences.setMockInitialValues) - nesting fixtures under test/
+# would make that rule's "should be flagged" fixture accidentally exempt
+# itself. Excluded from this package's own analysis so unresolved fixture
+# imports don't show up as noise here; dart test still resolves and runs
+# them directly via File(...).
+analyzer:
+  exclude:
+    - test_fixtures/**
