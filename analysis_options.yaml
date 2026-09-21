@@ -78,15 +78,14 @@ linter:
     - curly_braces_in_flow_control_structures
     - depend_on_referenced_packages
 
-# Project-specific lints, defined in packages/sahala_lints, run via the
-# custom_lint plugin declared above.
+# Project-specific lints, defined in packages/sahala_lints (kept as a
+# reference example for writing custom_lint rules), run via the custom_lint
+# plugin declared above.
 custom_lint:
   rules:
-    # Forces every translation lookup through String.localized /
-    # .localizedPlural / .localizedWithArg / .localizedWithCount
-    # (lib/core/extensions/string_extension.dart) instead of calling
-    # easy_localization's tr()/plural() directly.
-    - avoid_direct_localization_calls
+    # debugPrint() calls belong only inside AppLogger - see that rule's doc
+    # comment in packages/sahala_lints for why.
+    - avoid_debug_print
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sahala/core/routing/app_routes.dart';
+import 'package:sahala/core/service/app_logger.dart';
 import 'package:sahala/core/widgets/app_scaffold.dart';
 import 'package:sahala/core/widgets/countdown_timer.dart';
 import 'package:sahala/core/widgets/loading_outlined_button.dart';
@@ -48,7 +51,7 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
     });
 
     final arguments = ModalRoute.of(context)?.settings.arguments;
-    debugPrint('OTP arguments: $arguments');
+    unawaited(AppLogger.log('OTP arguments: $arguments', category: 'OTP'));
     final phoneNumber =
         ModalRoute.of(context)!.settings.arguments as String? ?? "";
     return AppScaffold(
@@ -104,7 +107,16 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
                     );
 
                     otpNotifier.otpVerify(body);
-                    debugPrint(value);
+                    // Not logging `value` itself - it's the OTP code, and
+                    // AppLogger.log only redacts Map/Iterable structures by
+                    // key, not plain strings (see PROJECT_DOCUMENTATION.md's
+                    // AppLogger section on what not to log).
+                    unawaited(
+                      AppLogger.log(
+                        'OTP entry completed (${value.length} digits)',
+                        category: 'OTP',
+                      ),
+                    );
                   },
                 ),
                 Row(
