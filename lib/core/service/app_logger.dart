@@ -63,6 +63,18 @@ class AppLogger {
       log(_redact(message), category: 'NETWORK 📡');
 
   /// Reports an error. Production records a non-fatal Crashlytics event by default.
+  ///
+  /// Only call this for critical/unexpected failures - a defect, or
+  /// something outside the app's control (network failure, unexpected
+  /// server error, a parsing bug, ...) - the kind of thing that needs to be
+  /// found and fixed. Do **not** call it for expected business-logic
+  /// outcomes that are simply shown to the user as a message/alert (wrong
+  /// OTP, invalid input the backend rejected with a reason, "no results
+  /// found", etc.) - those aren't defects, and logging every one of them
+  /// buries real incidents in Crashlytics noise. See `OtpNotifier.otpVerify`
+  /// (`lib/features/authentication/presentation/providers/otp_provider.dart`)
+  /// for a worked example of the split: the `catch` block (request/parsing
+  /// failure) logs, the non-success business response (wrong code) doesn't.
   static Future<void> error(
     Object error, {
     StackTrace? stackTrace,

@@ -63,19 +63,43 @@ class OtpNotifier extends Notifier<OtpState> {
           isSuccess: true,
           isError: false,
         );
+      } else {
+        // Expected business outcome (wrong/expired code, etc.) - the backend
+        // already returned a message meant for the customer, not a code
+        // defect, so this is not logged. See AppLogger.error's doc comment.
+        state = state.copyWith(
+          isLoading: false,
+          isSuccess: false,
+          isError: true,
+        );
       }
-
-      print(response.status);
-    } catch (error) {
+    } catch (error, stackTrace) {
+      // Reaching here means the request itself failed (network, parsing,
+      // an unexpected server error, ...) rather than an expected "wrong
+      // OTP" business outcome - that's a real defect/incident, so it is
+      // logged. See AppLogger.error's doc comment.
+      await AppLogger.error(
+        error,
+        stackTrace: stackTrace,
+        reason: 'OTP verify failed',
+      );
       state = state.copyWith(isLoading: false, isSuccess: false, isError: true);
     }
   }
 
   Future<void> resendOTP(String mobileNumber) async {
-    state = state.copyWith(isResending: true);
-    await _loginUseCase(mobileNumber);
-    state = state.copyWith(isResending: false);
-    state = state.copyWith(showCounter: true);
+    try {
+      state = state.copyWith(isResending: true);
+      await _loginUseCase(mobileNumber);
+      state = state.copyWith(isResending: false, showCounter: true);
+    } catch (error, stackTrace) {
+      await AppLogger.error(
+        error,
+        stackTrace: stackTrace,
+        reason: 'OTP resend failed',
+      );
+      state = state.copyWith(isResending: false);
+    }
   }
 
   void onCountdownFinished() {

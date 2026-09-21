@@ -222,6 +222,23 @@ try {
 }
 ```
 
+**Only log critical/unexpected failures, not expected business outcomes.** `AppLogger.error` is for defects and things outside the app's control: network failures, unexpected server errors, parsing bugs — the kind of thing that needs to be found and fixed. It is **not** for expected business-logic outcomes that just need a message/alert shown to the user (wrong OTP, a validation message the backend returned, "no results found", etc.) — those aren't defects, and logging every one of them buries real incidents in Crashlytics noise. `OtpNotifier.otpVerify` (`lib/features/authentication/presentation/providers/otp_provider.dart`) shows the split: the `catch` block (the request itself failed) logs; the non-success business response (wrong code, still a normal API round-trip) doesn't.
+
+```dart
+final response = await _otpUseCase(body);
+if (response.status == 'success') {
+  // ...
+} else {
+  // Expected business outcome (wrong/expired code) - not logged.
+  state = state.copyWith(isError: true);
+}
+} catch (error, stackTrace) {
+  // The request itself failed - a real defect/incident, so it is logged.
+  await AppLogger.error(error, stackTrace: stackTrace, reason: 'OTP verify failed');
+  state = state.copyWith(isError: true);
+}
+```
+
 The main benefit is one predictable debugging experience: readable local logs during development, and actionable Crashlytics evidence after release. Crashlytics must be enabled in the Firebase Console before release reports can appear.
 
 ### Lint rules: preventing common Flutter defects early
