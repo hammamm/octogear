@@ -5,7 +5,6 @@ import 'package:sahala/core/service/app_logger.dart';
 import 'package:sahala/core/service/firebase_messaging_service.dart';
 import 'package:sahala/core/theme/app_theme.dart';
 import 'package:sahala/dependency_injection.dart';
-import 'package:sahala/features/authentication/presentation/screens/login_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:easy_localization/easy_localization.dart';

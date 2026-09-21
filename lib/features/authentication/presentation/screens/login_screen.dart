@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sahala/core/routing/app_routes.dart';
 import 'package:sahala/core/theme/app_colors.dart';
-import 'package:sahala/core/widgets/app_background.dart';
 import 'package:sahala/core/widgets/app_scaffold.dart';
+import 'package:sahala/core/widgets/loading_outlined_button.dart';
 import 'package:sahala/features/authentication/presentation/providers/login_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -94,18 +94,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               SizedBox(height: 24),
 
-              OutlinedButton(
+              LoadingOutlinedButton(
+                label: 'Continue',
+                isLoading: loginState.isLoading,
                 onPressed: loginNotifier.isPhoneValid && !loginState.isLoading
                     ? loginNotifier.login
                     : null,
-                child: loginState.isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      )
-                    : const Text('Continue'),
               ),
+
+              // OutlinedButton(
+              //   onPressed: loginNotifier.isPhoneValid && !loginState.isLoading
+              //       ? loginNotifier.login
+              //       : null,
+              //   child: loginState.isLoading
+              //       ? const SizedBox(
+              //           width: 24,
+              //           height: 24,
+              //           child: CircularProgressIndicator(strokeWidth: 2.5),
+              //         )
+              //       : const Text('Continue'),
+              // ),
               SizedBox(height: 24),
             ],
           ),

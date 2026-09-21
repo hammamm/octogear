@@ -36,7 +36,16 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
         'user/otpVerify',
         data: body.toJson(),
       );
-      return response.data;
+
+      final json = Map<String, dynamic>.from(response.data as Map);
+
+      return ApiResponse<OtpVerifyResponseModel>.fromJson(json, (dataJson) {
+        return OtpVerifyResponseModel.fromJson(
+          Map<String, dynamic>.from(dataJson as Map),
+        );
+      });
+
+      //      return response.data;
     } on DioException catch (error, stackTrace) {
       await AppLogger.error(
         error,
