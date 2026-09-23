@@ -312,6 +312,99 @@ try {
 
 `ApiClient` already installs `AppLogInterceptor`; do not add Dio's `LogInterceptor` to individual requests. Crashlytics must also be enabled for the existing Firebase project in the Firebase console before production reports can appear.
 
+## Production development contract
+
+This section is the required standard for **all future code** in this repository: every feature, screen, provider, use case, repository, model, service, and shared `core` component. It is not a description of the current scaffold. When replacing or deleting existing code, follow these rules in the replacement. An AI assistant must apply the relevant rules before calling a feature complete; a working happy path is not sufficient.
+
+### Authentication and session rules
+
+Apply these rules to every authentication implementation and to every feature that calls protected APIs.
+
+1. After successful sign-in/OTP verification, save access and refresh tokens, when provided, only through secure storage. Never store tokens in `SharedPreferences`.
+2. Add one shared Dio authentication interceptor in `core/api/`. It must read the secure token and attach `Authorization: Bearer <token>` to protected requests. Feature repositories must not manually attach this header one-by-one.
+3. Add a protected current-user endpoint (for example `GET /me`; use the backend's actual endpoint) and an authentication/session provider.
+4. At startup, show a neutral loading/splash state while the session provider reads secure storage:
+
+   ```text
+   no token                         -> Login
+   token + current-user response 200 -> authenticated Home/app shell
+   token + response 401             -> refresh session if supported; otherwise clear session and Login
+   network/timeout/5xx              -> retry/offline error UI; keep the token
+   ```
+
+5. If the backend supports refresh tokens, centralize refresh and retry behavior in the Dio layer. A 401 must trigger at most one refresh operation at a time; queued protected requests may retry after a successful refresh. If refresh fails, clear secure tokens and authenticated state, then route to Login.
+6. On logout, clear secure tokens, any in-memory user/session state, and privacy-sensitive cached data before routing to Login.
+
+Do not log a user out for a timeout, no-internet condition, server error, 403, 404, or 422 response. A 401 means the credentials/session are no longer accepted; the other cases have different user-facing behavior.
+
+### API contract, typing, and error behavior
+
+Every endpoint needs a confirmed backend request/response example before implementation. Keep transport JSON in `data` models/DTOs and do not spread `Map<String, dynamic>` or `dynamic` through use cases, providers, or widgets. Repository contracts should return typed results, for example `Future<ApiResponse<FeatureResponseModel>>`, not `Future<dynamic>`.
+
+Map Dio/server failures to one app-level failure type or a small, consistent set of states. Providers expose a safe user-facing message; repositories/services retain the technical context for `AppLogger`. Do not expose raw exceptions, stack traces, or server implementation details in UI.
+
+| Condition | Required app behavior |
+| --- | --- |
+| 400 bad request | Show the backend's safe message; do not retry automatically. |
+| 401 unauthenticated | Refresh session once if supported; otherwise clear session and route to Login. |
+| 403 forbidden | Keep the session; show that this user lacks permission. |
+| 404 not found | Show that the requested resource no longer exists; offer a route back where appropriate. |
+| 422 validation | Keep the form data and show field-level validation messages when supplied by the backend. |
+| 429 rate limited | Prevent repeated submissions, show a wait message, and honor `Retry-After` when available. |
+| 500–599 server failure | Log unexpected failure, show Retry, and do not clear the session. |
+| timeout/no connection | Show a clear offline/timeout message and Retry; do not assume the token is invalid. |
+
+Use HTTPS for every production request. Never put backend secrets in the Flutter client. Never log tokens, OTPs, passwords, payment data, or unnecessary personal information.
+
+### Screen and provider state requirements
+
+For every API-backed screen, explicitly implement and test these states:
+
+```text
+initial/loading
+success with data
+success with no data
+validation/business error
+network/timeout error with Retry
+unexpected server error with Retry
+```
+
+Disable an action while its request is in flight to prevent duplicate login, booking, or payment requests. Do not make an API request inside a widget's `build()` method. After an `await`, check `context.mounted`/`mounted` before using a screen context, navigating, showing a dialog, or calling `setState` from a `StatefulWidget`.
+
+Automatic retries are safe only for idempotent reads (normally `GET`) when designed carefully. Do **not** blindly retry booking creation, payment submission, or other writes: use a backend idempotency key/transaction strategy first so a retry cannot create duplicate records or charges.
+
+### Lists, search, and performance
+
+Every large server list—such as cars, bookings, notifications, customers, or any future resource—must be paginated. The API should return items plus page metadata such as `current_page`, `last_page`, and `per_page`. The Flutter provider must:
+
+1. Load the first page.
+2. Append later pages when the user nears the end of the list.
+3. Prevent a second request while a page is already loading.
+4. Stop when no next page exists.
+5. Support pull-to-refresh and retrying a failed page without losing existing items.
+
+Use `ListView.builder`/slivers for long lists, resize and cache remote images, debounce search input (typically 300–500 ms), and ignore/cancel stale search responses so an old query cannot overwrite newer results. Dispose controllers, timers, focus nodes, and subscriptions. Do not add SQLite merely for “best practice”; add a local database only when a real offline, draft, cache, or synchronization requirement needs it.
+
+### Testing and delivery requirements
+
+Before declaring a feature complete, add tests proportional to its risk:
+
+- Unit tests for validation, models, use cases, failure mapping, and token/session behavior.
+- Widget tests for loading, empty, error, retry, and successful UI states.
+- Integration tests for critical user journeys: authentication/session restore, booking creation, and payment result handling when applicable.
+- Run `flutter analyze` and `flutter test` before merging. CI should run both on every pull request once the project workflow is established.
+
+For every feature, write a short implementation note before coding: user action, relevant API endpoints and JSON examples, permissions/roles, loading/empty/error states, navigation result, and tests. Keep business rules in use cases, HTTP/JSON in repositories/models, screen state in Riverpod providers, and cross-feature behavior (authentication, logging, networking, storage, theming) in `core` services.
+
+### Release and operational requirements
+
+- Use separate development, test/staging, and production configuration through flavors or `--dart-define`; do not switch environments by editing a source constant for releases.
+- Configure dedicated Android release signing and verify iOS release signing before distribution.
+- Confirm Crashlytics is initialized after Firebase and inspect production reports after release.
+- Handle notification permission, foreground messages, notification taps, and device-token upload/refresh only when the product requires push notifications.
+- Keep dependencies updated deliberately: review Flutter/Dart/package changelogs, update in a branch, run analysis/tests, and manually test critical flows before releasing. Do not mass-upgrade packages without verification.
+- Update this document whenever API contracts, routes, environment behavior, authentication, or ownership boundaries change.
+
 ## Platform and release notes
 
 - Application ID / iOS bundle ID: `com.jahr.sahala`.
