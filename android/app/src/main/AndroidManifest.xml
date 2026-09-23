@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required by release builds for API and Firebase networking. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required on Android 13+ before Firebase Cloud Messaging can show notifications. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:label="sahala"
         android:name="${applicationName}"

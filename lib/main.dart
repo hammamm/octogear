@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sahala/core/routing/app_router.dart';
-import 'package:sahala/core/routing/app_routes.dart';
 import 'package:sahala/core/service/app_logger.dart';
 import 'package:sahala/core/service/firebase_messaging_service.dart';
 import 'package:sahala/core/service/local_storage_service.dart';
@@ -8,6 +7,7 @@ import 'package:sahala/core/theme/app_theme.dart';
 import 'package:sahala/dependency_injection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
@@ -42,6 +42,9 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   static final _routeObserver = AppRouteObserver();
+  static final _analyticsObserver = FirebaseAnalyticsObserver(
+    analytics: FirebaseAnalytics.instance,
+  );
 
   // This widget is the root of your application.
   @override
@@ -54,7 +57,7 @@ class MyApp extends StatelessWidget {
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      navigatorObservers: [_routeObserver],
+      navigatorObservers: [_routeObserver, _analyticsObserver],
       // initialRoute: AppRoutes.login.path,
       onGenerateRoute: AppRouter.generateRoute,
     );

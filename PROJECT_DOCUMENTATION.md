@@ -14,9 +14,9 @@ The project is **not yet a complete application**. The login UI and API calls ex
 | State | Riverpod (`NotifierProvider`) | Presentation state for login and OTP |
 | Dependency injection | GetIt | Global service locator in `dependency_injection.dart` |
 | Networking | Dio | Ten-second connect and receive timeouts; centralized, redacted request/response logging |
-| Firebase services | Core, Messaging, Crashlytics | Push token handling plus environment-aware logs and error reporting |
+| Firebase services | Core, Messaging, Crashlytics, Analytics | Push token handling, crash/error reporting, and non-PII route analytics |
 | Model generation | `json_serializable` + `build_runner` | Generated `*.g.dart` files are committed |
-| Supported platform in practice | Android and iOS | Flutter platform folders exist, but Firebase options intentionally throw on web, macOS, Windows, and Linux |
+| Firebase-enabled platform in practice | Android | Android is configured for Firebase project `octogear-1d72b`; iOS Firebase configuration is intentionally deferred |
 
 The package requires Dart SDK `^3.12.0`; use the Flutter SDK version that supplies a compatible Dart version.
 
@@ -55,7 +55,7 @@ The app sends HTTP—not HTTPS—in development. Android may require a cleartext
 lib/
 ├── main.dart                         # Bootstrap; Firebase, GetIt, Riverpod, MaterialApp
 ├── dependency_injection.dart          # GetIt registrations
-├── firebase_options.dart              # FlutterFire-generated Android/iOS Firebase options
+├── firebase_options.dart              # Android Firebase options for the OctoGear project
 ├── core/
 │   ├── api/                           # Dio client and generic API envelope
 │   ├── config/                        # Environment enum and base URL selection
@@ -285,9 +285,9 @@ Do not broadly disable lint rules to make analysis pass. If an exception is genu
 
 ### Firebase Messaging
 
-Firebase project configuration is present in `firebase.json`, `android/app/google-services.json`, `ios/Runner/GoogleService-Info.plist`, and the generated `lib/firebase_options.dart`. Only Android and iOS options are configured. `firebase_options.dart` explicitly throws an `UnsupportedError` on web, macOS, Windows, and Linux; do not present those as supported until configured.
+Android Firebase configuration is present in `firebase.json`, `android/app/google-services.json`, and `lib/firebase_options.dart`. These files identify Firebase project `octogear-1d72b` and Android application ID `com.octogear.app`. `firebase_options.dart` explicitly throws an `UnsupportedError` for iOS, web, macOS, Windows, and Linux; do not present those platforms as Firebase-enabled until separately configured for the OctoGear project.
 
-On iOS, the messaging service requests alert, badge, and sound permission. It logs the permission status and current/refreshed token. There is no notification-tap handler, foreground-message handler, token upload after refresh, or Android notification permission flow implemented yet.
+The messaging service requests alert, badge, and sound permission on iOS and Android; Android 13+ also declares `POST_NOTIFICATIONS`. It logs the permission status and current/refreshed token. There is no notification-tap handler, foreground-message handler, or token upload after refresh implemented yet.
 
 ### Sensitive data and logs
 
@@ -407,7 +407,8 @@ For every feature, write a short implementation note before coding: user action,
 
 ## Platform and release notes
 
-- Application ID / iOS bundle ID: `com.jahr.sahala`.
+- Android application ID / namespace: `com.octogear.app`.
+- iOS Firebase configuration and bundle-ID migration are intentionally deferred; do not use the existing iOS Firebase configuration for an OctoGear release.
 - Android uses Java 17 and the Google Services Gradle plugin.
 - Android release builds currently use the debug signing configuration. Configure a dedicated signing key and release signing before distribution.
 - iOS enables background `remote-notification` and `fetch` modes.
@@ -430,7 +431,7 @@ Replace `test/widget_test.dart` with feature tests that wrap the app in `Provide
 6. Decide whether location is needed; collect it with user permission or remove the placeholder fields.
 7. Add session restoration and an initial route/guard that chooses login or authenticated content.
 8. Configure release signing, production-safe logs, network transport, and notification behavior.
-9. Replace the legacy widget test and add repository/use-case tests against mocked API/Firebase services.
+9. Replace the legacy widget test and add repository/use-case tests against mocked API/Firebase services.s
 
 ## Working agreement for AI-assisted changes
 

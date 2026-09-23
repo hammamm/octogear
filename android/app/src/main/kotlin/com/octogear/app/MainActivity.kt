@@ -1,4 +1,4 @@
-package com.jahr.sahala
+package com.octogear.app
 
 import io.flutter.embedding.android.FlutterActivity
 

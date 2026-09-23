@@ -8,7 +8,9 @@ class FirebaseMessagingService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   StreamSubscription<String>? _tokenRefreshSubscription;
   Future<void> initialize() async {
-    if (Platform.isIOS) {
+    // Android 13+ also requires runtime notification permission. The Firebase
+    // plugin handles this safely on older Android versions.
+    if (Platform.isIOS || Platform.isAndroid) {
       await _requestPermission();
     }
 

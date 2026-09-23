@@ -1,79 +1,21 @@
 {
   "project_info": {
-    "project_number": "340724092441",
-    "firebase_url": "https://jal-hr-a55dc-default-rtdb.firebaseio.com",
-    "project_id": "jal-hr-a55dc",
-    "storage_bucket": "jal-hr-a55dc.firebasestorage.app"
+    "project_number": "22022700786",
+    "project_id": "octogear-1d72b",
+    "storage_bucket": "octogear-1d72b.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:340724092441:android:b1ce12df569c4c51422488",
+        "mobilesdk_app_id": "1:22022700786:android:5861d760336ec2205c5a6b",
         "android_client_info": {
-          "package_name": "com.jahr.jahr"
+          "package_name": "com.octogear.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB3RoxpmZCCYmjUf4_2kgsYMqMD0WtejRc"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:340724092441:android:4ffcc69d6ede2228422488",
-        "android_client_info": {
-          "package_name": "com.jahr.sahala"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyB3RoxpmZCCYmjUf4_2kgsYMqMD0WtejRc"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:340724092441:android:31196b23b82ae778422488",
-        "android_client_info": {
-          "package_name": "com.jaluser"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyB3RoxpmZCCYmjUf4_2kgsYMqMD0WtejRc"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:340724092441:android:869c36341acc6b93422488",
-        "android_client_info": {
-          "package_name": "com.jhrapps.v2jhremplo"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyB3RoxpmZCCYmjUf4_2kgsYMqMD0WtejRc"
+          "current_key": "AIzaSyDvV77qO8wHEpblFX6x5-g3zwsYJQHiEEA"
         }
       ],
       "services": {
