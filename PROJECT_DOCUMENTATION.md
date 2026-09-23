@@ -1,364 +1,243 @@
-# Sahala — Project Documentation
+# OctoGear - Mobile Application Development Contract
 
-## Purpose and current scope
+## Purpose
 
-Sahala is a Flutter mobile application scaffold for a Saudi phone-number authentication flow. A user enters a nine-digit mobile number (beginning with `5`), the app asks the API to send or register an OTP, then the user enters a four-digit OTP for verification.
+OctoGear is a production mobile marketplace for automotive spare parts. It serves people who need parts and store owners/providers who publish inventory and respond to requests. The mobile application must support Android and iOS, Arabic and English, right-to-left and left-to-right layouts, secure authentication, observable production behavior, and maintainable future changes.
 
-The project is **not yet a complete application**. The login UI and API calls exist, while onboarding, authenticated navigation, session storage, error presentation, and the home feature are still scaffolds. This document describes the code as it exists, and labels unfinished work explicitly so it can be used reliably by both developers and AI assistants.
+This document is the source of truth for developers and AI assistants working in the Flutter repository. It replaces the old Sahala scaffold description. The old implementation is temporary migration material only; it is not the architecture or visual identity for OctoGear.
 
-## Technology at a glance
+## Source-of-truth order
 
-| Area | Choice | Notes |
+When sources disagree, use this order:
+
+1. Explicit approved product decision from the project owner.
+2. Confirmed Laravel API behavior and validated request/response example.
+3. This development contract.
+4. OctoGear brand guideline PDF.
+5. Wireframes, which define required content and broad flow only.
+
+Do not copy the old wireframe visuals, YARDY branding, placeholder text, typos, duplicated pages, or role-mixed controls. Preserve the user need represented by a wireframe, then create a clean mobile-first OctoGear experience.
+
+## Repository and ownership
+
+- Flutter repository: `C:\Tamkkun\OctoGearProject\octogear`
+- Laravel API repository: `C:\Tamkkun\OctoGearProject\OctoGear-api`
+- Wireframes: `C:\Tamkkun\OctoGearProject\WireFrame`
+- Brand guide and login reference: `C:\Tamkkun\OctoGearProject\wireframe and loging example`
+
+Flutter and Laravel are separate repositories. The Flutter Git history and GitHub repository must contain Flutter work only. Laravel may be changed when an approved product/API gap requires it; do not copy Laravel into the Flutter repository.
+
+## Current migration status
+
+- Android Firebase is configured and verified for project `octogear-1d72b` and Android package `com.octogear.app`.
+- Firebase Core, Messaging, Crashlytics, and Analytics initialize on Android; an FCM token was retrieved on an emulator.
+- The official Android FlutterFire configuration has been generated.
+- iOS Firebase, bundle ID migration, Apple signing, and iOS device verification remain required before an iOS release. Do not claim iOS Firebase support until they are complete.
+- The existing Flutter code, assets, routes, theme, translation files, and package name still contain legacy Sahala/YARDY material. Replace it deliberately during the foundation migration; do not reuse it as OctoGear product logic.
+- The last verified Flutter test run passed six tests. Static analysis has no compilation errors but has legacy style/unused-import findings that must be removed as the old scaffold is replaced.
+
+## Brand and design system
+
+Use the supplied OctoGear identity, not the legacy YARDY/Sahala assets.
+
+| Token | Value | Use |
 | --- | --- | --- |
-| UI | Flutter / Material 3 | Custom Poppins font and a light brand theme |
-| State | Riverpod (`NotifierProvider`) | Presentation state for login and OTP |
-| Dependency injection | GetIt | Global service locator in `dependency_injection.dart` |
-| Networking | Dio | Ten-second connect and receive timeouts; centralized, redacted request/response logging |
-| Firebase services | Core, Messaging, Crashlytics, Analytics | Push token handling, crash/error reporting, and non-PII route analytics |
-| Model generation | `json_serializable` + `build_runner` | Generated `*.g.dart` files are committed |
-| Firebase-enabled platform in practice | Android | Android is configured for Firebase project `octogear-1d72b`; iOS Firebase configuration is intentionally deferred |
+| OctoGear navy | `#242C41` | Primary brand surface, text, navigation, dark backgrounds |
+| OctoGear yellow | `#F7C83C` | Primary call to action, highlights, active state |
+| Structural gray | `#878380` | Secondary/supporting detail only |
+| Success | Green semantic token | Confirmed success, never a replacement for the primary brand |
+| Warning | Amber semantic token | Caution/action required |
+| Error | Red semantic token | Error/destructive action |
+| Information | Blue semantic token | Informational state |
+| Accent | Purple semantic token | Exceptional emphasis only |
 
-The package requires Dart SDK `^3.12.0`; use the Flutter SDK version that supplies a compatible Dart version.
+Use the octopus, gear, and spark-plug logo exactly as supplied. Do not distort it, add effects, recolor it outside approved variants, or use low-contrast combinations. Before release, store approved high-resolution app-icon, splash, light, and dark logo assets in the Flutter assets directory.
 
-## Quick start
+Use Noto Sans Arabic as the primary brand font. It must render Arabic well and work consistently in bilingual layouts. UI must prioritize readable text, sufficient contrast, 44-48 dp minimum touch targets, safe areas, dynamic type, semantic labels, and clear loading/empty/error states. Use the navy base with yellow as an action accent, not as body text or a decorative substitute for hierarchy.
 
-```bash
-flutter pub get
-flutter run
-```
+The login reference establishes the intended tone, not an exact page to copy. Correct its Arabic copy to:
 
-Useful maintenance commands:
+> أهلاً بك في أوكتوجير. أدخل رقم جوالك للبدء.
 
-```bash
-flutter analyze
-flutter test
-dart run build_runner build --delete-conflicting-outputs
-dart run flutter_native_splash:create
-dart run flutter_launcher_icons
-```
+The English equivalent is:
 
-Run the code-generation command after changing a class annotated with `@JsonSerializable`. Do not edit generated `*.g.dart` files manually.
+> Welcome to OctoGear. Enter your mobile number to get started.
 
-### Local API requirement
+Saudi phone formatting must use `+966` only if that is the confirmed market rule. The current backend normalizes Saudi mobile numbers, so the first implementation will use `+966` with a nine-digit number beginning with `5`.
 
-The selected development URL is `http://0.0.0.0:8000/api/v1/` in `lib/core/config/app_config.dart`. `0.0.0.0` is a server bind address, not normally a reachable address from an emulator or physical device. Before testing login, replace or redesign this development configuration with an address reachable by the target:
+## Localization and RTL contract
 
-- Android emulator: commonly `10.0.2.2` for a server on the host machine.
-- iOS simulator: commonly `127.0.0.1` works for a host-local server.
-- Physical device: use the development machine's LAN IP or a publicly reachable development API.
+The application supports exactly these initial locales:
 
-The app sends HTTP—not HTTPS—in development. Android may require a cleartext-traffic configuration before that URL can be reached.
+| App locale | API header | Layout direction |
+| --- | --- | --- |
+| Arabic (`ar`) | `Accept-Language: ar` | RTL |
+| English (`en`) | `Accept-Language: en` | LTR |
 
-## Repository map
+Rules:
+
+1. Every user-visible Flutter string belongs in `assets/translations/ar.json` and `assets/translations/en.json`. Never hard-code Arabic or English UI text in widgets.
+2. Static app content is translated by Flutter. Localized names, server messages, cities, components, stores, and other API data are returned by the backend and must not be translated again by Flutter.
+3. Persist the selected locale locally. On a language switch, update the app locale/direction immediately, update the API locale resolver, invalidate locale-dependent cached/reference data, and refetch visible server data.
+4. Attach the exact `Accept-Language` header to every API request through one shared Dio interceptor. Repositories must not attach it individually.
+5. Use directional APIs: `EdgeInsetsDirectional`, `AlignmentDirectional`, `BorderRadiusDirectional`, and directional icons where appropriate. Do not hard-code left/right for layout.
+6. Format dates, numbers, price, and plural text using the active locale. Currency rules must be confirmed with the product owner before checkout is implemented.
+7. Phone numbers, OTPs, IDs, license plates, and money values must remain readable within RTL screens. Use appropriate text direction/formatters rather than reversing raw values.
+
+## Architecture
+
+Use Riverpod as the single dependency and state-management system. Do not retain both GetIt and Riverpod as parallel service locators in the OctoGear implementation. Dependencies are provided through Riverpod providers and overridden in tests.
 
 ```text
 lib/
-├── main.dart                         # Bootstrap; Firebase, GetIt, Riverpod, MaterialApp
-├── dependency_injection.dart          # GetIt registrations
-├── firebase_options.dart              # Android Firebase options for the OctoGear project
-├── core/
-│   ├── api/                           # Dio client and generic API envelope
-│   ├── config/                        # Environment enum and base URL selection
-│   ├── routing/                       # Route names and route factory
-│   ├── service/                       # Firebase Messaging lifecycle/token access
-│   ├── theme/                         # Colors and ThemeData
-│   └── widgets/                       # Shared scaffold, background, OTP input, timer
+├── app/                         # Bootstrap, root app, router, app-level providers
+├── core/                        # Cross-feature technical infrastructure only
+│   ├── api/                     # Dio, interceptors, typed API envelope, failures
+│   ├── configuration/           # --dart-define/flavor configuration
+│   ├── design_system/           # OctoGear tokens, theme, shared primitives
+│   ├── localization/            # Locale persistence, API locale resolver
+│   ├── logging/                 # Redacted AppLogger and Crashlytics integration
+│   ├── network/                 # Connectivity/retry policy when needed
+│   ├── routing/                 # Typed route declarations and guards
+│   ├── storage/                 # Secure session storage and non-sensitive preferences
+│   └── widgets/                 # Small, generic, reusable UI only
 └── features/
-    ├── authentication/                # Login/OTP feature in data, domain, presentation layers
-    ├── intro/                         # Unconnected three-page onboarding prototype
-    ├── home/                          # Unconnected placeholder Home screen
-    └── example/                       # Template feature; not used by the app
-assets/
-├── fonts/                             # Poppins font files
-├── icons/                             # App and splash artwork
-└── images/                            # Intro artwork
-android/, ios/                         # Native Flutter/Firebase projects
-test/widget_test.dart                  # Legacy counter test; currently invalid for this app
+    ├── authentication/
+    ├── account/
+    ├── customer_garage/
+    ├── storefront/
+    ├── part_requests/
+    ├── orders/
+    ├── provider_onboarding/
+    ├── provider_inventory/
+    ├── conversations/
+    ├── notifications/
+    ├── ratings/
+    ├── payments/
+    └── support_and_legal/
 ```
 
-`features/authentication` follows a clean-architecture-inspired split:
+For an API/business feature, use this shape:
 
 ```text
-presentation (screens + Riverpod notifiers)
-        ↓
-domain (use cases + repository contract)
-        ↓
-data (request/response models + repository implementation)
-        ↓
-core/api (Dio)
+feature/
+├── data/
+│   ├── data_sources/            # API calls only
+│   ├── models/                  # JSON DTOs only
+│   └── repositories/            # DTO mapping and API error translation
+├── domain/
+│   ├── entities/                # App/business objects when distinct from DTOs
+│   ├── repositories/            # Contracts
+│   └── use_cases/               # One business action/query per use case
+└── presentation/
+    ├── controllers/             # Riverpod Notifier/AsyncNotifier providers
+    ├── screens/
+    └── widgets/
 ```
 
-## Application startup and routing
-
-`main()` performs these operations in order:
-
-1. Initializes Flutter bindings.
-2. Initializes Firebase using `DefaultFirebaseOptions.currentPlatform`.
-3. Calls `setup()` to register dependencies with GetIt.
-4. Initializes `FirebaseMessagingService`, which gets and logs an FCM token and listens for token changes.
-5. Runs `ProviderScope(child: MyApp())`, which provides Riverpod to the widget tree.
-
-`MyApp` applies `AppTheme` and delegates routes to `AppRouter.generateRoute`. It has no explicit `home` or `initialRoute`. Flutter therefore requests `/`; the router's default case returns `LoginScreen`, making login the effective entry screen.
-
-| Route constant | Path | Current destination |
-| --- | --- | --- |
-| `AppRoutes.login` | `/login` | `LoginScreen` |
-| `AppRoutes.otp` | `/otp` | `OTPScreen`; expects a phone-number `String` in route arguments |
-| `AppRoutes.home` | `/home` | Declared only; not handled by `AppRouter` |
-
-When adding a screen, add the path to `app_routes.dart`, implement it in `app_router.dart`, then navigate only through the route constant. Add an explicit `initialRoute` once start-up/session routing is designed.
-
-## Authentication flow
+Keep the dependency direction:
 
 ```text
-LoginScreen
-  └─ phone number: 9 digits, starts with 5
-       └─ LoginNotifier.login()
-            └─ LoginUseCase
-                 ├─ retrieves Firebase device token
-                 └─ POST user/loginRegister
-                      └─ success status → navigate to /otp with phone number
-
-OTPScreen
-  └─ four-digit OtpInput completion
-       └─ OtpNotifier.otpVerify()
-            └─ POST user/otpVerify
-                 └─ current code logs receipt only; it does not yet save a session or navigate
+presentation -> domain -> data -> core
 ```
 
-### Login request
+A simple static legal screen does not need artificial repository/use-case layers. Do not create a generic `users` feature or a controller-style mega-feature. A feature is organized by a coherent user capability and its API/use cases.
 
-`LoginUseCase` uses `Platform.isIOS` to send `device_type: 1` on iOS and `0` otherwise. It currently uses `0.0` for both location values.
+## Feature boundaries and planned order
+
+Build one bounded slice at a time. A phase is complete only when its screen behavior, loading/error states, tests, documentation, and verified API contract are complete.
+
+1. **Foundation and application shell**
+   - Rename Dart/package/app branding to OctoGear.
+   - Replace the legacy theme, assets, translation files, router, configuration, and shared UI primitives.
+   - Set up Android/iOS-safe bootstrap, Riverpod-only dependencies, locale persistence/header injection, typed failures, secure storage, logging, and route guards.
+   - Configure iOS Firebase only after the iOS bundle identifier and Apple configuration are confirmed.
+2. **Authentication and session**
+   - Phone OTP send, verify, new-user registration, secure token storage, startup session restoration, logout, profile bootstrap, and role-aware shell.
+   - This phase requires a role-neutral current-user endpoint before production completion.
+3. **Account and customer garage**
+   - Profile, language setting, saved-car create/read/update/delete, reference selectors, and empty/error states.
+4. **Storefront discovery**
+   - Store search/filter/pagination, store detail, store cars, component catalog/detail, ratings display, and saved-car-aware discovery.
+5. **Part requests and order lifecycle**
+   - Specific requests, general requests to multiple stores, offer display/selection, one state-driven order detail/timeline, cancellation, and customer receipt confirmation.
+   - Do not implement this phase until the order/offer decisions below are approved and reflected in the API.
+6. **Provider onboarding**
+   - Provider application, commercial-registration proof, verified business contact, review/pending/approved/rejected states, role/capability rules, and resubmission.
+7. **Provider inventory**
+   - Provider stores, store cars, component CRUD, photos, price, warranty, stock, compatibility, and inventory history/availability.
+8. **Provider orders and offers**
+   - Incoming specific orders, general-request offers, order fulfilment, paid/completed history, refusal reasons, and order-related communication.
+9. **Communication, notifications, ratings, support, and legal**
+   - Conversation lists/messages/read state, notification inbox/taps, FCM token upload and delivery, rating flow, contact/support, approved terms/privacy/about content.
+10. **Payments and release hardening**
+    - Real payment provider integration, payment retry/refund behavior, pickup/delivery confirmation, iOS build/signing, Android release signing, accessibility, integration tests, and release checklist.
+
+The exact implementation order may move only when an API dependency or an approved product decision requires it. Do not build a later feature as a fake shortcut around an earlier dependency.
+
+## Confirmed API contract
+
+The Laravel API base path is `/api`. All API calls send:
 
 ```http
-POST {baseUrl}user/loginRegister
-Content-Type: application/json
+Accept: application/json
+Accept-Language: ar | en
+Authorization: Bearer <Sanctum token>   # protected routes only
+```
 
+The standard API envelope is:
+
+```json
 {
-  "mobile_number": "5xxxxxxxx",
-  "device_type": 0,
-  "latitude": 0.0,
-  "longitude": 0.0,
-  "device_token": "<Firebase token or null>"
+  "success": true,
+  "message": "Localized server message",
+  "data": {}
 }
 ```
 
-`LoginNotifier` marks navigation successful only if `response.data['status'] == 'success'`. Network and API errors are not caught in this notifier, so they currently surface as unhandled exceptions and no message is shown to the user.
+Paginated endpoints additionally expose:
 
-### OTP request and expected data
-
-```http
-POST {baseUrl}user/otpVerify
-Content-Type: application/json
-
+```json
 {
-  "mobile_number": "5xxxxxxxx",
-  "otp": "1234"
+  "meta": {
+    "current_page": 1,
+    "last_page": 3,
+    "per_page": 15,
+    "total": 42
+  }
 }
 ```
 
-`OtpVerifyResponseModel` models a successful payload with `customer`, `leadSourceList`, and `token`. The reusable `ApiResponse<T>` class represents an envelope shaped like `{status, message, data}`.
+Use typed DTOs for this envelope and endpoint data. No `dynamic` or raw `Map<String, dynamic>` may escape the data layer. Parse field validation errors into a typed failure that can display field-level messages without exposing technical details.
 
-At present, `AuthenticationRepositoryImpl.otpVerify` returns raw `response.data` even though its contract promises `ApiResponse<OtpVerifyResponseModel>`. It does not construct that model, and the OTP notifier does not update UI state, save the returned token, handle errors, or navigate to home. These are required before OTP authentication is complete.
+Reference endpoints provide localized cities, companies, names, models, fuel types, colors, sections, and components. Cache reference data by locale, not as one language-independent value.
 
-## Dependency and state ownership
+## Authentication and session contract
 
-`setup()` registers lazy singletons:
+Confirmed public routes:
 
-| Registration | Used by |
-| --- | --- |
-| `AuthenticationRepository` → `AuthenticationRepositoryImpl` | Login and OTP use cases |
-| `FirebaseMessagingService` | `LoginUseCase`, startup |
-| `LoginUseCase` | `LoginNotifier` |
-| `OtpUseCase` | `OtpNotifier` |
-| `ExampleRepository` → `ExampleRepositoryImpl` | No production caller |
+- `POST /auth/otp/send` with `{ mobile }`
+- `POST /auth/otp/verify` with `{ mobile, otp }`
+- `POST /auth/register` with `{ temp_token, full_name, city_id }`
 
-Riverpod notifiers obtain use cases through GetIt. `LoginNotifier` owns its `TextEditingController` and disposes it with `ref.onDispose`. Its `LoginState` has only `isLoading` and `loginSuccess`; there is no error or response data state. `OtpState` is currently empty.
+Existing-user verification returns a Sanctum token, `is_new`, and a user type. New users receive a temporary token and must register.
 
-For a new feature, keep request/response serialization in `data`, business orchestration in a use case, presentation state in a Riverpod notifier, and register the production dependencies in `setup()`. Avoid calling Dio directly from a screen.
+Required rules:
 
-## Shared UI and visual system
+1. Store access tokens only in secure storage. Never store access tokens, temporary tokens, OTPs, passwords, or payment data in shared preferences.
+2. Add a shared authentication interceptor that reads the in-memory secure session and attaches the bearer token to protected calls.
+3. Startup must show a neutral splash/session state. It must validate a stored token with a protected current-user endpoint:
+   - no token -> authentication
+   - valid token/current user -> role-aware application shell
+   - 401 -> clear session -> authentication
+   - timeout/no connection/5xx -> retain token and show a retry/offline state
+4. Do not log out for 403, 404, 422, 429, timeout, or 5xx.
+5. Logout must clear secure credentials, memory session state, and sensitive cached data.
+6. The current backend has no role-neutral `GET /auth/me` or logout/revoke endpoint. Add and test them before declaring session restoration complete. The current API has no refresh-token behavior, so do not invent refresh logic.
 
-- `AppScaffold` gives feature screens a transparent app bar and wraps them in `AppBackground`.
-- `AppBackground` renders the white/pastel diagonal gradient background.
-- `OtpInput` owns four one-character controllers and moves focus forward; it invokes `onCompleted` after the final digit.
-- `CountdownTimer` is display-only today. It finishes after 36 seconds on the OTP screen, but no resend action is connected.
-- `AppTheme` provides Material 3 light and dark themes. The core brand colors are teal (`AppColors.primary`), pink (`secondary`), blue-gray (`tertiary`), and a gray border.
-- `pubspec.yaml` declares the `Poppins` font weights 400, 500, 600, and 700, as well as the `assets/images/` and `assets/icons/` directories.
+## Error, offline, and request rules
 
-## Engineering guardrails
-
-These three project-level tools keep the codebase observable, consistent, and safe to share. They are part of the development workflow, not optional additions for individual features.
-
-### AppLogger: consistent logs and production diagnostics
-
-`lib/core/service/app_logger.dart` is the single logging entry point. Use it instead of `print`, `debugPrint` in feature code, `developer.log`, or Dio's `LogInterceptor`.
-
-| API / integration | Debug behavior | Profile and release behavior | Reason and benefit |
-| --- | --- | --- | --- |
-| `AppLogger.log(message, category: ...)` | Prints a boxed, emoji-labelled console log | Sends a Crashlytics breadcrumb | Makes normal application events easy to scan locally and useful when investigating a production crash. |
-| `AppLogger.network(data)` | Prints a redacted request/response log | Sends a redacted Crashlytics breadcrumb | Gives developers API visibility without permanently exposing common credentials. |
-| `AppLogger.error(error, stackTrace: ..., reason: ...)` | Prints the error, reason, and stack trace | Records a non-fatal Crashlytics event by default | Preserves the error context needed to fix problems users encounter without crashing the app. |
-| `AppLogger.installErrorHandlers()` | Prints framework and uncaught async errors | Records those errors as fatal Crashlytics events | Prevents unexpected framework/asynchronous failures from being invisible in production. |
-| `AppLogInterceptor` | Logs every Dio request, response, and error | Sends equivalent Crashlytics records | Keeps network observability centralized; repositories do not need custom request logging. |
-| `AppRouteObserver` | Logs `OPENED` / `CLOSED` for route changes | Sends the same navigation breadcrumbs | Reconstructs a user's screen journey before an error without adding log calls to every screen. |
-
-`main()` initializes Crashlytics collection and installs the global error handlers after Firebase initialization. `ApiClient` installs `AppLogInterceptor`, and `MyApp` installs the route observer. Do not add another instance of either integration.
-
-Network redaction currently masks values with keys containing `authorization`, `token`, `otp`, `password`, or `secret`. It does **not** automatically mask all personal data, including phone numbers. Do not put additional personal data, credentials, access tokens, or raw API bodies into `AppLogger.log`. Extend `_redact` before logging a new sensitive field.
-
-Use an error log when a failure is handled locally:
-
-```dart
-try {
-  await repository.saveProfile(body);
-} catch (error, stackTrace) {
-  await AppLogger.error(
-    error,
-    stackTrace: stackTrace,
-    reason: 'Saving profile failed',
-  );
-  rethrow;
-}
-```
-
-**Only log critical/unexpected failures, not expected business outcomes.** `AppLogger.error` is for defects and things outside the app's control: network failures, unexpected server errors, parsing bugs — the kind of thing that needs to be found and fixed. It is **not** for expected business-logic outcomes that just need a message/alert shown to the user (wrong OTP, a validation message the backend returned, "no results found", etc.) — those aren't defects, and logging every one of them buries real incidents in Crashlytics noise. `OtpNotifier.otpVerify` (`lib/features/authentication/presentation/providers/otp_provider.dart`) shows the split: the `catch` block (the request itself failed) logs; the non-success business response (wrong code, still a normal API round-trip) doesn't.
-
-```dart
-final response = await _otpUseCase(body);
-if (response.status == 'success') {
-  // ...
-} else {
-  // Expected business outcome (wrong/expired code) - not logged.
-  state = state.copyWith(isError: true);
-}
-} catch (error, stackTrace) {
-  // The request itself failed - a real defect/incident, so it is logged.
-  await AppLogger.error(error, stackTrace: stackTrace, reason: 'OTP verify failed');
-  state = state.copyWith(isError: true);
-}
-```
-
-The main benefit is one predictable debugging experience: readable local logs during development, and actionable Crashlytics evidence after release. Crashlytics must be enabled in the Firebase Console before release reports can appear.
-
-### Lint rules: preventing common Flutter defects early
-
-`analysis_options.yaml` extends `package:flutter_lints/flutter.yaml` and adds stricter project rules. Run them with:
-
-```bash
-flutter analyze
-```
-
-The analyzer excludes generated/native platform directories (`build`, Android, iOS, web, macOS, Windows, Linux) so the report focuses on application Dart code that this team owns.
-
-| Rule group | Enabled rules | Why it matters / benefit |
-| --- | --- | --- |
-| Context and widget safety | `use_build_context_synchronously`, `use_key_in_widget_constructors`, `no_logic_in_create_state` | Avoids using a disposed `BuildContext`, makes widgets easier to identify/reuse, and keeps widget lifecycle code predictable. `use_build_context_synchronously` and lifecycle/resource risks are treated as errors. |
-| UI quality | `avoid_unnecessary_containers`, `use_colored_box`, `use_decorated_box`, `sized_box_for_whitespace`, `sort_child_properties_last`, `prefer_const_*`, `use_full_hex_values_for_flutter_colors` | Reduces unnecessary widget work, improves readability, and encourages immutable widget trees that Flutter can optimize. |
-| Async and resources | `cancel_subscriptions`, `close_sinks`, `unawaited_futures`, `avoid_web_libraries_in_flutter` | Finds memory leaks, unhandled async work, and platform-incompatible imports before they become runtime bugs. |
-| Maintainability | `avoid_print`, `document_ignores`, `file_names`, `curly_braces_in_flow_control_structures`, `depend_on_referenced_packages` | Enforces the AppLogger policy, makes any lint suppression accountable, and keeps imports/files/style consistent. |
-
-The configured severities intentionally make five high-risk issues errors: using context after `await`, forgotten stream subscriptions, forgotten sink closure, importing web libraries into Flutter code, and placing logic in `createState`. The remaining selected rules report warnings or info so they can be cleaned up steadily without hiding real correctness failures.
-
-Do not broadly disable lint rules to make analysis pass. If an exception is genuinely necessary, use the smallest `ignore` scope and add a reason; `document_ignores` exists to enforce that explanation. The benefit is earlier feedback in the IDE and CI, fewer lifecycle/resource bugs, and a more uniform codebase for humans and AI tools.
-
-### `.gitignore`: keeping the repository clean and safe
-
-`.gitignore` defines files that Git must leave local. It is grouped by platform and tool so it is easy to maintain.
-
-| Ignored category | Examples | Reason and benefit |
-| --- | --- | --- |
-| Flutter/Dart generated state | `.dart_tool/`, `.pub/`, `.flutter-plugins`, generated web output | Recreated by Flutter; excluding it prevents machine-specific noise and merge conflicts. |
-| Build/test outputs | `build/`, `**/build/`, `coverage/`, APK/IPA artifacts | Keeps large, reproducible binaries out of source control and makes reviews smaller. |
-| Secrets and local environment | `.env`, `.env.*`, `local.properties`, `*.jks`, `*.keystore` | Prevents API credentials, local SDK paths, and signing keys from accidentally entering Git. `.env.example` remains trackable as a safe template. |
-| iOS/macOS generated/local files | `Pods/`, `DerivedData/`, `xcuserdata/`, `*.xcworkspace`, `.DS_Store` | Prevents Xcode/CocoaPods caches and user-specific files from conflicting across developers. `Podfile` and `Podfile.lock` are explicitly retained. |
-| Android/IDE caches | `.gradle/`, `.idea/`, `captures/`, `.externalNativeBuild/`, `.cxx/` | Avoids committing local Gradle/IDE indexes and native build artifacts. |
-| General temporary files | `*.log`, `*.tmp`, `*.bak`, `.history` | Keeps debug leftovers and editor history out of commits. |
-
-`.gitignore` is preventive, not retroactive: it does not remove a file that Git already tracks. If a secret was committed, rotate it and remove it from repository history using the team's approved security process. Keep source configuration needed to build the app—such as `pubspec.lock`, `Podfile.lock`, and the Firebase configuration files—tracked unless the team deliberately adopts a secure alternative delivery method.
-
-## Configuration, Firebase, and security
-
-### Environments
-
-`AppConfig.environment` is a compile-time `const` set to `Environment.dev`. Base URLs are hard-coded in source for `dev`, `test`, and `prod`. For a maintainable release setup, replace this with build flavors or `--dart-define` configuration and keep environment-specific secrets out of source control.
-
-### Firebase Messaging
-
-Android Firebase configuration is present in `firebase.json`, `android/app/google-services.json`, and `lib/firebase_options.dart`. These files identify Firebase project `octogear-1d72b` and Android application ID `com.octogear.app`. `firebase_options.dart` explicitly throws an `UnsupportedError` for iOS, web, macOS, Windows, and Linux; do not present those platforms as Firebase-enabled until separately configured for the OctoGear project.
-
-The messaging service requests alert, badge, and sound permission on iOS and Android; Android 13+ also declares `POST_NOTIFICATIONS`. It logs the permission status and current/refreshed token. There is no notification-tap handler, foreground-message handler, or token upload after refresh implemented yet.
-
-### Sensitive data and logs
-
-The committed Firebase configuration contains app identifiers and API keys, which are normal client Firebase configuration values but should still be governed by project access rules. `AppLogger` replaces Dio's default verbose logger. Debug builds print visually grouped app, network, error, push, and screen-navigation logs; profile/release builds send ordinary logs to Crashlytics and record errors as non-fatal Crashlytics events. Its network interceptor masks values whose keys contain `authorization`, `token`, `otp`, `password`, or `secret`. Do not pass other sensitive values to general logs. Flutter and uncaught asynchronous errors are also reported as fatal errors. Navigation is observed globally, so pushes, pops, replacements, and removals produce `OPENED`/`CLOSED` view logs without adding logging code to each screen.
-
-Use the logger instead of `print` or `developer.log`:
-
-```dart
-await AppLogger.log('Profile loaded', category: 'PROFILE');
-
-try {
-  await repository.saveProfile(body);
-} catch (error, stackTrace) {
-  await AppLogger.error(
-    error,
-    stackTrace: stackTrace,
-    reason: 'Saving profile failed',
-  );
-  rethrow;
-}
-```
-
-`ApiClient` already installs `AppLogInterceptor`; do not add Dio's `LogInterceptor` to individual requests. Crashlytics must also be enabled for the existing Firebase project in the Firebase console before production reports can appear.
-
-## Production development contract
-
-This section is the required standard for **all future code** in this repository: every feature, screen, provider, use case, repository, model, service, and shared `core` component. It is not a description of the current scaffold. When replacing or deleting existing code, follow these rules in the replacement. An AI assistant must apply the relevant rules before calling a feature complete; a working happy path is not sufficient.
-
-### Authentication and session rules
-
-Apply these rules to every authentication implementation and to every feature that calls protected APIs.
-
-1. After successful sign-in/OTP verification, save access and refresh tokens, when provided, only through secure storage. Never store tokens in `SharedPreferences`.
-2. Add one shared Dio authentication interceptor in `core/api/`. It must read the secure token and attach `Authorization: Bearer <token>` to protected requests. Feature repositories must not manually attach this header one-by-one.
-3. Add a protected current-user endpoint (for example `GET /me`; use the backend's actual endpoint) and an authentication/session provider.
-4. At startup, show a neutral loading/splash state while the session provider reads secure storage:
-
-   ```text
-   no token                         -> Login
-   token + current-user response 200 -> authenticated Home/app shell
-   token + response 401             -> refresh session if supported; otherwise clear session and Login
-   network/timeout/5xx              -> retry/offline error UI; keep the token
-   ```
-
-5. If the backend supports refresh tokens, centralize refresh and retry behavior in the Dio layer. A 401 must trigger at most one refresh operation at a time; queued protected requests may retry after a successful refresh. If refresh fails, clear secure tokens and authenticated state, then route to Login.
-6. On logout, clear secure tokens, any in-memory user/session state, and privacy-sensitive cached data before routing to Login.
-
-Do not log a user out for a timeout, no-internet condition, server error, 403, 404, or 422 response. A 401 means the credentials/session are no longer accepted; the other cases have different user-facing behavior.
-
-### API contract, typing, and error behavior
-
-Every endpoint needs a confirmed backend request/response example before implementation. Keep transport JSON in `data` models/DTOs and do not spread `Map<String, dynamic>` or `dynamic` through use cases, providers, or widgets. Repository contracts should return typed results, for example `Future<ApiResponse<FeatureResponseModel>>`, not `Future<dynamic>`.
-
-Map Dio/server failures to one app-level failure type or a small, consistent set of states. Providers expose a safe user-facing message; repositories/services retain the technical context for `AppLogger`. Do not expose raw exceptions, stack traces, or server implementation details in UI.
-
-| Condition | Required app behavior |
-| --- | --- |
-| 400 bad request | Show the backend's safe message; do not retry automatically. |
-| 401 unauthenticated | Refresh session once if supported; otherwise clear session and route to Login. |
-| 403 forbidden | Keep the session; show that this user lacks permission. |
-| 404 not found | Show that the requested resource no longer exists; offer a route back where appropriate. |
-| 422 validation | Keep the form data and show field-level validation messages when supplied by the backend. |
-| 429 rate limited | Prevent repeated submissions, show a wait message, and honor `Retry-After` when available. |
-| 500–599 server failure | Log unexpected failure, show Retry, and do not clear the session. |
-| timeout/no connection | Show a clear offline/timeout message and Retry; do not assume the token is invalid. |
-
-Use HTTPS for every production request. Never put backend secrets in the Flutter client. Never log tokens, OTPs, passwords, payment data, or unnecessary personal information.
-
-### Screen and provider state requirements
-
-For every API-backed screen, explicitly implement and test these states:
+All API-backed screens must explicitly handle:
 
 ```text
 initial/loading
@@ -369,70 +248,127 @@ network/timeout error with Retry
 unexpected server error with Retry
 ```
 
-Disable an action while its request is in flight to prevent duplicate login, booking, or payment requests. Do not make an API request inside a widget's `build()` method. After an `await`, check `context.mounted`/`mounted` before using a screen context, navigating, showing a dialog, or calling `setState` from a `StatefulWidget`.
+| Condition | User behavior |
+| --- | --- |
+| 400 | Show safe backend message; do not retry automatically. |
+| 401 | Clear invalid session only after the session rule above. |
+| 403 | Keep session; show permission explanation. |
+| 404 | Show resource no longer exists and a safe way back. |
+| 422 | Preserve form input and show field errors. |
+| 429 | Disable repeated submission; honor `Retry-After` when available. |
+| 500-599 | Log technical context; show Retry; keep session. |
+| No connection/timeout | Show offline/timeout UI and Retry; keep session. |
 
-Automatic retries are safe only for idempotent reads (normally `GET`) when designed carefully. Do **not** blindly retry booking creation, payment submission, or other writes: use a backend idempotency key/transaction strategy first so a retry cannot create duplicate records or charges.
+Never call an API from `build()`. Disable an action while its request is in flight. After `await`, verify `mounted` before navigation, dialogs, snackbars, or stateful UI work. Retry only safe idempotent reads unless the backend implements an idempotency key for a write.
 
-### Lists, search, and performance
+## Order and offer decision gates
 
-Every large server list—such as cars, bookings, notifications, customers, or any future resource—must be paginated. The API should return items plus page metadata such as `current_page`, `last_page`, and `per_page`. The Flutter provider must:
+Do not create order, checkout, provider-offer, or payment screens that pretend these rules exist. The current backend/wireframes leave the following product decisions unresolved.
 
-1. Load the first page.
-2. Append later pages when the user nears the end of the list.
-3. Prevent a second request while a page is already loading.
-4. Stop when no next page exists.
-5. Support pull-to-refresh and retrying a failed page without losing existing items.
+1. **Account roles:** Does one account retain customer capabilities while it applies for/is approved as a provider? Recommended: one account can have customer and provider capabilities; provider approval gates provider actions without removing customer access.
+2. **Specific order:** A specific order starts `pending`, but a provider cannot quote/accept it and payment requires `negotiating`. Choose one:
+   - listed component price is final, so customer can pay after stock confirmation; or
+   - provider confirms/quotes, moving the order to negotiating before payment.
+3. **General request:** Wireframes show a request sent to many stores. Recommended: many providers submit non-exclusive offers; the customer chooses one; accepting it reserves inventory and expires competing offers.
+4. **Lifecycle:** Approve one canonical state machine and who can make every transition. Recommended baseline:
+   `draft -> submitted -> negotiating/offer selected -> payment pending -> paid -> ready for pickup/shipped -> completed`, with `rejected`, `cancelled`, `expired`, `refunded`, and `disputed` as explicit terminal/exception states.
+5. **Fulfilment:** Confirm pickup versus delivery, availability of delivery, verification/receipt behavior, operating hours, cancellation/refund policy, and whether a provider or customer confirms collection.
+6. **General request details:** The current API has `model_id`, quantity, image, and notes but no requested component/section. Confirm whether component selection is required.
+7. **Offers:** Fix server behavior so an accepted offer is marked accepted, competing offers close, rejected offers cannot be accepted, and edits stop after selection.
 
-Use `ListView.builder`/slivers for long lists, resize and cache remote images, debounce search input (typically 300–500 ms), and ignore/cancel stale search responses so an old query cannot overwrite newer results. Dispose controllers, timers, focus nodes, and subscriptions. Do not add SQLite merely for “best practice”; add a local database only when a real offline, draft, cache, or synchronization requirement needs it.
+These decisions are business logic. Stop and obtain approval before changing affected Laravel routes or Flutter flows.
 
-### Testing and delivery requirements
+## Backend capabilities required before affected features
 
-Before declaring a feature complete, add tests proportional to its risk:
+| Capability | Current state | Required action |
+| --- | --- | --- |
+| Production OTP | Codes are logged locally; no SMS gateway | Select and integrate an SMS provider. |
+| Session validation/logout | No `/auth/me` or token revocation | Add role-neutral current-user and logout/revoke endpoints. |
+| Media uploads | Image fields are string paths; no upload contract | Add secure multipart/signed-upload endpoint, validation, processing, and public/private URL policy. |
+| Payments | Stub gateway; retry blocked after failed payment | Select a Saudi-compatible provider and fix payment attempt/retry/idempotency/refund behavior. |
+| Push delivery | Device-token table exists; no registration/delivery | Add authenticated token register/remove endpoints, FCM/APNs sender, jobs, and notification deep-link payloads. |
+| Chat | No read-mark endpoint/realtime transport | Add read status; choose polling or realtime; define order/store conversation permissions. |
+| Provider stores | Company/gallery tables exist but no provider mutations | Add/update API and expose company/gallery data consistently. |
+| Provider history | Paid list omits completed orders | Include completed provider sales/history. |
+| CMS/settings | CMS routes bind numeric IDs; public settings missing | Define stable CMS keys and a public platform-settings contract. |
 
-- Unit tests for validation, models, use cases, failure mapping, and token/session behavior.
-- Widget tests for loading, empty, error, retry, and successful UI states.
-- Integration tests for critical user journeys: authentication/session restore, booking creation, and payment result handling when applicable.
-- Run `flutter analyze` and `flutter test` before merging. CI should run both on every pull request once the project workflow is established.
+Before editing Laravel, write the exact problem, proposed data model/API contract, affected roles, state transitions, migration/backfill, validation, authorization, and tests. Apply the smallest approved backend change; do not refactor unrelated controllers.
 
-For every feature, write a short implementation note before coding: user action, relevant API endpoints and JSON examples, permissions/roles, loading/empty/error states, navigation result, and tests. Keep business rules in use cases, HTTP/JSON in repositories/models, screen state in Riverpod providers, and cross-feature behavior (authentication, logging, networking, storage, theming) in `core` services.
+## Provider and inventory rules
 
-### Release and operational requirements
+Use public terminology consistently:
 
-- Use separate development, test/staging, and production configuration through flavors or `--dart-define`; do not switch environments by editing a source constant for releases.
-- Configure dedicated Android release signing and verify iOS release signing before distribution.
-- Confirm Crashlytics is initialized after Firebase and inspect production reports after release.
-- Handle notification permission, foreground messages, notification taps, and device-token upload/refresh only when the product requires push notifications.
-- Keep dependencies updated deliberately: review Flutter/Dart/package changelogs, update in a branch, run analysis/tests, and manually test critical flows before releasing. Do not mass-upgrade packages without verification.
-- Update this document whenever API contracts, routes, environment behavior, authentication, or ownership boundaries change.
+- **Customer**: a person requesting or buying a part.
+- **Provider**: a business-side capability in the domain.
+- **Store owner**: the public-facing label for a provider managing a store.
+- **Store**: a provider's marketplace listing.
+- **Inventory**: store cars and components/stock.
 
-## Platform and release notes
+A provider onboarding path must have explicit pending, approved, rejected, and resubmission states. Provider inventory must separate:
 
-- Android application ID / namespace: `com.octogear.app`.
-- iOS Firebase configuration and bundle-ID migration are intentionally deferred; do not use the existing iOS Firebase configuration for an OctoGear release.
-- Android uses Java 17 and the Google Services Gradle plugin.
-- Android release builds currently use the debug signing configuration. Configure a dedicated signing key and release signing before distribution.
-- iOS enables background `remote-notification` and `fetch` modes.
-- App version is `1.0.0+1` in `pubspec.yaml`.
-- Splash and launcher icon configuration is in `pubspec.yaml`; regenerate native assets after replacing source artwork.
+- store profile/company/location/contact
+- store cars and vehicle compatibility
+- components, condition, photos, part number, price, quantity, warranty, and status
+- stock adjustment/history
+- customer-specific requests/orders and general-request offers
 
-## Current quality status (verified 2026-09-14)
+Never expose provider inventory-edit actions in customer routes. Never expose provider accept/refuse controls in a customer order screen.
 
-`flutter analyze` currently has no compilation errors, but reports 59 existing lint/style and unused-code items. `flutter test` fails. The sole test is the default counter-app test, but Sahala has no counter UI; it also pumps `MyApp` without its required `ProviderScope`, which causes `No ProviderScope found` while rendering `LoginScreen`.
+## Notifications and communication
 
-Replace `test/widget_test.dart` with feature tests that wrap the app in `ProviderScope`, supply/mock dependencies, and verify at least phone validation, login loading/error/success states, OTP completion, and authenticated navigation.
+Firebase initialization alone does not make product notifications work. When push becomes an approved feature:
 
-## Delivery checklist for completing authentication
+1. Register the FCM token with the authenticated backend after login and on every token refresh.
+2. Remove/disable it on logout.
+3. Handle foreground messages, background messages, notification taps, and deep links.
+4. Use non-sensitive notification text and localized payload/content.
+5. Keep an in-app notification inbox with read/unread state as the reliable source of history.
+6. Link order/chat notifications to typed routes only after authorization checks.
 
-1. Parse the OTP API envelope into `ApiResponse<OtpVerifyResponseModel>` and make repository types non-`dynamic`.
-2. Add OTP loading, success, and error state; show errors in both authentication screens.
-3. Persist the verified access token securely (prefer secure storage, not the currently unused `shared_preferences` package) and attach it through a Dio interceptor.
-4. Navigate to a real home/profile-completion route after verification; implement `/home` in the router.
-5. Implement resend OTP and make the timer/control states accessible.
-6. Decide whether location is needed; collect it with user permission or remove the placeholder fields.
-7. Add session restoration and an initial route/guard that chooses login or authenticated content.
-8. Configure release signing, production-safe logs, network transport, and notification behavior.
-9. Replace the legacy widget test and add repository/use-case tests against mocked API/Firebase services.s
+Chat must define participants, creation rules, message pagination, attachments, read state, blocking/reporting/moderation policy, and notification behavior before a production implementation.
 
-## Working agreement for AI-assisted changes
+## Testing and delivery standard
 
-When changing this project, first identify the affected layer and preserve the direction of dependencies: presentation → domain → data → core. Update models and regenerate code when API JSON changes; do not patch generated files. Treat API response shapes as assumptions until confirmed by backend examples. Do not claim a feature is complete merely because its screen exists: an authentication feature is only complete once it handles success, failure, session persistence, and its next route. Keep this document updated whenever routes, API contracts, environments, or ownership boundaries change.
+Before a feature is complete, include:
+
+- Unit tests for validation, DTO mapping, use cases, failure mapping, locale header behavior, session behavior, and state transitions.
+- Widget tests for loading, empty, validation, offline/retry, error, accessibility semantics, and success states.
+- Integration tests for critical journeys: OTP/session restore, saved-car CRUD, part request/order lifecycle, and payment outcome when available.
+- `flutter analyze` and `flutter test` run before merging.
+- CI running analysis and tests on every pull request once the repository workflow is established.
+
+For every feature, add a short implementation note to this document or linked feature document before coding:
+
+```text
+User action:
+Roles/permissions:
+API endpoint(s) and confirmed JSON example:
+Loading/empty/error/offline states:
+Navigation inputs/result:
+Locale and RTL behavior:
+Analytics/notification behavior:
+Tests:
+```
+
+## Platform and release requirements
+
+- Use `--dart-define` or flavors for dev, staging, and production. Never switch environments by editing source constants.
+- All production API calls use HTTPS. Do not store backend secrets in Flutter.
+- Android uses `com.octogear.app`. Configure a dedicated Android release key before Play distribution.
+- Before iOS work, confirm the iOS bundle identifier, register it in Apple Developer and Firebase, add the correct `GoogleService-Info.plist`, regenerate FlutterFire options for iOS, and verify on an iOS device/simulator.
+- Configure notification permission and actual delivery separately for Android and iOS.
+- Verify Crashlytics reporting after a controlled non-production test and inspect Analytics in Firebase DebugView.
+- Release only after testing major flows on physical Android and iOS devices, not only emulators.
+- Never log tokens, OTPs, passwords, payment data, commercial-registration documents, raw phone numbers, or unnecessary personal data.
+
+## AI-assisted change protocol
+
+An AI assistant must:
+
+1. Inspect relevant API, feature, existing tests, and this contract before coding.
+2. State the bounded feature slice being changed.
+3. Preserve the dependency direction and avoid unrelated cleanup.
+4. Stop for product/API decisions that would materially change business behavior.
+5. Update models/code generation after confirmed JSON changes; never hand-edit generated files.
+6. Update this document when API contracts, routes, environment behavior, platform support, ownership, or feature decisions change.
+7. Run proportionate tests and report what was verified, what is not verified, and any manual release step.
