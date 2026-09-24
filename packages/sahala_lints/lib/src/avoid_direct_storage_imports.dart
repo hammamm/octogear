@@ -5,14 +5,15 @@ import 'package:analyzer/error/error.dart' show ErrorSeverity;
 import 'package:analyzer/error/listener.dart' show ErrorReporter;
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
-/// The only app file allowed to import `shared_preferences` /
-/// `flutter_secure_storage` directly - everywhere else must go through
-/// `LocalStorageService`, so there's one place that knows what keys exist,
-/// one place that handles read/write failures, and one place to change if
-/// the storage backend ever changes.
-const _allowedCallerSuffix = 'lib/core/service/local_storage_service.dart';
+/// The only app files allowed to import `shared_preferences` /
+/// `flutter_secure_storage` directly. New OctoGear code uses `AppStorage`;
+/// the legacy service is temporarily allowed only during the migration.
+const _allowedCallerSuffixes = {
+  'lib/core/service/local_storage_service.dart',
+  'lib/core/storage/app_storage.dart',
+};
 
-/// Package import URIs this rule bans outside of [_allowedCallerSuffix].
+/// Package import URIs this rule bans outside of [_allowedCallerSuffixes].
 const _bannedImportUris = {
   'package:shared_preferences/shared_preferences.dart',
   'package:flutter_secure_storage/flutter_secure_storage.dart',
@@ -23,7 +24,7 @@ const _bannedImportUris = {
 /// `flutter_secure_storage` directly elsewhere in the app.
 ///
 /// Test files are exempt (path contains `/test/`) - a test for
-/// `LocalStorageService` legitimately needs `shared_preferences`' own
+/// the storage boundary legitimately needs `shared_preferences`' own
 /// `SharedPreferences.setMockInitialValues` to set up fake persisted state;
 /// that's test scaffolding, not the app reaching around the service.
 class AvoidDirectStorageImports extends DartLintRule {
@@ -33,7 +34,7 @@ class AvoidDirectStorageImports extends DartLintRule {
     name: 'avoid_direct_storage_imports',
     problemMessage:
         "Don't import shared_preferences/flutter_secure_storage directly.",
-    correctionMessage: 'Use LocalStorageService ($_allowedCallerSuffix) instead.',
+    correctionMessage: 'Use the approved core storage boundary instead.',
     errorSeverity: ErrorSeverity.WARNING,
   );
 
@@ -44,7 +45,8 @@ class AvoidDirectStorageImports extends DartLintRule {
     CustomLintContext context,
   ) {
     final path = resolver.path.replaceAll('\\', '/');
-    if (path.endsWith(_allowedCallerSuffix) || path.contains('/test/')) {
+    if (_allowedCallerSuffixes.any((suffix) => path.endsWith(suffix)) ||
+        path.contains('/test/')) {
       return;
     }
 

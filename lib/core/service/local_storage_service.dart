@@ -61,11 +61,9 @@ class _StorageKeys {
 ///    value - reconcile the two if you want a single source of truth.
 ///  * `trakingIdintifer` -> [trackingIdentifier] (typo fix; it's just an
 ///    identifier name, not a stored value or wire format).
-///  * `baseUrl` here is a runtime-overridable stored value, independent of
-///    `AppConfig.baseUrl` (`lib/core/config/app_config.dart`), which is a
-///    compile-time constant picked by `Environment`. Kept both as-is since
-///    reconciling them wasn't asked for - this one is for something like a
-///    QA/debug screen that overrides the API base URL at runtime.
+///  * `baseUrl` is a legacy runtime-overridable value for a possible QA/debug
+///    screen. New OctoGear code uses `AppConfiguration` through Riverpod and
+///    must never read a server URL from local storage.
 class LocalStorageService {
   LocalStorageService({FlutterSecureStorage? secureStorage})
     : _secureStorage = secureStorage ?? const FlutterSecureStorage();
@@ -105,8 +103,7 @@ class LocalStorageService {
   String? get name => _prefs.getString(_StorageKeys.name);
   set name(String? value) => _setString(_StorageKeys.name, value);
 
-  String? get currentLanguage =>
-      _prefs.getString(_StorageKeys.currentLanguage);
+  String? get currentLanguage => _prefs.getString(_StorageKeys.currentLanguage);
   set currentLanguage(String? value) =>
       _setString(_StorageKeys.currentLanguage, value);
 

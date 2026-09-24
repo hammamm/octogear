@@ -1,5 +1,4 @@
 import 'package:decimal/decimal.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 /// `Double` helpers ported from the iOS codebase's `Double` extension.
 ///

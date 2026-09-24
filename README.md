@@ -1,17 +1,33 @@
-# sahala
+# OctoGear mobile app
 
-A new Flutter project.
+OctoGear is a bilingual Flutter marketplace for automotive spare parts. The
+app serves customers and store owners through separate, role-aware feature
+flows.
 
-## Getting Started
+The engineering rules, architecture, API contracts, environment setup, and
+delivery requirements live in [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md).
+Read that document before changing code.
 
-This project is a starting point for a Flutter application.
+## Run locally
 
-A few resources to get you started if this is your first Flutter project:
+```powershell
+flutter pub get
+flutter run --dart-define=OCTOGEAR_ENV=development
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+The local Laravel API default is `http://127.0.0.1:8000/api`. Android emulators
+normally need an explicit host override:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```powershell
+flutter run --dart-define=OCTOGEAR_API_BASE_URL=http://10.0.2.2:8000/api
+```
+
+## Verify a change
+
+```powershell
+flutter analyze
+flutter test
+```
+
+Keep Flutter work in this repository. The Laravel backend lives separately at
+`C:\Tamkkun\OctoGearProject\OctoGear-api` and must never be committed here.

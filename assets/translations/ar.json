@@ -1,1 +1,38 @@
-{}
+{
+  "app": {
+    "name": "أوكتوجير"
+  },
+  "foundation": {
+    "ready_title": "أساس أوكتوجير جاهز",
+    "ready_description": "المصادقة هي خطوة التطوير التالية."
+  },
+  "common": {
+    "retry": "إعادة المحاولة",
+    "sign_out": "تسجيل الخروج",
+    "switch_to_english": "English",
+    "switch_to_arabic": "العربية"
+  },
+  "auth": {
+    "welcome": "أهلاً بك في أوكتوجير.",
+    "description": "أدخل رقم جوالك للبدء.",
+    "next_step": "تسجيل الدخول الآمن برقم الجوال هو الخطوة التالية في المصادقة."
+  },
+  "session": {
+    "loading": "جارٍ تجهيز جلستك",
+    "unavailable_title": "تعذر التحقق من جلستك",
+    "unavailable_description": "يرجى إعادة المحاولة بعد قليل.",
+    "offline_description": "تحقق من اتصالك بالإنترنت ثم أعد المحاولة.",
+    "forbidden_title": "حسابك يحتاج إلى مراجعة",
+    "forbidden_description": "لا يمكن لهذا الحساب الوصول إلى أوكتوجير حالياً."
+  },
+  "shell": {
+    "customer": {
+      "title": "أهلاً، {}",
+      "description": "تجربة العميل جاهزة لخطوة التطوير التالية."
+    },
+    "provider": {
+      "title": "أهلاً، {}",
+      "description": "تجربة مالك المتجر جاهزة لخطوة التطوير التالية."
+    }
+  }
+}

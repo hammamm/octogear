@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:sahala/core/routing/app_router.dart';
+import 'package:sahala/app/octogear_app.dart';
+import 'package:sahala/core/localization/app_locale.dart';
 import 'package:sahala/core/service/app_logger.dart';
-import 'package:sahala/core/service/firebase_messaging_service.dart';
-import 'package:sahala/core/service/local_storage_service.dart';
-import 'package:sahala/core/theme/app_theme.dart';
-import 'package:sahala/dependency_injection.dart';
+import 'package:sahala/core/storage/app_storage.dart';
+import 'package:sahala/core/storage/storage_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
@@ -23,43 +21,21 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppLogger.initialize();
   AppLogger.installErrorHandlers();
-  setup();
 
-  await sl<LocalStorageService>().initialize();
-  await sl<FirebaseMessagingService>().initialize();
+  final octoGearStorage = AppStorage();
+  await octoGearStorage.initialize();
 
   runApp(
     EasyLocalization(
-      supportedLocales: const [Locale('en'), Locale('ar')],
+      supportedLocales: const [Locale('ar'), Locale('en')],
       path: 'assets/translations',
-      fallbackLocale: const Locale('ar'),
-      child: const ProviderScope(child: MyApp()),
+      fallbackLocale: AppLocale.arabic.locale,
+      startLocale: octoGearStorage.cachedLocale.locale,
+      saveLocale: false,
+      child: ProviderScope(
+        overrides: [appStorageProvider.overrideWithValue(octoGearStorage)],
+        child: const OctoGearApp(),
+      ),
     ),
   );
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  static final _routeObserver = AppRouteObserver();
-  static final _analyticsObserver = FirebaseAnalyticsObserver(
-    analytics: FirebaseAnalytics.instance,
-  );
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      localizationsDelegates: context.localizationDelegates,
-      supportedLocales: context.supportedLocales,
-      locale: context.locale,
-      navigatorObservers: [_routeObserver, _analyticsObserver],
-      // initialRoute: AppRoutes.login.path,
-      onGenerateRoute: AppRouter.generateRoute,
-    );
-  }
 }

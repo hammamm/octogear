@@ -32,7 +32,7 @@ Flutter and Laravel are separate repositories. The Flutter Git history and GitHu
 - Android Firebase is configured and verified for project `octogear-1d72b` and Android package `com.octogear.app`.
 - Firebase Core, Messaging, Crashlytics, and Analytics initialize on Android; an FCM token was retrieved on an emulator.
 - The official Android FlutterFire configuration has been generated.
-- iOS Firebase, bundle ID migration, Apple signing, and iOS device verification remain required before an iOS release. Do not claim iOS Firebase support until they are complete.
+- iOS work and further Firebase work are deferred for the current phase. Leave the existing Android Firebase configuration intact, but do not make new Firebase/iOS changes or depend on Firebase for the foundation/session flow.
 - The existing Flutter code, assets, routes, theme, translation files, and package name still contain legacy Sahala/YARDY material. Replace it deliberately during the foundation migration; do not reuse it as OctoGear product logic.
 - The last verified Flutter test run passed six tests. Static analysis has no compilation errors but has legacy style/unused-import findings that must be removed as the old scaffold is replaced.
 
@@ -154,7 +154,7 @@ Build one bounded slice at a time. A phase is complete only when its screen beha
    - Configure iOS Firebase only after the iOS bundle identifier and Apple configuration are confirmed.
 2. **Authentication and session**
    - Phone OTP send, verify, new-user registration, secure token storage, startup session restoration, logout, profile bootstrap, and role-aware shell.
-   - This phase requires a role-neutral current-user endpoint before production completion.
+   - This phase uses the shared role-neutral `GET /profile` endpoint for profile bootstrap before production completion.
 3. **Account and customer garage**
    - Profile, language setting, saved-car create/read/update/delete, reference selectors, and empty/error states.
 4. **Storefront discovery**
@@ -212,6 +212,20 @@ Use typed DTOs for this envelope and endpoint data. No `dynamic` or raw `Map<Str
 
 Reference endpoints provide localized cities, companies, names, models, fuel types, colors, sections, and components. Cache reference data by locale, not as one language-independent value.
 
+### Environment configuration for the current phase
+
+The local Laravel development server root is `http://127.0.0.1:8000`. The Flutter API base URL therefore resolves to `http://127.0.0.1:8000/api` because Laravel API routes live below `/api`.
+
+Use `--dart-define` configuration rather than source edits when an environment is deployed:
+
+| Environment | Temporary API value | Rule |
+| --- | --- | --- |
+| development | `http://127.0.0.1:8000/api` | Default for the current development setup. An Android emulator normally needs an explicit host override such as `http://10.0.2.2:8000/api`. |
+| test/staging | `https://api-staging.octogear.invalid/api` | Safe placeholder that must be replaced before deployment. |
+| production | `https://api.octogear.invalid/api` | Safe placeholder that must be replaced with the real HTTPS production API. |
+
+The `.invalid` hostnames deliberately fail rather than accidentally sending test or production traffic to an unknown server.
+
 ## Authentication and session contract
 
 Confirmed public routes:
@@ -219,6 +233,7 @@ Confirmed public routes:
 - `POST /auth/otp/send` with `{ mobile }`
 - `POST /auth/otp/verify` with `{ mobile, otp }`
 - `POST /auth/register` with `{ temp_token, full_name, city_id }`
+- `POST /auth/logout` revokes the currently presented Sanctum token.
 
 Existing-user verification returns a Sanctum token, `is_new`, and a user type. New users receive a temporary token and must register.
 
@@ -226,14 +241,16 @@ Required rules:
 
 1. Store access tokens only in secure storage. Never store access tokens, temporary tokens, OTPs, passwords, or payment data in shared preferences.
 2. Add a shared authentication interceptor that reads the in-memory secure session and attaches the bearer token to protected calls.
-3. Startup must show a neutral splash/session state. It must validate a stored token with a protected current-user endpoint:
+3. Startup must show a neutral splash/session state. It must validate a stored token with protected `GET /profile`:
    - no token -> authentication
    - valid token/current user -> role-aware application shell
    - 401 -> clear session -> authentication
    - timeout/no connection/5xx -> retain token and show a retry/offline state
 4. Do not log out for 403, 404, 422, 429, timeout, or 5xx.
 5. Logout must clear secure credentials, memory session state, and sensitive cached data.
-6. The current backend has no role-neutral `GET /auth/me` or logout/revoke endpoint. Add and test them before declaring session restoration complete. The current API has no refresh-token behavior, so do not invent refresh logic.
+6. Session validation uses shared `GET /profile`, protected by `auth:sanctum`, `user.active`, and `auth.provider`. It returns the authenticated localized user profile and its `type` (`customer` or `service provider`). A valid customer opens the customer shell; a valid provider opens the provider shell.
+7. After a successful profile read, cache the non-sensitive user profile locally for fast display. It is never proof of an active session: the token plus a fresh `GET /profile` response is the source of truth at every app launch.
+8. The current API has no refresh-token behavior. Do not invent refresh logic. Local logout must clear secure credentials, in-memory session state, and the cached profile without being blocked by a network failure. The existing protected `POST /auth/logout` endpoint is reserved for the later online-authentication flow; it is not part of startup validation.
 
 ## Error, offline, and request rules
 
@@ -283,7 +300,7 @@ These decisions are business logic. Stop and obtain approval before changing aff
 | Capability | Current state | Required action |
 | --- | --- | --- |
 | Production OTP | Codes are logged locally; no SMS gateway | Select and integrate an SMS provider. |
-| Session validation/logout | No `/auth/me` or token revocation | Add role-neutral current-user and logout/revoke endpoints. |
+| Session validation/logout | Shared `GET /profile` returns the localized `UserResource` for active customers and providers. | Flutter must implement secure storage, startup validation, non-sensitive cached-profile storage, local session clearing, and role-aware routing. |
 | Media uploads | Image fields are string paths; no upload contract | Add secure multipart/signed-upload endpoint, validation, processing, and public/private URL policy. |
 | Payments | Stub gateway; retry blocked after failed payment | Select a Saudi-compatible provider and fix payment attempt/retry/idempotency/refund behavior. |
 | Push delivery | Device-token table exists; no registration/delivery | Add authenticated token register/remove endpoints, FCM/APNs sender, jobs, and notification deep-link payloads. |
@@ -372,3 +389,21 @@ An AI assistant must:
 5. Update models/code generation after confirmed JSON changes; never hand-edit generated files.
 6. Update this document when API contracts, routes, environment behavior, platform support, ownership, or feature decisions change.
 7. Run proportionate tests and report what was verified, what is not verified, and any manual release step.
+
+## Next feature implementation note: authentication and session routing
+
+**User action:** Open the application.
+
+**Roles/permissions:** A tokenless visitor opens authentication. An authenticated customer opens the customer shell. An authenticated service provider opens the provider shell.
+
+**API endpoint(s) and confirmed JSON example:** Shared `GET /profile`, protected by `auth:sanctum`, `user.active`, and `auth.provider`. It returns the standard `{ success, message, data }` envelope where `data` is the localized `UserResource` and includes `type`.
+
+**Loading/empty/error/offline states:** The authentication feature must show a neutral startup loading state while secure storage and profile validation run. For `401`, clear the token and open authentication. For timeout, no connection, and `5xx`, keep the token and show a retry/offline state. For `403`, keep the token and show the safe server message; do not route to login.
+
+**Navigation inputs/result:** The session controller will be the only root routing decision-maker. It validates the token through `GET /profile`, caches the returned non-sensitive profile, then emits unauthenticated, customer, provider, or retryable unavailable states; screens do not independently redirect from `build()`.
+
+**Locale and RTL behavior:** The session request sends the current persisted `Accept-Language` value. The returned city/name is already localized by Laravel.
+
+**Analytics/notification behavior:** Deferred for this phase.
+
+**Tests:** Laravel feature tests for unauthenticated, customer, provider, and blocked shared-profile cases; Flutter unit tests for no-token, `401`, non-`401` failure, customer, provider, and profile-cache session outcomes.

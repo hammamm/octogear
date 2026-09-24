@@ -1,1 +1,38 @@
-{}
+{
+  "app": {
+    "name": "OctoGear"
+  },
+  "foundation": {
+    "ready_title": "The OctoGear foundation is ready",
+    "ready_description": "Authentication is the next development step."
+  },
+  "common": {
+    "retry": "Retry",
+    "sign_out": "Sign out",
+    "switch_to_english": "English",
+    "switch_to_arabic": "العربية"
+  },
+  "auth": {
+    "welcome": "Welcome to OctoGear.",
+    "description": "Enter your mobile number to get started.",
+    "next_step": "Secure phone sign-in is the next authentication step."
+  },
+  "session": {
+    "loading": "Preparing your session",
+    "unavailable_title": "We couldn't verify your session",
+    "unavailable_description": "Please try again in a moment.",
+    "offline_description": "Check your internet connection, then try again.",
+    "forbidden_title": "Your account needs attention",
+    "forbidden_description": "This account cannot access OctoGear right now."
+  },
+  "shell": {
+    "customer": {
+      "title": "Welcome, {}",
+      "description": "Your customer experience is ready for the next feature slice."
+    },
+    "provider": {
+      "title": "Welcome, {}",
+      "description": "Your store-owner experience is ready for the next feature slice."
+    }
+  }
+}
