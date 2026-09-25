@@ -1,5 +1,5 @@
-name: sahala_lints
-description: Custom analyzer lint rules for the sahala app.
+name: octogear_lints
+description: Custom analyzer lint rules for the OctoGear app.
 publish_to: "none"
 version: 1.0.0
 

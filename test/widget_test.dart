@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sahala/firebase_options.dart';
+import 'package:octogear/firebase_options.dart';
 
 void main() {
   test('Android Firebase configuration targets OctoGear', () {

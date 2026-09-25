@@ -6,7 +6,7 @@ import '../localization/app_locale.dart';
 /// The narrow secure-session contract used by the application and tests.
 abstract interface class SessionStorage {
   String? get cachedAccessToken;
-
+ 
   Future<String?> readAccessToken();
   Future<void> saveAccessToken(String accessToken);
   Future<void> clearSession();

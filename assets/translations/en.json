@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "OctoGear"
+    "name": "OctoGear",
+    "tagline": "The complete spare-parts platform"
   },
   "foundation": {
     "ready_title": "The OctoGear foundation is ready",
@@ -13,24 +14,60 @@
     "switch_to_arabic": "العربية"
   },
   "auth": {
-    "welcome": "Welcome to OctoGear.",
+    "welcome": "Welcome to OctoGear",
     "description": "Enter your mobile number to get started.",
-    "next_step": "Secure phone sign-in is the next authentication step."
+    "next_step": "Secure phone sign-in is the next authentication step.",
+    "phone_label": "Mobile number",
+    "phone_hint": "5XXXXXXXX",
+    "phone_invalid": "Enter a valid 9-digit Saudi mobile number starting with 5.",
+    "phone_note": "We will send you a 4-digit verification code.",
+    "continue": "Get started",
+    "otp_title": "Verify your number",
+    "otp_description": "Enter the 4-digit code we sent to",
+    "otp_label": "Verification code",
+    "otp_hint": "1234",
+    "otp_invalid": "Enter the 4-digit verification code.",
+    "verify": "Verify",
+    "resend_otp": "Resend code",
+    "otp_resent": "A new code was sent.",
+    "registration_title": "Complete your account",
+    "registration_description": "Tell us a little about yourself to finish signing up.",
+    "full_name_label": "Full name",
+    "full_name_required": "Enter your full name.",
+    "city_label": "City",
+    "city_required": "Choose your city.",
+    "cities_empty": "No cities are available right now. Please try again.",
+    "cities_loading": "Loading available cities...",
+    "complete_registration": "Complete registration"
   },
   "session": {
     "loading": "Preparing your session",
+    "loading_description": "We are securely checking your account before continuing.",
     "unavailable_title": "We couldn't verify your session",
     "unavailable_description": "Please try again in a moment.",
     "offline_description": "Check your internet connection, then try again.",
     "forbidden_title": "Your account needs attention",
     "forbidden_description": "This account cannot access OctoGear right now."
   },
+  "errors": {
+    "validation": "Please check the information and try again.",
+    "rate_limited": "Too many attempts. Please wait a moment and try again.",
+    "timeout": "The request took too long. Please try again.",
+    "no_connection": "Check your internet connection and try again.",
+    "server": "Our service is temporarily unavailable. Please try again.",
+    "unexpected": "Something went wrong. Please try again."
+  },
+  "routing": {
+    "not_found": "This page is not available."
+  },
   "shell": {
     "customer": {
+      "role_label": "Customer account",
       "title": "Welcome, {}",
       "description": "Your customer experience is ready for the next feature slice."
     },
     "provider": {
+      "role_label": "Store-owner account",
       "title": "Welcome, {}",
       "description": "Your store-owner experience is ready for the next feature slice."
     }

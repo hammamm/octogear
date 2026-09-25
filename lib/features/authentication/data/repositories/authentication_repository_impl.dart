@@ -1,58 +1,93 @@
-import 'package:dio/dio.dart';
-import 'package:sahala/core/api/api_client.dart';
-import 'package:sahala/core/api/api_response.dart';
-import 'package:sahala/core/service/app_logger.dart';
-import 'package:sahala/features/authentication/data/models/login_request_model.dart';
-import 'package:sahala/features/authentication/data/models/otp_verify_request_model.dart';
-import 'package:sahala/features/authentication/data/models/otp_verify_response_model.dart';
-import 'package:sahala/features/authentication/domain/repositories/authentication_repository.dart';
+import 'dart:async';
+
+import '../../../../core/api/api_failure.dart';
+import '../../../../core/service/device_token_reader.dart';
+import '../../domain/entities/app_user.dart';
+import '../../domain/entities/otp_verification_result.dart';
+import '../../domain/entities/saudi_mobile_number.dart';
+import '../../domain/repositories/authentication_repository.dart';
+import '../data_sources/authentication_remote_data_source.dart';
 
 class AuthenticationRepositoryImpl implements AuthenticationRepository {
-  final ApiClient apiClient = ApiClient();
+  const AuthenticationRepositoryImpl({
+    required AuthenticationRemoteDataSource remoteDataSource,
+    required DeviceTokenReader deviceTokenReader,
+  }) : _remoteDataSource = remoteDataSource,
+       _deviceTokenReader = deviceTokenReader;
+
+  static const _deviceTokenReadTimeout = Duration(seconds: 3);
+
+  final AuthenticationRemoteDataSource _remoteDataSource;
+  final DeviceTokenReader _deviceTokenReader;
+
   @override
-  Future<dynamic> login(LoginRequestModel body) async {
+  Future<void> sendOtp(SaudiMobileNumber mobile) {
+    return _remoteDataSource.sendOtp(mobile.nationalNumber);
+  }
+
+  @override
+  Future<OtpVerificationResult> verifyOtp({
+    required SaudiMobileNumber mobile,
+    required String otp,
+  }) async {
     try {
-      final response = await apiClient.dio.post(
-        'user/loginRegister',
-        data: body.toJson(),
+      final dto = await _remoteDataSource.verifyOtp(
+        mobile: mobile.nationalNumber,
+        otp: otp,
       );
-      return response;
-    } on DioException catch (error, stackTrace) {
-      await AppLogger.error(
-        error,
-        stackTrace: stackTrace,
-        reason: 'Login API request failed',
-      );
-      throw Exception(error.response?.data ?? error.message);
+      return dto.isNew
+          ? NewAccountOtpResult(dto.temporaryRegistrationToken!)
+          : ExistingAccountOtpResult(dto.accessToken!);
+    } on ApiFailure {
+      rethrow;
+    } on FormatException {
+      throw const ApiFailure.unexpected();
     }
   }
 
   @override
-  Future<ApiResponse<OtpVerifyResponseModel>> otpVerify(
-    OtpVerifyRequestModel body,
-  ) async {
+  Future<String> register({
+    required String temporaryRegistrationToken,
+    required String fullName,
+    required int cityId,
+  }) async {
     try {
-      final response = await apiClient.dio.post(
-        'user/otpVerify',
-        data: body.toJson(),
+      final deviceToken = await _readDeviceToken();
+      final dto = await _remoteDataSource.register(
+        temporaryRegistrationToken: temporaryRegistrationToken,
+        fullName: fullName.trim(),
+        cityId: cityId,
+        deviceToken: deviceToken,
       );
+      return dto.value;
+    } on ApiFailure {
+      rethrow;
+    } on FormatException {
+      throw const ApiFailure.unexpected();
+    }
+  }
 
-      final json = Map<String, dynamic>.from(response.data as Map);
+  Future<String?> _readDeviceToken() async {
+    try {
+      return await _deviceTokenReader.read().timeout(_deviceTokenReadTimeout);
+    } on TimeoutException {
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
 
-      return ApiResponse<OtpVerifyResponseModel>.fromJson(json, (dataJson) {
-        return OtpVerifyResponseModel.fromJson(
-          Map<String, dynamic>.from(dataJson as Map),
-        );
-      });
-
-      //      return response.data;
-    } on DioException catch (error, stackTrace) {
-      await AppLogger.error(
-        error,
-        stackTrace: stackTrace,
-        reason: 'OTP verification API request failed',
-      );
-      throw Exception(error.response?.data ?? error.message);
+  @override
+  Future<List<AppCity>> getRegistrationCities() async {
+    try {
+      final cities = await _remoteDataSource.fetchCities();
+      return cities
+          .map((city) => AppCity(id: city.id, name: city.name))
+          .toList(growable: false);
+    } on ApiFailure {
+      rethrow;
+    } on FormatException {
+      throw const ApiFailure.unexpected();
     }
   }
 }

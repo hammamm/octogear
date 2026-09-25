@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sahala/app/octogear_app.dart';
-import 'package:sahala/core/localization/app_locale.dart';
-import 'package:sahala/core/service/app_logger.dart';
-import 'package:sahala/core/storage/app_storage.dart';
-import 'package:sahala/core/storage/storage_providers.dart';
+import 'package:octogear/app/octogear_app.dart';
+import 'package:octogear/core/localization/app_locale.dart';
+import 'package:octogear/core/service/app_logger.dart';
+import 'package:octogear/core/storage/app_storage.dart';
+import 'package:octogear/core/storage/storage_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:easy_localization/easy_localization.dart';

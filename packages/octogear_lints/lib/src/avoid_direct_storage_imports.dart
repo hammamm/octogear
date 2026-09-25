@@ -5,11 +5,9 @@ import 'package:analyzer/error/error.dart' show ErrorSeverity;
 import 'package:analyzer/error/listener.dart' show ErrorReporter;
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
-/// The only app files allowed to import `shared_preferences` /
-/// `flutter_secure_storage` directly. New OctoGear code uses `AppStorage`;
-/// the legacy service is temporarily allowed only during the migration.
+/// The only app file allowed to import `shared_preferences` /
+/// `flutter_secure_storage` directly.
 const _allowedCallerSuffixes = {
-  'lib/core/service/local_storage_service.dart',
   'lib/core/storage/app_storage.dart',
 };
 
@@ -20,7 +18,7 @@ const _bannedImportUris = {
 };
 
 /// Forces every plain-preference and secure-storage read/write through
-/// `LocalStorageService` instead of importing `shared_preferences` /
+/// `AppStorage` instead of importing `shared_preferences` /
 /// `flutter_secure_storage` directly elsewhere in the app.
 ///
 /// Test files are exempt (path contains `/test/`) - a test for

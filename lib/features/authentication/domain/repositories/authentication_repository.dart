@@ -1,11 +1,18 @@
-import 'package:sahala/core/api/api_response.dart';
-import 'package:sahala/features/authentication/data/models/login_request_model.dart';
-import 'package:sahala/features/authentication/data/models/otp_verify_request_model.dart';
-import 'package:sahala/features/authentication/data/models/otp_verify_response_model.dart';
+import '../entities/app_user.dart';
+import '../entities/otp_verification_result.dart';
+import '../entities/saudi_mobile_number.dart';
 
-abstract class AuthenticationRepository {
-  Future<dynamic> login(LoginRequestModel body);
-  Future<ApiResponse<OtpVerifyResponseModel>> otpVerify(
-    OtpVerifyRequestModel body,
-  );
+/// Business contract for the authentication capability.
+abstract interface class AuthenticationRepository {
+  Future<void> sendOtp(SaudiMobileNumber mobile);
+  Future<OtpVerificationResult> verifyOtp({
+    required SaudiMobileNumber mobile,
+    required String otp,
+  });
+  Future<String> register({
+    required String temporaryRegistrationToken,
+    required String fullName,
+    required int cityId,
+  });
+  Future<List<AppCity>> getRegistrationCities();
 }

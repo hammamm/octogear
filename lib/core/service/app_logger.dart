@@ -71,10 +71,7 @@ class AppLogger {
   /// outcomes that are simply shown to the user as a message/alert (wrong
   /// OTP, invalid input the backend rejected with a reason, "no results
   /// found", etc.) - those aren't defects, and logging every one of them
-  /// buries real incidents in Crashlytics noise. See `OtpNotifier.otpVerify`
-  /// (`lib/features/authentication/presentation/providers/otp_provider.dart`)
-  /// for a worked example of the split: the `catch` block (request/parsing
-  /// failure) logs, the non-success business response (wrong code) doesn't.
+  /// buries real incidents in Crashlytics noise.
   static Future<void> error(
     Object error, {
     StackTrace? stackTrace,
@@ -109,6 +106,12 @@ class AppLogger {
           'otp',
           'password',
           'secret',
+          'mobile',
+          'phone',
+          'email',
+          'full_name',
+          'name',
+          'national_id',
         ].any(keyText.contains);
         return MapEntry(key, isSecret ? '***' : _redact(item));
       });
@@ -126,7 +129,7 @@ class AppLogInterceptor extends Interceptor {
       AppLogger.network({
         'event': 'REQUEST',
         'method': options.method,
-        'url': options.uri.toString(),
+        'url': options.uri.replace(query: null).toString(),
         'headers': options.headers,
         'body': options.data,
       }),
@@ -144,7 +147,7 @@ class AppLogInterceptor extends Interceptor {
         'event': 'RESPONSE',
         'statusCode': response.statusCode,
         'method': response.requestOptions.method,
-        'url': response.requestOptions.uri.toString(),
+        'url': response.requestOptions.uri.replace(query: null).toString(),
         'body': response.data,
       }),
     );

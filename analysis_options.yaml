@@ -36,6 +36,17 @@ analyzer:
     unawaited_futures: warning
     use_key_in_widget_constructors: warning
 
+    # Public dependency-injection parameters intentionally assign to private
+    # fields (for example `apiClient` -> `_apiClient`). The default lint cannot
+    # express that production API boundary without exposing private parameter
+    # names, so its findings are intentionally ignored project-wide.
+    prefer_initializing_formals: ignore
+
+    # The two OctoGear safety rules still run through custom_lint. Dart emits
+    # this protocol-deprecation warning for the active plugin; suppress only
+    # the warning until those rules are migrated to analysis_server_plugin.
+    analysis_options_deprecated_plugins: ignore
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
@@ -78,16 +89,17 @@ linter:
     - curly_braces_in_flow_control_structures
     - depend_on_referenced_packages
 
-# Project-specific lints, defined in packages/sahala_lints, run via the
+
+# Project-specific lints, defined in packages/octogear_lints, run via the
 # custom_lint plugin declared above.
 custom_lint:
   rules:
     # debugPrint() calls belong only inside AppLogger - see that rule's doc
-    # comment in packages/sahala_lints for why.
+    # comment in packages/octogear_lints for why.
     - avoid_debug_print
     # shared_preferences/flutter_secure_storage may only be imported inside
-    # LocalStorageService - see that rule's doc comment in
-    # packages/sahala_lints for why.
+    # AppStorage - see that rule's doc comment in
+    # packages/octogear_lints for why.
     - avoid_direct_storage_imports
 
 # Additional information about this file can be found at

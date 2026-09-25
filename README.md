@@ -15,12 +15,17 @@ flutter pub get
 flutter run --dart-define=OCTOGEAR_ENV=development
 ```
 
-The local Laravel API default is `http://127.0.0.1:8000/api`. Android emulators
-normally need an explicit host override:
+The local Laravel API default is `http://127.0.0.1:8000/api`. When Laravel is
+running on the Windows loopback address, bridge the active LDPlayer emulator to
+that port before starting the app:
 
 ```powershell
-flutter run --dart-define=OCTOGEAR_API_BASE_URL=http://10.0.2.2:8000/api
+C:\LDPlayer\LDPlayer9\adb.exe -s emulator-5554 reverse tcp:8000 tcp:8000
 ```
+
+Repeat this command after restarting LDPlayer or ADB. An
+`OCTOGEAR_API_BASE_URL=http://10.0.2.2:8000/api` override is appropriate only
+when Laravel has been intentionally exposed to the emulator network.
 
 ## Verify a change
 

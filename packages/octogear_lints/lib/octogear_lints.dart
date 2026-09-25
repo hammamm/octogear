@@ -5,9 +5,9 @@ import 'src/avoid_direct_storage_imports.dart';
 
 /// Entry point discovered by `custom_lint` (declared as a `custom_lint`
 /// dependency in the app's `analysis_options.yaml`).
-PluginBase createPlugin() => _SahalaLints();
+PluginBase createPlugin() => _OctoGearLints();
 
-class _SahalaLints extends PluginBase {
+class _OctoGearLints extends PluginBase {
   @override
   List<LintRule> getLintRules(CustomLintConfigs configs) => const [
     AvoidDebugPrint(),

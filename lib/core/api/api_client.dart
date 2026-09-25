@@ -68,11 +68,6 @@ class ApiClient {
   final AccessTokenResolver _accessTokenResolver;
   final ApiLocaleResolver _localeResolver;
 
-  /// Temporary compatibility for legacy Sahala migration files. New
-  /// repositories use the typed methods below.
-  @Deprecated('Use the typed ApiClient methods instead.')
-  Dio get dio => _dio;
-
   static String? _noAccessToken() => null;
   static String _arabicLocale() => 'ar';
 
