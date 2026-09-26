@@ -11,15 +11,6 @@ import '../../features/authentication/domain/entities/app_user.dart';
 import '../../features/authentication/domain/entities/session_outcome.dart';
 import '../../features/authentication/presentation/controllers/session_controller.dart';
 
-class CustomerAppShell extends ConsumerWidget {
-  const CustomerAppShell({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const _RoleAppShell(role: AppUserRole.customer);
-  }
-}
-
 class ProviderAppShell extends ConsumerWidget {
   const ProviderAppShell({super.key});
 

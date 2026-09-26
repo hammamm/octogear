@@ -12,6 +12,7 @@ import '../../features/authentication/presentation/screens/phone_sign_in_screen.
 import '../../features/authentication/presentation/screens/registration_screen.dart';
 import '../../features/authentication/presentation/screens/session_loading_screen.dart';
 import '../../features/authentication/presentation/screens/session_unavailable_screen.dart';
+import '../shells/customer_app_shell.dart';
 import '../shells/role_app_shell.dart';
 
 part 'app_routes.g.dart';
@@ -67,13 +68,100 @@ class SessionUnavailableRoute extends GoRouteData
   }
 }
 
-@TypedGoRoute<CustomerHomeRoute>(path: AppRoutePath.customerHome)
+@TypedStatefulShellRoute<CustomerShellRoute>(
+  branches: <TypedStatefulShellBranch<StatefulShellBranchData>>[
+    TypedStatefulShellBranch<CustomerHomeBranch>(
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<CustomerHomeRoute>(path: AppRoutePath.customerHome),
+      ],
+    ),
+    TypedStatefulShellBranch<CustomerStoresBranch>(
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<CustomerStoresRoute>(path: AppRoutePath.customerStores),
+      ],
+    ),
+    TypedStatefulShellBranch<CustomerOrdersBranch>(
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<CustomerOrdersRoute>(path: AppRoutePath.customerOrders),
+      ],
+    ),
+    TypedStatefulShellBranch<CustomerAccountBranch>(
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<CustomerAccountRoute>(path: AppRoutePath.customerAccount),
+      ],
+    ),
+  ],
+)
+class CustomerShellRoute extends StatefulShellRouteData {
+  const CustomerShellRoute();
+
+  @override
+  Widget builder(
+    BuildContext context,
+    GoRouterState state,
+    StatefulNavigationShell navigationShell,
+  ) {
+    return CustomerAppShell(navigationShell: navigationShell);
+  }
+}
+
+class CustomerHomeBranch extends StatefulShellBranchData {
+  const CustomerHomeBranch();
+}
+
+class CustomerStoresBranch extends StatefulShellBranchData {
+  const CustomerStoresBranch();
+}
+
+class CustomerOrdersBranch extends StatefulShellBranchData {
+  const CustomerOrdersBranch();
+}
+
+class CustomerAccountBranch extends StatefulShellBranchData {
+  const CustomerAccountBranch();
+}
+
 class CustomerHomeRoute extends GoRouteData with $CustomerHomeRoute {
   const CustomerHomeRoute();
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const CustomerAppShell();
+    return const CustomerShellTabScreen(
+      destination: CustomerShellDestination.home,
+    );
+  }
+}
+
+class CustomerStoresRoute extends GoRouteData with $CustomerStoresRoute {
+  const CustomerStoresRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const CustomerShellTabScreen(
+      destination: CustomerShellDestination.stores,
+    );
+  }
+}
+
+class CustomerOrdersRoute extends GoRouteData with $CustomerOrdersRoute {
+  const CustomerOrdersRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const CustomerShellTabScreen(
+      destination: CustomerShellDestination.orders,
+    );
+  }
+}
+
+class CustomerAccountRoute extends GoRouteData with $CustomerAccountRoute {
+  const CustomerAccountRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const CustomerShellTabScreen(
+      destination: CustomerShellDestination.account,
+    );
   }
 }
 

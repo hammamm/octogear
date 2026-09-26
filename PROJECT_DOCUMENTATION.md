@@ -38,7 +38,8 @@ Flutter and Laravel are separate repositories. The Flutter Git history and GitHu
 - The external YARDY wireframes remain unchanged as a functional product reference. They must never be deleted as part of Flutter source cleanup.
 - Android launcher, Android splash, and the shared Flutter header use the approved full-color original OctoGear mark in `assets/icons/app_icon.png` and `assets/icons/splash.png`. These are high-resolution source crops from page 4 of the supplied brand guide; preserve their proportions and colors. A raw designer-exported SVG/PNG may replace those files later only after visual review. iOS icon/splash generation remains deferred with the rest of iOS work.
 - The two local OctoGear safety rules (`avoid_debug_print` and `avoid_direct_storage_imports`) continue to run through `custom_lint`. Its plugin protocol is deprecated upstream, so plan a deliberate migration to `analysis_server_plugin`; do not remove the rules merely to silence tooling output.
-- The last verified Flutter test run passed 26 tests. Run `flutter analyze` and `flutter test` after every material foundation or feature change.
+- The last verified Flutter test run passed 31 tests (2026-09-26). Run `flutter analyze` and `flutter test` after every material foundation or feature change.
+- The customer root now uses a typed `StatefulShellRoute` with the semantic paths `/customer`, `/customer/stores`, `/customer/orders`, and `/customer/account`. Its tab bodies are intentionally static navigation previews until their bounded customer features are implemented; they make no API calls and must not be mistaken for completed discovery, order, or account features.
 
 ## Brand and design system
 
@@ -464,3 +465,21 @@ analytics or notification behavior.
 **Tests:** Widget regression coverage for clearing a failed request message on
 edit, preserving it on selection changes, and displaying a new failure on retry;
 verify that an in-flight send keeps the number read-only.
+
+## Next feature implementation note: customer navigation shell
+
+**User action:** An authenticated customer opens the application or selects one of the four primary destinations.
+
+**Roles/permissions:** Customer only. The session route guard permits the `/customer` route family only for a verified customer; a provider is redirected to `/provider`.
+
+**API endpoint(s) and confirmed JSON example:** None. This shell must not fetch, cache, or fabricate Home, Storefront, Order, or Account data.
+
+**Loading/empty/error/offline states:** Not applicable to this static navigation slice. Each later feature owns its required API states and replaces the matching temporary shell content.
+
+**Navigation inputs/result:** Use one typed `StatefulShellRoute` with branches `/customer`, `/customer/stores`, `/customer/orders`, and `/customer/account`. Tab selection calls `StatefulNavigationShell.goBranch`, preserving every branch's future navigation stack and scroll state. Do not use raw paths or `Navigator` calls in tab widgets.
+
+**Locale and RTL behavior:** Navigation labels and temporary explanatory copy are translated through `BuildContext`. The Material 3 `NavigationBar` follows the active layout direction, has always-visible labels, and retains 48 dp-or-larger interactive targets.
+
+**Analytics/notification behavior:** Deferred. The shell does not create notification or analytics events in this phase.
+
+**Tests:** Verify the four English and Arabic navigation labels, route/tab switching, RTL direction, and that the session guard allows verified customers inside the customer route family while redirecting providers away from it.

@@ -71,5 +71,51 @@
       "title": "Welcome, {}",
       "description": "Your store-owner experience is ready for the next feature slice."
     }
+  },
+  "customer_shell": {
+    "home": {
+      "tab": "Home",
+      "eyebrow": "OCTOGEAR FOR YOUR CAR",
+      "title": "Welcome, {}",
+      "description": "Find the spare part that fits your car with confidence.",
+      "hero_title": "Find the right part",
+      "hero_description": "Your car, part, and store search will begin here.",
+      "card_title": "Start with your car",
+      "card_description": "Your saved cars will make every future part search more accurate."
+    },
+    "stores": {
+      "tab": "Stores",
+      "eyebrow": "MARKETPLACE",
+      "title": "Discover stores",
+      "description": "Browse trusted spare-parts stores and available inventory.",
+      "hero_title": "Stores, clearly organized",
+      "hero_description": "Find a store, inspect its cars, then see the available components.",
+      "card_title": "Browse with confidence",
+      "card_description": "Store search, filters, and component details will live in this destination."
+    },
+    "orders": {
+      "tab": "Orders",
+      "eyebrow": "ORDER CENTER",
+      "title": "Your orders",
+      "description": "Keep requests, offers, payment, and collection in one place.",
+      "hero_title": "Every order in view",
+      "hero_description": "The complete order journey will stay clear from request to receipt.",
+      "card_title": "A clear timeline",
+      "card_description": "You will be able to follow each request and its next required action here."
+    },
+    "account": {
+      "tab": "Account",
+      "eyebrow": "CUSTOMER ACCOUNT",
+      "title": "Your account",
+      "description": "Manage your profile, saved cars, and preferences in one place.",
+      "hero_title": "Your OctoGear space",
+      "hero_description": "Keep the information that makes your spare-parts journey easier.",
+      "profile_title": "Account details",
+      "role_label": "Customer account",
+      "city_label": "City",
+      "city_missing": "City not set yet",
+      "settings_title": "Account settings",
+      "settings_description": "Language, profile details, and saved cars will be managed here."
+    }
   }
 }

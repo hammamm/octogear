@@ -55,6 +55,18 @@ void main() {
       expect(target, AppRoutePath.customerHome);
     });
 
+    test('keeps a verified customer inside a customer tab route', () {
+      final target = redirectForSession(
+        session: const AsyncData<SessionOutcome>(
+          AuthenticatedSession(_customer),
+        ),
+        authenticationFlow: noFlow,
+        currentPath: AppRoutePath.customerStores,
+      );
+
+      expect(target, isNull);
+    });
+
     test('sends a verified provider to the provider shell', () {
       final target = redirectForSession(
         session: const AsyncData<SessionOutcome>(
@@ -62,6 +74,18 @@ void main() {
         ),
         authenticationFlow: noFlow,
         currentPath: AppRoutePath.customerHome,
+      );
+
+      expect(target, AppRoutePath.providerHome);
+    });
+
+    test('keeps a provider out of customer tab routes', () {
+      final target = redirectForSession(
+        session: const AsyncData<SessionOutcome>(
+          AuthenticatedSession(_provider),
+        ),
+        authenticationFlow: noFlow,
+        currentPath: AppRoutePath.customerOrders,
       );
 
       expect(target, AppRoutePath.providerHome);
