@@ -192,6 +192,13 @@ RouteBase get $customerShellRoute => StatefulShellRouteData.$route(
               path: 'cars',
               hasOverriddenOnExit: false,
               factory: $CustomerCarsRoute._fromState,
+              routes: [
+                GoRouteData.$route(
+                  path: 'add',
+                  hasOverriddenOnExit: false,
+                  factory: $CreateCustomerCarRoute._fromState,
+                ),
+              ],
             ),
           ],
         ),
@@ -295,6 +302,27 @@ mixin $CustomerCarsRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/customer/account/cars');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CreateCustomerCarRoute on GoRouteData {
+  static CreateCustomerCarRoute _fromState(GoRouterState state) =>
+      const CreateCustomerCarRoute();
+
+  @override
+  String get location => GoRouteData.$location('/customer/account/cars/add');
 
   @override
   void go(BuildContext context) => context.go(location);

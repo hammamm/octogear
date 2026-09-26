@@ -97,6 +97,22 @@ class AppLogger {
   }
 
   static Object? _redact(Object? value) {
+    if (value is FormData) {
+      final fileFieldCounts = <String, int>{};
+      for (final file in value.files) {
+        fileFieldCounts.update(
+          file.key,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
+      }
+
+      return {
+        'multipart': true,
+        'field_keys': value.fields.map((field) => field.key).toList(),
+        'file_field_counts': fileFieldCounts,
+      };
+    }
     if (value is Map) {
       return value.map((key, item) {
         final keyText = key.toString().toLowerCase();
@@ -112,6 +128,7 @@ class AppLogger {
           'full_name',
           'name',
           'national_id',
+          'idempotency',
         ].any(keyText.contains);
         return MapEntry(key, isSecret ? '***' : _redact(item));
       });

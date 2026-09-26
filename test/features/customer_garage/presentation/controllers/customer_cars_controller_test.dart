@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:octogear/core/localization/app_locale.dart';
 import 'package:octogear/core/localization/app_locale_controller.dart';
 import 'package:octogear/features/customer_garage/domain/entities/customer_car.dart';
+import 'package:octogear/features/customer_garage/domain/entities/customer_car_form_references.dart';
+import 'package:octogear/features/customer_garage/domain/entities/create_customer_car_command.dart';
 import 'package:octogear/features/customer_garage/domain/repositories/customer_garage_repository.dart';
 import 'package:octogear/features/customer_garage/domain/use_cases/get_customer_cars_use_case.dart';
 import 'package:octogear/features/customer_garage/presentation/controllers/customer_cars_controller.dart';
@@ -58,4 +60,19 @@ class _CountingCustomerCarsUseCase extends GetCustomerCarsUseCase {
 class _UnusedCustomerGarageRepository implements CustomerGarageRepository {
   @override
   Future<List<CustomerCar>> getCustomerCars() => throw UnimplementedError();
+
+  @override
+  Future<CustomerCar> createCustomerCar(CreateCustomerCarCommand command) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<CustomerCarReference>> getCarNames(int companyId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<CustomerCarFormReferences> getCustomerCarFormReferences() {
+    throw UnimplementedError();
+  }
 }

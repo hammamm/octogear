@@ -103,6 +103,68 @@ class ApiClient {
     );
   }
 
+  /// Sends a typed multipart request while preserving the shared bearer token,
+  /// locale header, timeouts, error mapping, and redacted request logging.
+  ///
+  /// Callers must create a fresh [FormData] instance for every attempt because
+  /// multipart files are finalized after they are transmitted.
+  Future<ApiEnvelope<T>> postMultipart<T>(
+    String path, {
+    required FormData data,
+    required ApiDataDecoder<T> decode,
+    bool requiresAuthentication = false,
+    Map<String, String> headers = const {},
+  }) {
+    return _request(
+      () => _dio.post<Object?>(
+        _relativePath(path),
+        data: data,
+        options: _requestOptions(
+          requiresAuthentication,
+          headers: headers,
+          contentType: Headers.multipartFormDataContentType,
+        ),
+      ),
+      decode: decode,
+    );
+  }
+
+  /// Resolves a relative API URL returned by Laravel against the configured
+  /// base host without requiring a feature to duplicate environment logic.
+  Uri resolveUri(String apiPath) {
+    final candidate = Uri.tryParse(apiPath);
+    if (candidate != null && candidate.hasScheme) return candidate;
+    return Uri.parse(_dio.options.baseUrl).resolve(apiPath);
+  }
+
+  /// Resolves a private API-media URL only when it stays on this API origin.
+  ///
+  /// A bearer header must never be attached to an arbitrary URL returned by a
+  /// malformed or compromised response. Feature DTOs should still require the
+  /// documented API-relative path before reaching this boundary.
+  Uri? resolveAuthenticatedApiUri(String apiPath) {
+    final base = Uri.parse(_dio.options.baseUrl);
+    final candidate = Uri.tryParse(apiPath);
+    final resolved = candidate != null && candidate.hasScheme
+        ? candidate
+        : base.resolve(apiPath);
+
+    if (resolved.scheme != base.scheme ||
+        resolved.host != base.host ||
+        resolved.port != base.port) {
+      return null;
+    }
+    return resolved;
+  }
+
+  /// Headers for a secure non-Dio consumer such as Flutter's Image widget.
+  /// The bearer value remains memory-only and must never be moved into a URL.
+  Map<String, String> get authenticatedHeaders {
+    final token = _accessTokenResolver();
+    if (token == null || token.isEmpty) return const {};
+    return {_authorizationHeader: 'Bearer $token'};
+  }
+
   Future<ApiEnvelope<T>> _request<T>(
     Future<Response<Object?>> Function() request, {
     required ApiDataDecoder<T> decode,
@@ -113,9 +175,9 @@ class ApiClient {
       final envelope = ApiEnvelope<T>.fromJson(payload, decode);
 
       if (!envelope.success) {
-        throw ApiFailure.unexpected(
-          serverMessage: envelope.message.isEmpty ? null : envelope.message,
-        );
+        // A `success: false` payload without an HTTP failure status does not
+        // establish that its message is safe to render to a customer.
+        throw const ApiFailure.unexpected();
       }
       return envelope;
     } on DioException catch (error) {
@@ -129,8 +191,16 @@ class ApiClient {
     }
   }
 
-  Options _requestOptions(bool requiresAuthentication) {
-    return Options(extra: {_requiresAuthenticationKey: requiresAuthentication});
+  Options _requestOptions(
+    bool requiresAuthentication, {
+    Map<String, String> headers = const {},
+    String? contentType,
+  }) {
+    return Options(
+      extra: {_requiresAuthenticationKey: requiresAuthentication},
+      headers: headers.isEmpty ? null : headers,
+      contentType: contentType,
+    );
   }
 
   /// Dio resolves a leading slash from the domain root and a base URL without

@@ -29,7 +29,10 @@ void main() {
         expect(car.carName.name, 'Camry');
         expect(car.color.name, 'White');
         expect(car.fuelType.name, 'Petrol');
-        expect(car.picturePaths, ['cars/9.jpg']);
+        expect(
+          car.pictures.single.url,
+          '/api/customer/customer-cars/9/pictures/17',
+        );
       },
     );
 
@@ -110,7 +113,15 @@ Map<String, Object?> _carJson() {
     'car_name': {'id': 4, 'name': 'Camry'},
     'color': {'id': 2, 'name': 'White'},
     'fuel_type': {'id': 1, 'name': 'Petrol'},
-    'pictures': ['cars/9.jpg'],
+    'pictures': [
+      {
+        'id': 17,
+        'url': '/api/customer/customer-cars/9/pictures/17',
+        'mime_type': 'image/jpeg',
+        'size_bytes': 348291,
+        'sort_order': 0,
+      },
+    ],
     'created_at': '2026-09-26T10:15:00Z',
   };
 }

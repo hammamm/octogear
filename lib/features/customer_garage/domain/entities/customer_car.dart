@@ -6,6 +6,26 @@ class CustomerCarReference {
   final String name;
 }
 
+/// Safe metadata for one private customer-car image.
+///
+/// [url] is the API-provided relative or absolute stream URL. It is never a
+/// storage path and must be requested with the current bearer token.
+class CustomerCarPicture {
+  const CustomerCarPicture({
+    required this.id,
+    required this.url,
+    required this.mimeType,
+    required this.sizeBytes,
+    required this.sortOrder,
+  });
+
+  final int id;
+  final String url;
+  final String mimeType;
+  final int sizeBytes;
+  final int sortOrder;
+}
+
 /// A car saved by the authenticated customer.
 ///
 /// This entity uses the correct domain term `licensePlateNumber`. The Laravel
@@ -19,7 +39,7 @@ class CustomerCar {
     required this.carName,
     required this.color,
     required this.fuelType,
-    required this.picturePaths,
+    required this.pictures,
     required this.createdAt,
   });
 
@@ -29,6 +49,6 @@ class CustomerCar {
   final CustomerCarReference carName;
   final CustomerCarReference color;
   final CustomerCarReference fuelType;
-  final List<String> picturePaths;
+  final List<CustomerCarPicture> pictures;
   final DateTime createdAt;
 }

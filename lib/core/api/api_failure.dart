@@ -31,14 +31,20 @@ class ApiFailure implements Exception {
     final response = exception.response;
     final statusCode = response?.statusCode;
     final payload = _responsePayload(response?.data);
+    final type = _typeFor(exception.type, statusCode);
     final message = payload['message'] is String
         ? payload['message'] as String
         : null;
 
     return ApiFailure(
-      type: _typeFor(exception.type, statusCode),
+      type: type,
       statusCode: statusCode,
-      serverMessage: message,
+      // A backend must never expose technical 5xx details, but the client
+      // must still protect users if a debug or proxy response does so.
+      serverMessage: switch (type) {
+        ApiFailureType.server || ApiFailureType.unexpected => null,
+        _ => message,
+      },
       fieldErrors: statusCode == 422
           ? _fieldErrors(payload['errors'])
           : const {},

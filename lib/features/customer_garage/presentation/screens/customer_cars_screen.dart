@@ -1,22 +1,16 @@
-import 'dart:ui' as ui show TextDirection;
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routing/app_routes.dart';
-import '../../../../core/api/api_failure.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
-import '../../domain/entities/customer_car.dart';
+import '../customer_garage_failure_message.dart';
 import '../controllers/customer_cars_controller.dart';
+import '../widgets/customer_car_card.dart';
 
-/// The customer's read-only saved-vehicle list.
-///
-/// Creation, editing, deletion, photo rendering, and vehicle selection are
-/// intentionally separate slices. This screen is limited to a reliable view
-/// of the vehicles that the authenticated customer already saved.
+/// The customer’s saved-vehicle list and entry point to the Add Car child flow.
 class CustomerCarsScreen extends ConsumerWidget {
   const CustomerCarsScreen({super.key});
 
@@ -35,7 +29,11 @@ class CustomerCarsScreen extends ConsumerWidget {
             padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
             sliver: SliverMainAxisGroup(
               slivers: [
-                SliverToBoxAdapter(child: _CustomerCarsHeader()),
+                SliverToBoxAdapter(
+                  child: _CustomerCarsHeader(
+                    onAddCar: () => _openAddCar(context, ref),
+                  ),
+                ),
                 const SliverToBoxAdapter(
                   child: SizedBox(height: OctoGearSpacing.xLarge),
                 ),
@@ -44,18 +42,22 @@ class CustomerCarsScreen extends ConsumerWidget {
                       const SliverToBoxAdapter(child: _CustomerCarsLoading()),
                   error: (error, _) => SliverToBoxAdapter(
                     child: _CustomerCarsError(
-                      message: _failureMessage(context, error),
+                      message: customerGarageFailureMessage(context, error),
                       onRetry: () => ref
                           .read(customerCarsControllerProvider.notifier)
                           .retry(),
                     ),
                   ),
                   data: (values) => values.isEmpty
-                      ? const SliverToBoxAdapter(child: _CustomerCarsEmpty())
+                      ? SliverToBoxAdapter(
+                          child: _CustomerCarsEmpty(
+                            onAddCar: () => _openAddCar(context, ref),
+                          ),
+                        )
                       : SliverList.separated(
                           itemCount: values.length,
                           itemBuilder: (context, index) =>
-                              _CustomerCarCard(car: values[index]),
+                              CustomerCarCard(car: values[index]),
                           separatorBuilder: (_, _) =>
                               const SizedBox(height: OctoGearSpacing.medium),
                         ),
@@ -76,9 +78,31 @@ class CustomerCarsScreen extends ConsumerWidget {
       // should finish cleanly rather than surface a second unhandled error.
     }
   }
+
+  Future<void> _openAddCar(BuildContext context, WidgetRef ref) async {
+    final created = await const CreateCustomerCarRoute().push<bool>(context);
+    if (created != true || !context.mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(context.tr('customer_garage.add.created'))),
+      );
+
+    try {
+      await ref.read(customerCarsControllerProvider.notifier).retry();
+    } catch (_) {
+      // The already-visible list owns its retryable error state. Do not show a
+      // second modal or erase the car the customer just saved.
+    }
+  }
 }
 
 class _CustomerCarsHeader extends StatelessWidget {
+  const _CustomerCarsHeader({required this.onAddCar});
+
+  final VoidCallback onAddCar;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -109,6 +133,13 @@ class _CustomerCarsHeader extends StatelessWidget {
           style: Theme.of(
             context,
           ).textTheme.bodyLarge?.copyWith(color: OctoGearColors.structuralGray),
+        ),
+        const SizedBox(height: OctoGearSpacing.large),
+        FilledButton.icon(
+          key: const Key('customer_cars_add_button'),
+          onPressed: onAddCar,
+          icon: const Icon(Icons.add_rounded),
+          label: Text(context.tr('customer_garage.cars.add_car')),
         ),
       ],
     );
@@ -193,7 +224,9 @@ class _SkeletonBlock extends StatelessWidget {
 }
 
 class _CustomerCarsEmpty extends StatelessWidget {
-  const _CustomerCarsEmpty();
+  const _CustomerCarsEmpty({required this.onAddCar});
+
+  final VoidCallback onAddCar;
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +260,16 @@ class _CustomerCarsEmpty extends StatelessWidget {
             context.tr('customer_garage.cars.empty_description'),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: OctoGearSpacing.large),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const Key('customer_cars_empty_add_button'),
+              onPressed: onAddCar,
+              icon: const Icon(Icons.add_rounded),
+              label: Text(context.tr('customer_garage.cars.add_car')),
+            ),
           ),
         ],
       ),
@@ -286,170 +329,4 @@ class _CustomerCarsError extends StatelessWidget {
       ),
     );
   }
-}
-
-class _CustomerCarCard extends StatelessWidget {
-  const _CustomerCarCard({required this.car});
-
-  final CustomerCar car;
-
-  @override
-  Widget build(BuildContext context) {
-    // A manufacturing year is a four-digit identifier, not a quantity. Format
-    // it for the active locale without introducing a thousands separator.
-    final year = NumberFormat(
-      '0000',
-      context.locale.languageCode,
-    ).format(car.manufacturingYear);
-
-    return OctoGearSurfaceCard(
-      semanticLabel: car.carName.name,
-      padding: const EdgeInsetsDirectional.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _CarIdentityIcon(),
-              const SizedBox(width: OctoGearSpacing.medium),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        car.carName.name,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    _CarDetailLine(
-                      icon: Icons.calendar_today_outlined,
-                      label: context.tr('customer_garage.cars.year_label'),
-                      value: year,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: OctoGearSpacing.medium),
-          const Divider(),
-          const SizedBox(height: OctoGearSpacing.medium),
-          _CarDetailLine(
-            icon: Icons.palette_outlined,
-            label: context.tr('customer_garage.cars.color_label'),
-            value: car.color.name,
-          ),
-          const SizedBox(height: OctoGearSpacing.small),
-          _CarDetailLine(
-            icon: Icons.local_gas_station_outlined,
-            label: context.tr('customer_garage.cars.fuel_type_label'),
-            value: car.fuelType.name,
-          ),
-          const SizedBox(height: OctoGearSpacing.small),
-          _CarDetailLine(
-            icon: Icons.pin_outlined,
-            label: context.tr('customer_garage.cars.plate_label'),
-            value: car.licensePlateNumber,
-            valueDirection: ui.TextDirection.ltr,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CarIdentityIcon extends StatelessWidget {
-  const _CarIdentityIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
-        color: OctoGearColors.yellowSoft,
-        shape: BoxShape.circle,
-      ),
-      child: SizedBox(
-        height: 56,
-        width: 56,
-        child: Icon(
-          Icons.directions_car_outlined,
-          size: 28,
-          color: OctoGearColors.navy,
-        ),
-      ),
-    );
-  }
-}
-
-class _CarDetailLine extends StatelessWidget {
-  const _CarDetailLine({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.valueDirection,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final ui.TextDirection? valueDirection;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 19, color: OctoGearColors.structuralGray),
-        const SizedBox(width: OctoGearSpacing.small),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              style: Theme.of(context).textTheme.bodyMedium,
-              children: [
-                TextSpan(
-                  text: '$label: ',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                WidgetSpan(
-                  alignment: PlaceholderAlignment.baseline,
-                  baseline: TextBaseline.alphabetic,
-                  child: Directionality(
-                    textDirection: valueDirection ?? Directionality.of(context),
-                    child: Text(
-                      value,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-String _failureMessage(BuildContext context, Object error) {
-  if (error is! ApiFailure) return context.tr('errors.unexpected');
-
-  final serverMessage = error.serverMessage?.trim();
-  if (serverMessage != null && serverMessage.isNotEmpty) {
-    return serverMessage;
-  }
-
-  return switch (error.type) {
-    ApiFailureType.validation => context.tr('errors.validation'),
-    ApiFailureType.rateLimited => context.tr('errors.rate_limited'),
-    ApiFailureType.timeout => context.tr('errors.timeout'),
-    ApiFailureType.noConnection => context.tr('errors.no_connection'),
-    ApiFailureType.server => context.tr('errors.server'),
-    ApiFailureType.forbidden => context.tr('customer_garage.cars.forbidden'),
-    ApiFailureType.notFound => context.tr('customer_garage.cars.not_found'),
-    _ => context.tr('errors.unexpected'),
-  };
 }

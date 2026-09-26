@@ -38,7 +38,7 @@ Flutter and Laravel are separate repositories. The Flutter Git history and GitHu
 - The external YARDY wireframes remain unchanged as a functional product reference. They must never be deleted as part of Flutter source cleanup.
 - Android launcher, Android splash, and the shared Flutter header use the approved full-color original OctoGear mark in `assets/icons/app_icon.png` and `assets/icons/splash.png`. These are high-resolution source crops from page 4 of the supplied brand guide; preserve their proportions and colors. A raw designer-exported SVG/PNG may replace those files later only after visual review. iOS icon/splash generation remains deferred with the rest of iOS work.
 - The two local OctoGear safety rules (`avoid_debug_print` and `avoid_direct_storage_imports`) continue to run through `custom_lint`. Its plugin protocol is deprecated upstream, so plan a deliberate migration to `analysis_server_plugin`; do not remove the rules merely to silence tooling output.
-- The last verified Flutter test run passed 31 tests (2026-09-26). Run `flutter analyze` and `flutter test` after every material foundation or feature change.
+- The last verified Flutter test run passed 58 tests (2026-09-26). Run `flutter analyze` and `flutter test` after every material foundation or feature change.
 - The customer root now uses a typed `StatefulShellRoute` with the semantic paths `/customer`, `/customer/stores`, `/customer/orders`, and `/customer/account`. Its tab bodies are intentionally static navigation previews until their bounded customer features are implemented; they make no API calls and must not be mistaken for completed discovery, order, or account features.
 
 ## Brand and design system
@@ -312,6 +312,8 @@ unexpected server error with Retry
 
 Never call an API from `build()`. Disable an action while its request is in flight. After `await`, verify `mounted` before navigation, dialogs, snackbars, or stateful UI work. Retry only safe idempotent reads unless the backend implements an idempotency key for a write.
 
+Unexpected Laravel exceptions on `api/*` routes must be reported only to server-side diagnostics and return a localized, safe `500` envelope. This applies even while local `APP_DEBUG` is enabled. Flutter must never render a server or unexpected failure message verbatim; it uses its own localized fallback instead.
+
 ## Order and offer decision gates
 
 Do not create order, checkout, provider-offer, or payment screens that pretend these rules exist. The current backend/wireframes leave the following product decisions unresolved.
@@ -335,7 +337,7 @@ These decisions are business logic. Stop and obtain approval before changing aff
 | --- | --- | --- |
 | Production OTP | Codes are logged locally; no SMS gateway | Select and integrate an SMS provider. |
 | Session validation/logout | Shared `GET /profile` returns the localized `UserResource` for active customers and providers. | Flutter must implement secure storage, startup validation, non-sensitive cached-profile storage, local session clearing, and role-aware routing. |
-| Media uploads | Image fields are string paths; no upload contract | Add secure multipart/signed-upload endpoint, validation, processing, and public/private URL policy. |
+| Customer-car media uploads | Customer-car creation now accepts private multipart photos and returns authenticated image-stream URLs. It has a 24-hour exact-payload idempotency window and an hourly Laravel cleanup command. | Before production, configure and verify server-side image normalization/EXIF removal using an approved GD or Imagick-capable image worker; run Laravel's scheduler; set PHP/proxy upload limits; and make an explicit backup/backfill-or-retire decision for legacy raw picture data. |
 | Payments | Stub gateway; retry blocked after failed payment | Select a Saudi-compatible provider and fix payment attempt/retry/idempotency/refund behavior. |
 | Push delivery | First-time registration optionally stores one current-device token in `users.device_token`; there is no delivery, refresh, logout removal, or multi-device registration behavior. | Later define authenticated token register/remove endpoints, FCM/APNs sender, jobs, multi-device behavior, and notification deep-link payloads. |
 | Chat | No read-mark endpoint/realtime transport | Add read status; choose polling or realtime; define order/store conversation permissions. |
@@ -490,14 +492,79 @@ verify that an in-flight send keeps the number read-only.
 
 **Roles/permissions:** Customer only. The central session guard permits the `/customer/account/cars` child route for a verified customer. Laravel remains the authority: the endpoint uses Sanctum authentication, the active-user rule, and the customer rule, and returns only cars owned by that customer.
 
-**API endpoint(s) and confirmed JSON example:** Protected `GET /customer/customer-cars`, using the standard envelope and the central bearer/locale headers. `data` is a newest-first, non-paginated list of objects containing `id`, `manufacturing_year`, legacy API key `vehicle_plat_number`, localized `car_name`, localized `color`, localized `fuel_type`, `pictures`, and `created_at`. Flutter maps the legacy transport spelling to the domain field `licensePlateNumber`; it must not rename the API in this slice. Picture strings have no confirmed public-media URL contract, so the list uses a neutral car illustration rather than guessing a URL.
+**API endpoint(s) and confirmed JSON example:** Protected `GET /customer/customer-cars`, using the standard envelope and the central bearer/locale headers. `data` is a newest-first, non-paginated list of objects containing `id`, `manufacturing_year`, legacy API key `vehicle_plat_number`, localized `car_name`, localized `color`, localized `fuel_type`, typed `pictures`, and `created_at`. Flutter maps the legacy transport spelling to the domain field `licensePlateNumber`; it must not rename the API in this slice. Each picture is controlled metadata with an exact API-relative owner-only stream URL, MIME type, size, and sort order—never a storage path, base64 value, or arbitrary host URL. Flutter rejects unexpected URLs before attaching a bearer header, renders an authenticated thumbnail for a valid first picture, and uses a neutral vehicle fallback when none can load.
 
 **Loading/empty/error/offline states:** Render compact skeleton cards while loading, a truthful empty state when the returned list is empty, and a safe inline error with an explicit Retry action for no connection, timeout, server, permission, and unexpected failures. No failure clears a valid session. This safe `GET` may be manually refreshed; the feature explicitly disables Riverpod's default automatic retry and has no pagination because the API provides the customer’s complete personal saved-car list.
 
-**Navigation inputs/result:** Account uses the generated `CustomerCarsRoute` helper to push the typed child route `/customer/account/cars`. The Back action returns to Account. The customer StatefulShell remains visible; this list does not add, edit, delete, or navigate to fake car actions.
+**Navigation inputs/result:** Account uses the generated `CustomerCarsRoute` helper to push the typed child route `/customer/account/cars`. The Back action returns to Account. My Cars pushes `CreateCustomerCarRoute` for the real `/customer/account/cars/add` child flow. A confirmed creation pops with `true`; the list then shows safe confirmation and refreshes from Laravel. The customer StatefulShell remains visible. Edit and delete remain later bounded slices; never add fake actions.
 
 **Locale and RTL behavior:** All static copy is translated from the app translation files through `BuildContext`. The centralized `Accept-Language` header returns localized car, color, and fuel names. The controller observes the app locale so a visible list reloads with the selected language. License plates are explicitly rendered left-to-right.
 
 **Analytics/notification behavior:** Deferred. No event, notification, or device-token behavior is introduced.
 
-**Tests:** Cover the authenticated endpoint path/header and DTO mapping; controller success, empty, error/retry, and locale reload behavior; Account-to-My-Cars typed navigation; and screen loading, empty, error/retry, populated-card, Arabic, and RTL states.
+**Tests:** Cover the authenticated endpoint path/header and DTO mapping; private-media URL validation and same-origin bearer protection; controller success, empty, error/retry, and locale reload behavior; Account-to-My-Cars typed navigation; and screen loading, empty, error/retry, populated-card, image fallback, Arabic, and RTL states.
+
+## Next feature implementation note: create customer car with private photos
+
+**User action:** A signed-in customer opens **My cars**, selects **Add car**, chooses the vehicle information, optionally selects up to five gallery photos, and submits once.
+
+**Roles/permissions:** Customer only. Laravel remains the authority for every operation through Sanctum authentication, active-user and customer middleware, and the `CustomerCarPolicy`. A customer may access only their own cars and their own photo bytes. A nested photo that belongs to another car must return `404`, not leak its existence.
+
+**API endpoint(s) and confirmed JSON example:** The form reads localized, public reference data from `GET /reference/companies`, `GET /reference/companies/{company}/names`, `GET /reference/colors`, and `GET /reference/fuel-types`. Company is a selector helper only; the persisted request sends `car_name_id`, `manufacturing_year`, legacy key `vehicle_plat_number`, `color_id`, and legacy key `fuel_type`.
+
+`POST /customer/customer-cars` is a protected `multipart/form-data` request. It sends those fields plus zero to five `pictures[]` image files and one UUID `Idempotency-Key` request header. Flutter creates a new key after any draft edit and reuses the exact submitted key only for its explicit Retry action. Laravel records a server-only fingerprint of the scalar values and image bytes/MIME/order: within the configurable 24-hour window, the exact same request replays the original car; the same key with changed data returns a safe `409`; a soft-deleted or expired record never replays. Laravel's hourly `customer-car-media:purge-expired-idempotency-keys` scheduler command clears expired retained keys.
+
+Laravel validates JPEG, PNG, or WebP files, a maximum of 5 MiB and 4096 x 4096 pixels per photo, stores random names on a private filesystem disk, and records only controlled metadata. No client storage path, disk name, original filename, server fingerprint, idempotency key, EXIF data, base64 value, or image bytes appear in JSON or logs.
+
+The response/list shape contains typed picture metadata, for example:
+
+```json
+{
+  "id": 9,
+  "pictures": [
+    {
+      "id": 17,
+      "url": "/api/customer/customer-cars/9/pictures/17",
+      "mime_type": "image/jpeg",
+      "size_bytes": 348291,
+      "sort_order": 0
+    }
+  ]
+}
+```
+
+`GET /customer/customer-cars/{customerCar}/pictures/{picture}` returns the authenticated owner the actual binary image stream with the correct content type. Flutter accepts only the documented `/api/customer/customer-cars/{car}/pictures/{picture}` relative path, resolves it on the configured API origin, and sends the bearer header; it never exposes the token in a URL or sends it to another host. Dedicated authenticated add/delete-photo endpoints may be used by a later edit-car slice. The current slice creates photos with the car and removes selected local photos before submission only. Adding photos to an existing car must preserve the total five-photo limit and return field-level `pictures` validation feedback when it would exceed it.
+
+**Loading/empty/error/offline states:** Reference selectors have loading, empty, error, and explicit Retry states. The form preserves valid input and selected local photos after `422` validation, connection, timeout, and server failures. Submit is disabled while the multipart request is in flight. Network failures are not blindly retried; the visible Retry reuses the form's idempotency key. A success returns to My Cars and refreshes its list. The list displays a secure thumbnail when a returned picture can be loaded and a neutral vehicle fallback otherwise.
+
+**Navigation inputs/result:** My Cars pushes a typed Add Car child route. Add Car pops with a created result only after a confirmed response; My Cars then reloads. No raw route strings, temporary data, or fake model selector may be used. The wireframe's model field is not implemented because the confirmed customer-car API has no `model_id`.
+
+**Locale and RTL behavior:** All static copy is translated through `BuildContext`; reference names are localized by the API's shared `Accept-Language` header. Changing locale reloads reference lists without losing selected IDs where still available. Year and plate fields remain readable left-to-right inside Arabic UI. The image picker is gallery-only in this slice; Android lost-picker-data recovery is handled so an activity restart does not silently discard selected photos.
+
+**Analytics/notification behavior:** Deferred. This slice adds no Firebase, notification permission, background upload, SMS, or external service behavior.
+
+**Tests:** Laravel feature tests cover multipart creation, metadata/path secrecy, file validation, exact-payload idempotency/replay/conflict/expiry, retained-key purge scheduling, storage rollback cleanup, force-delete cleanup failure, owner-only streaming, nested-resource ownership, and localized errors. Flutter tests cover multipart fields/headers/files, typed picture decoding, private-media URL safety, references and dependent company/name selection, form validation/retained draft, photo limits/removal, loading/error/retry/idempotency behavior, successful list refresh, image fallback, accessibility, Arabic, and RTL.
+
+## Next feature implementation note: customer-car detail, edit, and removal
+
+**User action:** A signed-in customer taps one of their saved cars, reviews its full information and all private photos, then may edit vehicle details/manage photos or remove the saved car.
+
+**Roles/permissions:** Customer only. Every endpoint remains protected by Sanctum, active-user/customer middleware, and the existing `CustomerCarPolicy`. A user may never inspect, update, remove, add a photo to, delete a photo from, or infer the existence of another customer's car or photo.
+
+**API endpoint(s) and confirmed JSON example:** `GET /customer/customer-cars/{customerCar}` returns one owner-authorized car. Its resource includes localized top-level `company`, `car_name`, `color`, `fuel_type`, full ordered private-picture metadata, and the persisted scalar values. `PATCH /customer/customer-cars/{customerCar}` receives only scalar JSON fields (`car_name_id`, `manufacturing_year`, legacy `vehicle_plat_number`, `color_id`, and legacy `fuel_type`); the Flutter domain names stay clear even while those existing transport keys remain unchanged. Photo mutation deliberately stays separate: `POST /customer/customer-cars/{customerCar}/pictures` sends multipart `pictures[]`, and `DELETE /customer/customer-cars/{customerCar}/pictures/{customerCarPicture}` removes one owner-authorized photo. `DELETE /customer/customer-cars/{customerCar}` soft-removes the saved car from customer lists. It is not presented as permanent deletion because private-media retention/purge policy is a separate operational requirement.
+
+**Loading/empty/error/offline states:** The detail screen has explicit loading, not-found, permission, retryable network/server error, and successful states. It fetches a fresh detail resource instead of trusting the list card as a full record. Edit retains unsaved scalar changes and local photo choices on validation/network/server failure. Scalar save and each photo action are explicit, disabled while in flight, and report their own safe result; do not make one opaque multipart PATCH. Car removal requires a clear destructive confirmation and never happens automatically. A `404` after a stale card returns to My Cars with a truthful message; a timeout/5xx preserves the screen and offers Retry.
+
+**Navigation inputs/result:** A list card pushes the typed child route `/customer/account/cars/:carId`; it passes only the numeric identifier. Detail can push a typed edit child route. A successful edit/photo change pops back to detail with refreshed server data. A confirmed removal pops to My Cars with `true`, and the list explicitly reloads. Do not pass a token, photo bytes, file paths, or mutable car object through a route.
+
+**Locale and RTL behavior:** Static copy uses `BuildContext` translations. API names/localized company follow the shared `Accept-Language` header. The detail view refreshes locale-dependent data when the language changes. Plate values and manufacturing years remain left-to-right. Photos use only the existing authenticated same-origin image component; no raw storage path or bearer token enters a URL.
+
+**Analytics/notification behavior:** Deferred. This slice adds no Firebase work, background upload, or notification behavior.
+
+**Tests:** Laravel covers localized company, active-reference validation, owner detail/update/delete/photo authorization, missing/stale resources, and soft removal. Flutter covers typed DTO/repository mapping, route/card tap, detail loading/error/photo gallery, edit validation/save/photo mutation, destructive removal confirmation, list refresh, private image fallback, and Arabic RTL behavior.
+
+### Customer-car media deployment and deletion safety
+
+Before deploying this feature, run Laravel migrations, configure the production scheduler to invoke `php artisan schedule:run` every minute, and verify that the hourly customer-car idempotency cleanup command appears in `php artisan schedule:list`. Set PHP and reverse-proxy multipart size limits at or above the API's 5 MiB-per-image contract. Configure and test a GD/Imagick-capable normalization/EXIF-removal worker or approved image service before public production use; client compression is only a usability optimization, not a privacy control.
+
+The legacy migration deliberately hides old raw picture values rather than guessing that their files are trustworthy. Before deploying against existing production data, take a backup and explicitly choose a tested private-media backfill or a customer-visible retirement path. Do not roll back the media migration after new private uploads exist. Eloquent `forceDelete()` cleans a car's private media first and aborts safely if storage cleanup fails. Any future account deletion, raw database maintenance, bulk deletion, or database-cascade path must first use an explicit media-purge lifecycle; never assume a database cascade removes private files.

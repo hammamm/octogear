@@ -12,6 +12,7 @@ import '../../features/authentication/presentation/screens/phone_sign_in_screen.
 import '../../features/authentication/presentation/screens/registration_screen.dart';
 import '../../features/authentication/presentation/screens/session_loading_screen.dart';
 import '../../features/authentication/presentation/screens/session_unavailable_screen.dart';
+import '../../features/customer_garage/presentation/screens/create_customer_car_screen.dart';
 import '../../features/customer_garage/presentation/screens/customer_cars_screen.dart';
 import '../shells/customer_app_shell.dart';
 import '../shells/role_app_shell.dart';
@@ -91,7 +92,14 @@ class SessionUnavailableRoute extends GoRouteData
         TypedGoRoute<CustomerAccountRoute>(
           path: AppRoutePath.customerAccount,
           routes: <TypedRoute<RouteData>>[
-            TypedGoRoute<CustomerCarsRoute>(path: 'cars'),
+            TypedGoRoute<CustomerCarsRoute>(
+              path: 'cars',
+              routes: <TypedRoute<RouteData>>[
+                TypedGoRoute<CreateCustomerCarRoute>(
+                  path: AppRoutePath.customerCarsAddSegment,
+                ),
+              ],
+            ),
           ],
         ),
       ],
@@ -179,6 +187,17 @@ class CustomerCarsRoute extends GoRouteData with $CustomerCarsRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const CustomerCarsScreen();
+  }
+}
+
+/// A short child flow of My Cars. It returns `true` only after Laravel has
+/// confirmed a created car, so the parent can refresh its server-backed list.
+class CreateCustomerCarRoute extends GoRouteData with $CreateCustomerCarRoute {
+  const CreateCustomerCarRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const CreateCustomerCarScreen();
   }
 }
 

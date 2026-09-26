@@ -17,6 +17,8 @@ import 'package:octogear/features/authentication/domain/entities/app_user.dart';
 import 'package:octogear/features/authentication/domain/entities/session_outcome.dart';
 import 'package:octogear/features/authentication/presentation/controllers/session_controller.dart';
 import 'package:octogear/features/customer_garage/domain/entities/customer_car.dart';
+import 'package:octogear/features/customer_garage/domain/entities/customer_car_form_references.dart';
+import 'package:octogear/features/customer_garage/domain/entities/create_customer_car_command.dart';
 import 'package:octogear/features/customer_garage/domain/repositories/customer_garage_repository.dart';
 import 'package:octogear/features/customer_garage/domain/use_cases/get_customer_cars_use_case.dart';
 import 'package:octogear/features/customer_garage/presentation/controllers/customer_cars_controller.dart';
@@ -112,7 +114,7 @@ void main() {
     expect(useCase.callCount, greaterThan(1));
   });
 
-  testWidgets('renders saved-car details without guessing a picture URL', (
+  testWidgets('renders a vehicle fallback when no private picture exists', (
     tester,
   ) async {
     await _pumpCarsScreen(
@@ -128,7 +130,7 @@ void main() {
     expect(find.text('White'), findsOneWidget);
     expect(find.text('Petrol'), findsOneWidget);
     expect(find.text('ABC 1234'), findsOneWidget);
-    expect(find.byType(Image), findsNothing);
+    expect(find.byIcon(Icons.directions_car_outlined), findsWidgets);
   });
 
   testWidgets('uses Arabic RTL UI while keeping a plate value left-to-right', (
@@ -304,6 +306,18 @@ class _RetryingCustomerCarsUseCase extends GetCustomerCarsUseCase {
 
 class _UnusedCustomerGarageRepository implements CustomerGarageRepository {
   @override
+  Future<CustomerCar> createCustomerCar(CreateCustomerCarCommand command) =>
+      throw UnimplementedError();
+
+  @override
+  Future<List<CustomerCarReference>> getCarNames(int companyId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<CustomerCarFormReferences> getCustomerCarFormReferences() =>
+      throw UnimplementedError();
+
+  @override
   Future<List<CustomerCar>> getCustomerCars() => throw UnimplementedError();
 }
 
@@ -315,7 +329,7 @@ CustomerCar _sampleCar() {
     carName: const CustomerCarReference(id: 4, name: 'Camry'),
     color: const CustomerCarReference(id: 2, name: 'White'),
     fuelType: const CustomerCarReference(id: 1, name: 'Petrol'),
-    picturePaths: const ['cars/9.jpg'],
+    pictures: const [],
     createdAt: DateTime.utc(2026, 9, 26, 10, 15),
   );
 }

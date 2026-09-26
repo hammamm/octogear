@@ -4,6 +4,9 @@ import '../../../../core/api/api_providers.dart';
 import '../../data/data_sources/customer_cars_remote_data_source.dart';
 import '../../data/repositories/customer_garage_repository_impl.dart';
 import '../../domain/repositories/customer_garage_repository.dart';
+import '../../domain/use_cases/create_customer_car_use_case.dart';
+import '../../domain/use_cases/get_customer_car_form_references_use_case.dart';
+import '../../domain/use_cases/get_customer_car_names_use_case.dart';
 import '../../domain/use_cases/get_customer_cars_use_case.dart';
 
 final customerCarsRemoteDataSourceProvider =
@@ -23,4 +26,25 @@ final customerGarageRepositoryProvider = Provider<CustomerGarageRepository>((
 
 final getCustomerCarsUseCaseProvider = Provider<GetCustomerCarsUseCase>((ref) {
   return GetCustomerCarsUseCase(ref.watch(customerGarageRepositoryProvider));
+});
+
+final getCustomerCarFormReferencesUseCaseProvider =
+    Provider<GetCustomerCarFormReferencesUseCase>((ref) {
+      return GetCustomerCarFormReferencesUseCase(
+        ref.watch(customerGarageRepositoryProvider),
+      );
+    });
+
+final getCustomerCarNamesUseCaseProvider = Provider<GetCustomerCarNamesUseCase>(
+  (ref) {
+    return GetCustomerCarNamesUseCase(
+      ref.watch(customerGarageRepositoryProvider),
+    );
+  },
+);
+
+final createCustomerCarUseCaseProvider = Provider<CreateCustomerCarUseCase>((
+  ref,
+) {
+  return CreateCustomerCarUseCase(ref.watch(customerGarageRepositoryProvider));
 });
