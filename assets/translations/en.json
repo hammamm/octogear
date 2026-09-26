@@ -117,5 +117,25 @@
       "settings_title": "Account settings",
       "settings_description": "Language, profile details, and saved cars will be managed here."
     }
+  },
+  "customer_garage": {
+    "account_entry_title": "My cars",
+    "account_entry_description": "View the cars saved to your account.",
+    "cars": {
+      "title": "My cars",
+      "description": "Saved cars help you find compatible spare parts.",
+      "loading": "Loading your saved cars",
+      "empty_title": "No cars saved yet",
+      "empty_description": "Cars you save will appear here and help make future part searches more accurate.",
+      "error_title": "We couldn't load your cars",
+      "error_description": "Please check your connection and try again.",
+      "year_label": "Year",
+      "plate_label": "Plate number",
+      "color_label": "Color",
+      "fuel_type_label": "Fuel type",
+      "refresh_label": "Refresh cars",
+      "forbidden": "You do not have permission to view saved cars.",
+      "not_found": "Your saved cars are not available right now."
+    }
   }
 }

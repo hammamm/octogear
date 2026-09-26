@@ -9,6 +9,7 @@ import '../../core/design_system/octogear_theme.dart';
 import '../../core/widgets/app_language_toggle_button.dart';
 import '../../core/widgets/octogear_brand_header.dart';
 import '../../core/widgets/octogear_surface_card.dart';
+import '../routing/app_routes.dart';
 import '../../features/authentication/domain/entities/app_user.dart';
 import '../../features/authentication/domain/entities/session_outcome.dart';
 import '../../features/authentication/presentation/controllers/session_controller.dart';
@@ -169,6 +170,8 @@ class CustomerShellTabScreen extends ConsumerWidget {
             description: context.tr(content.cardDescriptionKey),
           ),
         if (destination == CustomerShellDestination.account) ...[
+          const SizedBox(height: OctoGearSpacing.medium),
+          const _CustomerGarageEntryCard(),
           const SizedBox(height: OctoGearSpacing.medium),
           _AccountSettingsCard(),
           const SizedBox(height: OctoGearSpacing.medium),
@@ -415,6 +418,68 @@ class _CustomerProfileCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CustomerGarageEntryCard extends StatelessWidget {
+  const _CustomerGarageEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final title = context.tr('customer_garage.account_entry_title');
+    final description = context.tr('customer_garage.account_entry_description');
+
+    return OctoGearSurfaceCard(
+      padding: EdgeInsets.zero,
+      semanticLabel: title,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(OctoGearRadii.large),
+        onTap: () {
+          const CustomerCarsRoute().push<void>(context);
+        },
+        child: Padding(
+          padding: const EdgeInsetsDirectional.all(20),
+          child: Row(
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: OctoGearColors.yellowSoft,
+                  borderRadius: BorderRadius.circular(OctoGearRadii.medium),
+                ),
+                child: const SizedBox(
+                  height: 48,
+                  width: 48,
+                  child: Icon(
+                    Icons.directions_car_outlined,
+                    color: OctoGearColors.navy,
+                    size: 25,
+                  ),
+                ),
+              ),
+              const SizedBox(width: OctoGearSpacing.medium),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 3),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: OctoGearSpacing.small),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: OctoGearColors.navy,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -12,6 +12,7 @@ import '../../features/authentication/presentation/screens/phone_sign_in_screen.
 import '../../features/authentication/presentation/screens/registration_screen.dart';
 import '../../features/authentication/presentation/screens/session_loading_screen.dart';
 import '../../features/authentication/presentation/screens/session_unavailable_screen.dart';
+import '../../features/customer_garage/presentation/screens/customer_cars_screen.dart';
 import '../shells/customer_app_shell.dart';
 import '../shells/role_app_shell.dart';
 
@@ -87,7 +88,12 @@ class SessionUnavailableRoute extends GoRouteData
     ),
     TypedStatefulShellBranch<CustomerAccountBranch>(
       routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<CustomerAccountRoute>(path: AppRoutePath.customerAccount),
+        TypedGoRoute<CustomerAccountRoute>(
+          path: AppRoutePath.customerAccount,
+          routes: <TypedRoute<RouteData>>[
+            TypedGoRoute<CustomerCarsRoute>(path: 'cars'),
+          ],
+        ),
       ],
     ),
   ],
@@ -162,6 +168,17 @@ class CustomerAccountRoute extends GoRouteData with $CustomerAccountRoute {
     return const CustomerShellTabScreen(
       destination: CustomerShellDestination.account,
     );
+  }
+}
+
+/// A child flow of Account, so the customer can return to their account after
+/// reviewing saved cars while the customer shell remains in place.
+class CustomerCarsRoute extends GoRouteData with $CustomerCarsRoute {
+  const CustomerCarsRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const CustomerCarsScreen();
   }
 }
 

@@ -483,3 +483,21 @@ verify that an in-flight send keeps the number read-only.
 **Analytics/notification behavior:** Deferred. The shell does not create notification or analytics events in this phase.
 
 **Tests:** Verify the four English and Arabic navigation labels, route/tab switching, RTL direction, and that the session guard allows verified customers inside the customer route family while redirecting providers away from it.
+
+## Next feature implementation note: customer saved-car list
+
+**User action:** A signed-in customer opens Account and selects **My cars**.
+
+**Roles/permissions:** Customer only. The central session guard permits the `/customer/account/cars` child route for a verified customer. Laravel remains the authority: the endpoint uses Sanctum authentication, the active-user rule, and the customer rule, and returns only cars owned by that customer.
+
+**API endpoint(s) and confirmed JSON example:** Protected `GET /customer/customer-cars`, using the standard envelope and the central bearer/locale headers. `data` is a newest-first, non-paginated list of objects containing `id`, `manufacturing_year`, legacy API key `vehicle_plat_number`, localized `car_name`, localized `color`, localized `fuel_type`, `pictures`, and `created_at`. Flutter maps the legacy transport spelling to the domain field `licensePlateNumber`; it must not rename the API in this slice. Picture strings have no confirmed public-media URL contract, so the list uses a neutral car illustration rather than guessing a URL.
+
+**Loading/empty/error/offline states:** Render compact skeleton cards while loading, a truthful empty state when the returned list is empty, and a safe inline error with an explicit Retry action for no connection, timeout, server, permission, and unexpected failures. No failure clears a valid session. This safe `GET` may be manually refreshed; the feature explicitly disables Riverpod's default automatic retry and has no pagination because the API provides the customer’s complete personal saved-car list.
+
+**Navigation inputs/result:** Account uses the generated `CustomerCarsRoute` helper to push the typed child route `/customer/account/cars`. The Back action returns to Account. The customer StatefulShell remains visible; this list does not add, edit, delete, or navigate to fake car actions.
+
+**Locale and RTL behavior:** All static copy is translated from the app translation files through `BuildContext`. The centralized `Accept-Language` header returns localized car, color, and fuel names. The controller observes the app locale so a visible list reloads with the selected language. License plates are explicitly rendered left-to-right.
+
+**Analytics/notification behavior:** Deferred. No event, notification, or device-token behavior is introduced.
+
+**Tests:** Cover the authenticated endpoint path/header and DTO mapping; controller success, empty, error/retry, and locale reload behavior; Account-to-My-Cars typed navigation; and screen loading, empty, error/retry, populated-card, Arabic, and RTL states.
