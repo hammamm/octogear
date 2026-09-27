@@ -5,6 +5,7 @@ import 'package:octogear/core/localization/app_locale_controller.dart';
 import 'package:octogear/features/customer_garage/domain/entities/customer_car.dart';
 import 'package:octogear/features/customer_garage/domain/entities/customer_car_form_references.dart';
 import 'package:octogear/features/customer_garage/domain/entities/create_customer_car_command.dart';
+import 'package:octogear/features/customer_garage/domain/entities/update_customer_car_command.dart';
 import 'package:octogear/features/customer_garage/domain/repositories/customer_garage_repository.dart';
 import 'package:octogear/features/customer_garage/domain/use_cases/get_customer_cars_use_case.dart';
 import 'package:octogear/features/customer_garage/presentation/controllers/customer_cars_controller.dart';
@@ -75,4 +76,16 @@ class _UnusedCustomerGarageRepository implements CustomerGarageRepository {
   Future<CustomerCarFormReferences> getCustomerCarFormReferences() {
     throw UnimplementedError();
   }
+
+  @override
+  Future<CustomerCar> getCustomerCar(int carId) => throw UnimplementedError();
+
+  @override
+  Future<CustomerCar> updateCustomerCar(
+    int carId,
+    UpdateCustomerCarCommand command,
+  ) => throw UnimplementedError();
+
+  @override
+  Future<void> deleteCustomerCar(int carId) => throw UnimplementedError();
 }

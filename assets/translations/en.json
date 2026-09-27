@@ -9,6 +9,8 @@
   },
   "common": {
     "retry": "Retry",
+    "cancel": "Cancel",
+    "refresh": "Refresh",
     "sign_out": "Sign out",
     "switch_to_english": "English",
     "switch_to_arabic": "العربية"
@@ -138,6 +140,35 @@
       "refresh_label": "Refresh cars",
       "forbidden": "You do not have permission to view saved cars.",
       "not_found": "Your saved cars are not available right now."
+    },
+    "details": {
+      "title": "Car details",
+      "loading": "Loading car details",
+      "error_title": "We couldn't load this car",
+      "back_to_cars": "Back to my cars",
+      "vehicle_details": "Vehicle details",
+      "company_label": "Manufacturer",
+      "year_label": "Manufacturing year",
+      "plate_label": "Plate number",
+      "color_label": "Color",
+      "fuel_type_label": "Fuel type",
+      "photo_semantics": "Vehicle photo {} of {}",
+      "photo_counter": "{} of {}",
+      "no_photo": "No vehicle photos yet",
+      "edit": "Edit car",
+      "remove": "Remove saved car",
+      "remove_title": "Remove this saved car?",
+      "remove_description": "{} will be removed from your saved cars. This cannot be undone in the app.",
+      "remove_confirm": "Remove car",
+      "remove_error_title": "We couldn't remove this car",
+      "remove_error_description": "Refresh to confirm whether the car is still saved before trying again."
+    },
+    "edit": {
+      "title": "Edit car",
+      "description": "Keep your vehicle details accurate for better part matches.",
+      "save": "Save changes",
+      "saved": "Your car details were updated.",
+      "retry_submission": "Try saving again"
     },
     "add": {
       "title": "Add a car",

@@ -19,6 +19,7 @@ import 'package:octogear/features/authentication/presentation/controllers/sessio
 import 'package:octogear/features/customer_garage/domain/entities/customer_car.dart';
 import 'package:octogear/features/customer_garage/domain/entities/customer_car_form_references.dart';
 import 'package:octogear/features/customer_garage/domain/entities/create_customer_car_command.dart';
+import 'package:octogear/features/customer_garage/domain/entities/update_customer_car_command.dart';
 import 'package:octogear/features/customer_garage/domain/repositories/customer_garage_repository.dart';
 import 'package:octogear/features/customer_garage/domain/use_cases/get_customer_cars_use_case.dart';
 import 'package:octogear/features/customer_garage/presentation/controllers/customer_cars_controller.dart';
@@ -319,6 +320,18 @@ class _UnusedCustomerGarageRepository implements CustomerGarageRepository {
 
   @override
   Future<List<CustomerCar>> getCustomerCars() => throw UnimplementedError();
+
+  @override
+  Future<CustomerCar> getCustomerCar(int carId) => throw UnimplementedError();
+
+  @override
+  Future<CustomerCar> updateCustomerCar(
+    int carId,
+    UpdateCustomerCarCommand command,
+  ) => throw UnimplementedError();
+
+  @override
+  Future<void> deleteCustomerCar(int carId) => throw UnimplementedError();
 }
 
 CustomerCar _sampleCar() {
@@ -326,6 +339,7 @@ CustomerCar _sampleCar() {
     id: 9,
     manufacturingYear: 2022,
     licensePlateNumber: 'ABC 1234',
+    company: const CustomerCarReference(id: 1, name: 'Toyota'),
     carName: const CustomerCarReference(id: 4, name: 'Camry'),
     color: const CustomerCarReference(id: 2, name: 'White'),
     fuelType: const CustomerCarReference(id: 1, name: 'Petrol'),

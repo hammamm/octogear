@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:octogear/core/api/api_client.dart';
 import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/features/customer_garage/data/data_sources/customer_cars_remote_data_source.dart';
+import 'package:octogear/features/customer_garage/data/models/update_customer_car_request_dto.dart';
 
 void main() {
   group('CustomerCarsRemoteDataSourceImpl', () {
@@ -26,6 +27,7 @@ void main() {
         expect(car.id, 9);
         expect(car.manufacturingYear, 2022);
         expect(car.licensePlateNumber, 'ABC 1234');
+        expect(car.company.name, 'Toyota');
         expect(car.carName.name, 'Camry');
         expect(car.color.name, 'White');
         expect(car.fuelType.name, 'Petrol');
@@ -67,6 +69,76 @@ void main() {
         );
       },
     );
+
+    test('gets one protected saved car with the localized company', () async {
+      late RequestOptions request;
+      final dataSource = CustomerCarsRemoteDataSourceImpl(
+        apiClient: _clientThatReturns(
+          _carDetailEnvelope(),
+          onRequest: (value) => request = value,
+        ),
+      );
+
+      final car = await dataSource.fetchCustomerCar(9);
+
+      expect(request.method, 'GET');
+      expect(request.uri.path, '/api/customer/customer-cars/9');
+      expect(_header(request, 'Authorization'), 'Bearer secure-token');
+      expect(_header(request, 'Accept-Language'), 'en');
+      expect(car.company.name, 'Toyota');
+    });
+
+    test(
+      'patches exactly the editable scalar values of one saved car',
+      () async {
+        late RequestOptions request;
+        final dataSource = CustomerCarsRemoteDataSourceImpl(
+          apiClient: _clientThatReturns(
+            _carDetailEnvelope(),
+            onRequest: (value) => request = value,
+          ),
+        );
+
+        await dataSource.updateCustomerCar(
+          9,
+          const UpdateCustomerCarRequestDto(
+            carNameId: 4,
+            manufacturingYear: 2023,
+            licensePlateNumber: 'XYZ 9876',
+            colorId: 3,
+            fuelTypeId: 2,
+          ),
+        );
+
+        expect(request.method, 'PATCH');
+        expect(request.uri.path, '/api/customer/customer-cars/9');
+        expect(_header(request, 'Authorization'), 'Bearer secure-token');
+        expect(request.data, {
+          'car_name_id': 4,
+          'manufacturing_year': 2023,
+          'vehicle_plat_number': 'XYZ 9876',
+          'color_id': 3,
+          'fuel_type': 2,
+        });
+      },
+    );
+
+    test('deletes one protected saved car through the shared client', () async {
+      late RequestOptions request;
+      final dataSource = CustomerCarsRemoteDataSourceImpl(
+        apiClient: _clientThatReturns(const {
+          'success': true,
+          'message': 'Car removed',
+          'data': null,
+        }, onRequest: (value) => request = value),
+      );
+
+      await dataSource.deleteCustomerCar(9);
+
+      expect(request.method, 'DELETE');
+      expect(request.uri.path, '/api/customer/customer-cars/9');
+      expect(_header(request, 'Authorization'), 'Bearer secure-token');
+    });
   });
 }
 
@@ -105,11 +177,16 @@ Map<String, Object?> _carsEnvelope() {
   };
 }
 
+Map<String, Object?> _carDetailEnvelope() {
+  return {'success': true, 'message': 'Car loaded', 'data': _carJson()};
+}
+
 Map<String, Object?> _carJson() {
   return {
     'id': 9,
     'manufacturing_year': 2022,
     'vehicle_plat_number': 'ABC 1234',
+    'company': {'id': 1, 'name': 'Toyota'},
     'car_name': {'id': 4, 'name': 'Camry'},
     'color': {'id': 2, 'name': 'White'},
     'fuel_type': {'id': 1, 'name': 'Petrol'},

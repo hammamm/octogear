@@ -8,6 +8,9 @@ import '../../domain/use_cases/create_customer_car_use_case.dart';
 import '../../domain/use_cases/get_customer_car_form_references_use_case.dart';
 import '../../domain/use_cases/get_customer_car_names_use_case.dart';
 import '../../domain/use_cases/get_customer_cars_use_case.dart';
+import '../../domain/use_cases/delete_customer_car_use_case.dart';
+import '../../domain/use_cases/get_customer_car_use_case.dart';
+import '../../domain/use_cases/update_customer_car_use_case.dart';
 
 final customerCarsRemoteDataSourceProvider =
     Provider<CustomerCarsRemoteDataSource>((ref) {
@@ -26,6 +29,10 @@ final customerGarageRepositoryProvider = Provider<CustomerGarageRepository>((
 
 final getCustomerCarsUseCaseProvider = Provider<GetCustomerCarsUseCase>((ref) {
   return GetCustomerCarsUseCase(ref.watch(customerGarageRepositoryProvider));
+});
+
+final getCustomerCarUseCaseProvider = Provider<GetCustomerCarUseCase>((ref) {
+  return GetCustomerCarUseCase(ref.watch(customerGarageRepositoryProvider));
 });
 
 final getCustomerCarFormReferencesUseCaseProvider =
@@ -47,4 +54,16 @@ final createCustomerCarUseCaseProvider = Provider<CreateCustomerCarUseCase>((
   ref,
 ) {
   return CreateCustomerCarUseCase(ref.watch(customerGarageRepositoryProvider));
+});
+
+final updateCustomerCarUseCaseProvider = Provider<UpdateCustomerCarUseCase>((
+  ref,
+) {
+  return UpdateCustomerCarUseCase(ref.watch(customerGarageRepositoryProvider));
+});
+
+final deleteCustomerCarUseCaseProvider = Provider<DeleteCustomerCarUseCase>((
+  ref,
+) {
+  return DeleteCustomerCarUseCase(ref.watch(customerGarageRepositoryProvider));
 });

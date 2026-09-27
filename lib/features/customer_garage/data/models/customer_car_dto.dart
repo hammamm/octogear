@@ -5,6 +5,7 @@ class CustomerCarDto {
     required this.id,
     required this.manufacturingYear,
     required this.licensePlateNumber,
+    required this.company,
     required this.carName,
     required this.color,
     required this.fuelType,
@@ -15,6 +16,7 @@ class CustomerCarDto {
   final int id;
   final int manufacturingYear;
   final String licensePlateNumber;
+  final CustomerCarReferenceDto company;
   final CustomerCarReferenceDto carName;
   final CustomerCarReferenceDto color;
   final CustomerCarReferenceDto fuelType;
@@ -38,6 +40,10 @@ class CustomerCarDto {
       id: id,
       manufacturingYear: manufacturingYear,
       licensePlateNumber: licensePlateNumber,
+      company: CustomerCarReferenceDto.fromJson(
+        json['company'],
+        description: 'customer car company',
+      ),
       carName: CustomerCarReferenceDto.fromJson(
         json['car_name'],
         description: 'customer car car_name',
@@ -60,6 +66,7 @@ class CustomerCarDto {
       id: id,
       manufacturingYear: manufacturingYear,
       licensePlateNumber: licensePlateNumber,
+      company: company.toEntity(),
       carName: carName.toEntity(),
       color: color.toEntity(),
       fuelType: fuelType.toEntity(),

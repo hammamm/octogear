@@ -10,9 +10,10 @@ import '../../domain/entities/customer_car.dart';
 
 /// Read-only saved-car summary shown in the customer's personal garage.
 class CustomerCarCard extends StatelessWidget {
-  const CustomerCarCard({required this.car, super.key});
+  const CustomerCarCard({required this.car, this.onTap, super.key});
 
   final CustomerCar car;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -26,58 +27,76 @@ class CustomerCarCard extends StatelessWidget {
     return OctoGearSurfaceCard(
       semanticLabel: car.carName.name,
       padding: const EdgeInsetsDirectional.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _CustomerCarImage(car: car),
-              const SizedBox(width: OctoGearSpacing.medium),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        car.carName.name,
-                        style: Theme.of(context).textTheme.titleLarge,
+      child: InkWell(
+        onTap: onTap,
+        excludeFromSemantics: true,
+        borderRadius: BorderRadius.circular(OctoGearRadii.medium),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _CustomerCarImage(car: car),
+                const SizedBox(width: OctoGearSpacing.medium),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          car.carName.name,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    _CarDetailLine(
-                      icon: Icons.calendar_today_outlined,
-                      label: context.tr('customer_garage.cars.year_label'),
-                      value: year,
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        car.company.name,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      _CarDetailLine(
+                        icon: Icons.calendar_today_outlined,
+                        label: context.tr('customer_garage.cars.year_label'),
+                        value: year,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: OctoGearSpacing.medium),
-          const Divider(),
-          const SizedBox(height: OctoGearSpacing.medium),
-          _CarDetailLine(
-            icon: Icons.palette_outlined,
-            label: context.tr('customer_garage.cars.color_label'),
-            value: car.color.name,
-          ),
-          const SizedBox(height: OctoGearSpacing.small),
-          _CarDetailLine(
-            icon: Icons.local_gas_station_outlined,
-            label: context.tr('customer_garage.cars.fuel_type_label'),
-            value: car.fuelType.name,
-          ),
-          const SizedBox(height: OctoGearSpacing.small),
-          _CarDetailLine(
-            icon: Icons.pin_outlined,
-            label: context.tr('customer_garage.cars.plate_label'),
-            value: car.licensePlateNumber,
-            valueDirection: ui.TextDirection.ltr,
-          ),
-        ],
+                if (onTap != null)
+                  const Padding(
+                    padding: EdgeInsetsDirectional.only(start: 4),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      color: OctoGearColors.structuralGray,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: OctoGearSpacing.medium),
+            const Divider(),
+            const SizedBox(height: OctoGearSpacing.medium),
+            _CarDetailLine(
+              icon: Icons.palette_outlined,
+              label: context.tr('customer_garage.cars.color_label'),
+              value: car.color.name,
+            ),
+            const SizedBox(height: OctoGearSpacing.small),
+            _CarDetailLine(
+              icon: Icons.local_gas_station_outlined,
+              label: context.tr('customer_garage.cars.fuel_type_label'),
+              value: car.fuelType.name,
+            ),
+            const SizedBox(height: OctoGearSpacing.small),
+            _CarDetailLine(
+              icon: Icons.pin_outlined,
+              label: context.tr('customer_garage.cars.plate_label'),
+              value: car.licensePlateNumber,
+              valueDirection: ui.TextDirection.ltr,
+            ),
+          ],
+        ),
       ),
     );
   }

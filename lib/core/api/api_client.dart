@@ -103,6 +103,45 @@ class ApiClient {
     );
   }
 
+  /// Sends a typed partial update through the same authenticated API boundary
+  /// as every other OctoGear request.
+  Future<ApiEnvelope<T>> patch<T>(
+    String path, {
+    required ApiDataDecoder<T> decode,
+    Object? data,
+    bool requiresAuthentication = false,
+  }) {
+    return _request(
+      () => _dio.patch<Object?>(
+        _relativePath(path),
+        data: data,
+        options: _requestOptions(requiresAuthentication),
+      ),
+      decode: decode,
+    );
+  }
+
+  /// Sends a typed removal request through the shared API boundary.
+  ///
+  /// Features still decide whether a destructive action can safely be
+  /// repeated after an uncertain result; this method only centralizes HTTP,
+  /// authentication, locale headers, and failure mapping.
+  Future<ApiEnvelope<T>> delete<T>(
+    String path, {
+    required ApiDataDecoder<T> decode,
+    Object? data,
+    bool requiresAuthentication = false,
+  }) {
+    return _request(
+      () => _dio.delete<Object?>(
+        _relativePath(path),
+        data: data,
+        options: _requestOptions(requiresAuthentication),
+      ),
+      decode: decode,
+    );
+  }
+
   /// Sends a typed multipart request while preserving the shared bearer token,
   /// locale header, timeouts, error mapping, and redacted request logging.
   ///

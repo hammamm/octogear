@@ -198,6 +198,18 @@ RouteBase get $customerShellRoute => StatefulShellRouteData.$route(
                   hasOverriddenOnExit: false,
                   factory: $CreateCustomerCarRoute._fromState,
                 ),
+                GoRouteData.$route(
+                  path: ':carId',
+                  hasOverriddenOnExit: false,
+                  factory: $CustomerCarDetailsRoute._fromState,
+                  routes: [
+                    GoRouteData.$route(
+                      path: 'edit',
+                      hasOverriddenOnExit: false,
+                      factory: $CustomerCarEditRoute._fromState,
+                    ),
+                  ],
+                ),
               ],
             ),
           ],
@@ -323,6 +335,56 @@ mixin $CreateCustomerCarRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/customer/account/cars/add');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CustomerCarDetailsRoute on GoRouteData {
+  static CustomerCarDetailsRoute _fromState(GoRouterState state) =>
+      CustomerCarDetailsRoute(carId: int.parse(state.pathParameters['carId']!));
+
+  CustomerCarDetailsRoute get _self => this as CustomerCarDetailsRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/customer/account/cars/${Uri.encodeComponent(_self.carId.toString())}',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CustomerCarEditRoute on GoRouteData {
+  static CustomerCarEditRoute _fromState(GoRouterState state) =>
+      CustomerCarEditRoute(carId: int.parse(state.pathParameters['carId']!));
+
+  CustomerCarEditRoute get _self => this as CustomerCarEditRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/customer/account/cars/${Uri.encodeComponent(_self.carId.toString())}/edit',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

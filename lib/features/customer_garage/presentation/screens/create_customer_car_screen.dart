@@ -1,9 +1,6 @@
 import 'dart:async';
-import 'dart:ui' as ui show TextDirection;
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -20,6 +17,7 @@ import '../controllers/customer_car_form_references_controller.dart';
 import '../controllers/customer_car_names_controller.dart';
 import '../customer_garage_failure_message.dart';
 import '../services/customer_car_gallery_picker.dart';
+import '../widgets/customer_car_editor_fields.dart';
 import '../widgets/customer_car_photo_picker.dart';
 
 /// Customer-only form for creating a saved car and optional private photos.
@@ -289,136 +287,42 @@ class _CreateCustomerCarScreenState
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: OctoGearSpacing.xLarge),
-            DropdownButtonFormField<int>(
-              key: const Key('customer_car_company_field'),
-              initialValue: selectedCompanyId,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: context.tr('customer_garage.add.company_label'),
-                hintText: context.tr('customer_garage.add.company_hint'),
-                prefixIcon: const Icon(Icons.factory_outlined),
-              ),
-              items: _referenceItems(references.companies),
-              onChanged: submission.isSubmitting
-                  ? null
-                  : (value) {
-                      setState(() {
-                        _markDraftChanged();
-                        _companyId = value;
-                        _carNameId = null;
-                      });
-                    },
-              validator: (value) =>
-                  _validSelectedId(value, references.companies) == null
-                  ? context.tr('customer_garage.add.company_required')
-                  : null,
-            ),
-            const SizedBox(height: OctoGearSpacing.medium),
-            _CarNameField(
-              key: ValueKey<int?>(selectedCompanyId),
-              names: names,
-              selectedCarNameId: selectedCarNameId,
-              isSubmitting: submission.isSubmitting,
-              apiError: apiFailure?.fieldErrors['car_name_id']?.first,
-              onChanged: (value) {
+            CustomerCarEditorFields(
+              references: references,
+              carNames: names,
+              companyId: selectedCompanyId,
+              carNameId: selectedCarNameId,
+              colorId: selectedColorId,
+              fuelTypeId: selectedFuelTypeId,
+              yearController: _yearController,
+              plateController: _plateController,
+              enabled: !submission.isSubmitting,
+              fieldErrors: apiFailure?.fieldErrors ?? const {},
+              onCompanyChanged: (value) {
                 setState(() {
                   _markDraftChanged();
-                  _carNameId = value;
+                  _companyId = value;
+                  _carNameId = null;
                 });
               },
-              onRetry: selectedCompanyId == null
+              onCarNameChanged: (value) => setState(() {
+                _markDraftChanged();
+                _carNameId = value;
+              }),
+              onColorChanged: (value) => setState(() {
+                _markDraftChanged();
+                _colorId = value;
+              }),
+              onFuelTypeChanged: (value) => setState(() {
+                _markDraftChanged();
+                _fuelTypeId = value;
+              }),
+              onTextChanged: (_) => _markDraftChanged(),
+              onRetryCarNames: selectedCompanyId == null
                   ? null
                   : () => ref.invalidate(
                       customerCarNamesProvider(selectedCompanyId),
                     ),
-            ),
-            const SizedBox(height: OctoGearSpacing.medium),
-            TextFormField(
-              key: const Key('customer_car_year_field'),
-              controller: _yearController,
-              enabled: !submission.isSubmitting,
-              keyboardType: TextInputType.number,
-              textDirection: ui.TextDirection.ltr,
-              textInputAction: TextInputAction.next,
-              maxLength: 4,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onChanged: (_) => _markDraftChanged(),
-              decoration: InputDecoration(
-                labelText: context.tr('customer_garage.add.year_label'),
-                hintText: context.tr('customer_garage.add.year_hint'),
-                prefixIcon: const Icon(Icons.calendar_today_outlined),
-                counterText: '',
-                errorText: apiFailure?.fieldErrors['manufacturing_year']?.first,
-              ),
-              validator: _validateYear,
-            ),
-            const SizedBox(height: OctoGearSpacing.medium),
-            TextFormField(
-              key: const Key('customer_car_plate_field'),
-              controller: _plateController,
-              enabled: !submission.isSubmitting,
-              keyboardType: TextInputType.text,
-              textDirection: ui.TextDirection.ltr,
-              textInputAction: TextInputAction.next,
-              maxLength: 50,
-              onChanged: (_) => _markDraftChanged(),
-              decoration: InputDecoration(
-                labelText: context.tr('customer_garage.add.plate_label'),
-                hintText: context.tr('customer_garage.add.plate_hint'),
-                prefixIcon: const Icon(Icons.pin_outlined),
-                counterText: '',
-                errorText:
-                    apiFailure?.fieldErrors['vehicle_plat_number']?.first,
-              ),
-              validator: (value) => value?.trim().isEmpty ?? true
-                  ? context.tr('customer_garage.add.plate_required')
-                  : null,
-            ),
-            const SizedBox(height: OctoGearSpacing.medium),
-            DropdownButtonFormField<int>(
-              key: const Key('customer_car_color_field'),
-              initialValue: selectedColorId,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: context.tr('customer_garage.add.color_label'),
-                hintText: context.tr('customer_garage.add.color_hint'),
-                prefixIcon: const Icon(Icons.palette_outlined),
-                errorText: apiFailure?.fieldErrors['color_id']?.first,
-              ),
-              items: _referenceItems(references.colors),
-              onChanged: submission.isSubmitting
-                  ? null
-                  : (value) => setState(() {
-                      _markDraftChanged();
-                      _colorId = value;
-                    }),
-              validator: (value) =>
-                  _validSelectedId(value, references.colors) == null
-                  ? context.tr('customer_garage.add.color_required')
-                  : null,
-            ),
-            const SizedBox(height: OctoGearSpacing.medium),
-            DropdownButtonFormField<int>(
-              key: const Key('customer_car_fuel_type_field'),
-              initialValue: selectedFuelTypeId,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: context.tr('customer_garage.add.fuel_type_label'),
-                hintText: context.tr('customer_garage.add.fuel_type_hint'),
-                prefixIcon: const Icon(Icons.local_gas_station_outlined),
-                errorText: apiFailure?.fieldErrors['fuel_type']?.first,
-              ),
-              items: _referenceItems(references.fuelTypes),
-              onChanged: submission.isSubmitting
-                  ? null
-                  : (value) => setState(() {
-                      _markDraftChanged();
-                      _fuelTypeId = value;
-                    }),
-              validator: (value) =>
-                  _validSelectedId(value, references.fuelTypes) == null
-                  ? context.tr('customer_garage.add.fuel_type_required')
-                  : null,
             ),
             const SizedBox(height: OctoGearSpacing.xLarge),
             CustomerCarPhotoPicker(
@@ -478,31 +382,6 @@ class _CreateCustomerCarScreenState
         ),
       ),
     );
-  }
-
-  String? _validateYear(String? value) {
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) return context.tr('customer_garage.add.year_required');
-
-    final year = int.tryParse(text);
-    final currentYear = DateTime.now().year;
-    if (year == null || year < 1970 || year > currentYear) {
-      return context.tr(
-        'customer_garage.add.year_invalid',
-        args: ['$currentYear'],
-      );
-    }
-    return null;
-  }
-
-  List<DropdownMenuItem<int>> _referenceItems(
-    List<CustomerCarReference> values,
-  ) {
-    return values
-        .map(
-          (value) => DropdownMenuItem(value: value.id, child: Text(value.name)),
-        )
-        .toList(growable: false);
   }
 
   String? _pictureFieldError(ApiFailure? failure) {
@@ -619,131 +498,6 @@ class _ReferencesError extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _CarNameField extends StatelessWidget {
-  const _CarNameField({
-    required this.names,
-    required this.selectedCarNameId,
-    required this.isSubmitting,
-    required this.apiError,
-    required this.onChanged,
-    required this.onRetry,
-    super.key,
-  });
-
-  final AsyncValue<List<CustomerCarReference>>? names;
-  final int? selectedCarNameId;
-  final bool isSubmitting;
-  final String? apiError;
-  final ValueChanged<int?> onChanged;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    if (names == null) {
-      return _DisabledCarNameField(
-        message: context.tr('customer_garage.add.car_name_before_company'),
-      );
-    }
-
-    return names!.when(
-      loading: () => _DisabledCarNameField(
-        message: context.tr('customer_garage.add.car_names_loading'),
-        isLoading: true,
-      ),
-      error: (error, _) => _CarNameLoadError(
-        message: customerGarageFailureMessage(context, error),
-        onRetry: onRetry,
-      ),
-      data: (values) {
-        if (values.isEmpty) {
-          return _CarNameLoadError(
-            message: context.tr('customer_garage.add.car_names_empty'),
-            onRetry: onRetry,
-          );
-        }
-
-        return DropdownButtonFormField<int>(
-          key: const Key('customer_car_name_field'),
-          initialValue: selectedCarNameId,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: context.tr('customer_garage.add.car_name_label'),
-            hintText: context.tr('customer_garage.add.car_name_hint'),
-            prefixIcon: const Icon(Icons.directions_car_outlined),
-            errorText: apiError,
-          ),
-          items: values
-              .map(
-                (value) =>
-                    DropdownMenuItem(value: value.id, child: Text(value.name)),
-              )
-              .toList(growable: false),
-          onChanged: isSubmitting ? null : onChanged,
-          validator: (value) => values.any((item) => item.id == value)
-              ? null
-              : context.tr('customer_garage.add.car_name_required'),
-        );
-      },
-    );
-  }
-}
-
-class _DisabledCarNameField extends StatelessWidget {
-  const _DisabledCarNameField({required this.message, this.isLoading = false});
-
-  final String message;
-  final bool isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: context.tr('customer_garage.add.car_name_label'),
-        prefixIcon: isLoading
-            ? const Padding(
-                padding: EdgeInsets.all(14),
-                child: SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              )
-            : const Icon(Icons.directions_car_outlined),
-        enabled: false,
-      ),
-      child: Text(message, style: Theme.of(context).textTheme.bodyMedium),
-    );
-  }
-}
-
-class _CarNameLoadError extends StatelessWidget {
-  const _CarNameLoadError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        OctoGearFeedbackBanner(
-          message: message,
-          tone: OctoGearFeedbackTone.error,
-        ),
-        if (onRetry != null) ...[
-          const SizedBox(height: OctoGearSpacing.xSmall),
-          TextButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
-            label: Text(context.tr('common.retry')),
-          ),
-        ],
-      ],
     );
   }
 }

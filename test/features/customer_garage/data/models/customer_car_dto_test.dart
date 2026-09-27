@@ -7,6 +7,7 @@ void main() {
       final car = CustomerCarDto.fromJson(_carJson()).toEntity();
       final picture = car.pictures.single;
 
+      expect(car.company.name, 'Toyota');
       expect(picture.id, 17);
       expect(picture.url, '/api/customer/customer-cars/9/pictures/17');
       expect(picture.mimeType, 'image/jpeg');
@@ -51,6 +52,7 @@ Map<String, Object?> _carJson() {
     'id': 9,
     'manufacturing_year': 2022,
     'vehicle_plat_number': 'ABC 1234',
+    'company': {'id': 1, 'name': 'Toyota'},
     'car_name': {'id': 4, 'name': 'Camry'},
     'color': {'id': 2, 'name': 'White'},
     'fuel_type': {'id': 1, 'name': 'Petrol'},

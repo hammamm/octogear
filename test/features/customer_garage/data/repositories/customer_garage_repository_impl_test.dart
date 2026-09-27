@@ -3,6 +3,7 @@ import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/features/customer_garage/data/data_sources/customer_cars_remote_data_source.dart';
 import 'package:octogear/features/customer_garage/data/models/create_customer_car_request_dto.dart';
 import 'package:octogear/features/customer_garage/data/models/customer_car_dto.dart';
+import 'package:octogear/features/customer_garage/data/models/update_customer_car_request_dto.dart';
 import 'package:octogear/features/customer_garage/data/repositories/customer_garage_repository_impl.dart';
 
 void main() {
@@ -19,6 +20,7 @@ void main() {
         final car = (await repository.getCustomerCars()).single;
 
         expect(car.licensePlateNumber, 'ABC 1234');
+        expect(car.company.name, 'Toyota');
         expect(car.carName.name, 'Camry');
         expect(car.color.name, 'White');
         expect(car.fuelType.name, 'Petrol');
@@ -55,6 +57,7 @@ CustomerCarDto _carDto() {
     'id': 9,
     'manufacturing_year': 2022,
     'vehicle_plat_number': 'ABC 1234',
+    'company': {'id': 1, 'name': 'Toyota'},
     'car_name': {'id': 4, 'name': 'Camry'},
     'color': {'id': 2, 'name': 'White'},
     'fuel_type': {'id': 1, 'name': 'Petrol'},
@@ -85,6 +88,11 @@ class _FakeCustomerCarsRemoteDataSource
   }
 
   @override
+  Future<CustomerCarDto> fetchCustomerCar(int carId) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<List<CustomerCarReferenceDto>> fetchCarNames(int companyId) {
     throw UnimplementedError();
   }
@@ -108,6 +116,19 @@ class _FakeCustomerCarsRemoteDataSource
   Future<CustomerCarDto> createCustomerCar(
     CreateCustomerCarRequestDto request,
   ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<CustomerCarDto> updateCustomerCar(
+    int carId,
+    UpdateCustomerCarRequestDto request,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deleteCustomerCar(int carId) {
     throw UnimplementedError();
   }
 }

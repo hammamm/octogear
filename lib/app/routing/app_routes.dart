@@ -13,7 +13,9 @@ import '../../features/authentication/presentation/screens/registration_screen.d
 import '../../features/authentication/presentation/screens/session_loading_screen.dart';
 import '../../features/authentication/presentation/screens/session_unavailable_screen.dart';
 import '../../features/customer_garage/presentation/screens/create_customer_car_screen.dart';
+import '../../features/customer_garage/presentation/screens/customer_car_details_screen.dart';
 import '../../features/customer_garage/presentation/screens/customer_cars_screen.dart';
+import '../../features/customer_garage/presentation/screens/edit_customer_car_screen.dart';
 import '../shells/customer_app_shell.dart';
 import '../shells/role_app_shell.dart';
 
@@ -97,6 +99,14 @@ class SessionUnavailableRoute extends GoRouteData
               routes: <TypedRoute<RouteData>>[
                 TypedGoRoute<CreateCustomerCarRoute>(
                   path: AppRoutePath.customerCarsAddSegment,
+                ),
+                TypedGoRoute<CustomerCarDetailsRoute>(
+                  path: AppRoutePath.customerCarsDetailsSegment,
+                  routes: <TypedRoute<RouteData>>[
+                    TypedGoRoute<CustomerCarEditRoute>(
+                      path: AppRoutePath.customerCarsEditSegment,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -198,6 +208,32 @@ class CreateCustomerCarRoute extends GoRouteData with $CreateCustomerCarRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const CreateCustomerCarScreen();
+  }
+}
+
+/// Authoritative detail route for one saved car. Keeping the identifier in the
+/// URL makes it deep-linkable and lets the screen refetch server truth instead
+/// of accepting a potentially stale list object.
+class CustomerCarDetailsRoute extends GoRouteData
+    with $CustomerCarDetailsRoute {
+  const CustomerCarDetailsRoute({required this.carId});
+
+  final int carId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return CustomerCarDetailsScreen(carId: carId);
+  }
+}
+
+class CustomerCarEditRoute extends GoRouteData with $CustomerCarEditRoute {
+  const CustomerCarEditRoute({required this.carId});
+
+  final int carId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return EditCustomerCarScreen(carId: carId);
   }
 }
 

@@ -30,13 +30,16 @@ void main() {
       expect(request.contentType, Headers.multipartFormDataContentType);
 
       final formData = request.data! as FormData;
-      expect({for (final field in formData.fields) field.key: field.value}, {
-        'car_name_id': '4',
-        'manufacturing_year': '2022',
-        'vehicle_plat_number': 'ABC 1234',
-        'color_id': '2',
-        'fuel_type': '1',
-      });
+      expect(
+        {for (final field in formData.fields) field.key: field.value},
+        {
+          'car_name_id': '4',
+          'manufacturing_year': '2022',
+          'vehicle_plat_number': 'ABC 1234',
+          'color_id': '2',
+          'fuel_type': '1',
+        },
+      );
       expect(formData.files.map((entry) => entry.key), ['pictures[]']);
       expect(
         created.pictures.single.url,
@@ -98,6 +101,7 @@ Map<String, Object?> _carEnvelope() {
       'id': 9,
       'manufacturing_year': 2022,
       'vehicle_plat_number': 'ABC 1234',
+      'company': {'id': 1, 'name': 'Toyota'},
       'car_name': {'id': 4, 'name': 'Camry'},
       'color': {'id': 2, 'name': 'White'},
       'fuel_type': {'id': 1, 'name': 'Petrol'},

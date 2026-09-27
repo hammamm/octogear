@@ -56,8 +56,11 @@ class CustomerCarsScreen extends ConsumerWidget {
                         )
                       : SliverList.separated(
                           itemCount: values.length,
-                          itemBuilder: (context, index) =>
-                              CustomerCarCard(car: values[index]),
+                          itemBuilder: (context, index) => CustomerCarCard(
+                            car: values[index],
+                            onTap: () =>
+                                _openCarDetails(context, ref, values[index].id),
+                          ),
                           separatorBuilder: (_, _) =>
                               const SizedBox(height: OctoGearSpacing.medium),
                         ),
@@ -81,7 +84,9 @@ class CustomerCarsScreen extends ConsumerWidget {
 
   Future<void> _openAddCar(BuildContext context, WidgetRef ref) async {
     final created = await const CreateCustomerCarRoute().push<bool>(context);
-    if (created != true || !context.mounted) return;
+    if (created != true || !context.mounted) {
+      return;
+    }
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -94,6 +99,25 @@ class CustomerCarsScreen extends ConsumerWidget {
     } catch (_) {
       // The already-visible list owns its retryable error state. Do not show a
       // second modal or erase the car the customer just saved.
+    }
+  }
+
+  Future<void> _openCarDetails(
+    BuildContext context,
+    WidgetRef ref,
+    int carId,
+  ) async {
+    await CustomerCarDetailsRoute(carId: carId).push<bool>(context);
+    if (!context.mounted) {
+      return;
+    }
+
+    try {
+      await ref.read(customerCarsControllerProvider.notifier).retry();
+    } catch (_) {
+      // Always reconcile the list after the detail flow returns. This covers a
+      // normal edit, a completed-but-timeout DELETE, and a car removed by a
+      // concurrent session without trusting a stale in-memory card.
     }
   }
 }

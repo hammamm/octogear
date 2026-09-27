@@ -36,6 +36,7 @@ class CustomerCar {
     required this.id,
     required this.manufacturingYear,
     required this.licensePlateNumber,
+    required this.company,
     required this.carName,
     required this.color,
     required this.fuelType,
@@ -46,6 +47,7 @@ class CustomerCar {
   final int id;
   final int manufacturingYear;
   final String licensePlateNumber;
+  final CustomerCarReference company;
   final CustomerCarReference carName;
   final CustomerCarReference color;
   final CustomerCarReference fuelType;
