@@ -18,6 +18,7 @@ import '../../features/customer_garage/presentation/screens/customer_cars_screen
 import '../../features/customer_garage/presentation/screens/edit_customer_car_screen.dart';
 import '../../features/storefront/presentation/screens/customer_storefront_screen.dart';
 import '../../features/storefront/presentation/screens/customer_store_details_screen.dart';
+import '../../features/storefront/presentation/screens/customer_store_car_screen.dart';
 import '../shells/customer_app_shell.dart';
 import '../shells/role_app_shell.dart';
 
@@ -88,6 +89,11 @@ class SessionUnavailableRoute extends GoRouteData
           routes: <TypedRoute<RouteData>>[
             TypedGoRoute<CustomerStoreDetailsRoute>(
               path: AppRoutePath.customerStoreDetailsSegment,
+              routes: <TypedRoute<RouteData>>[
+                TypedGoRoute<CustomerStoreCarRoute>(
+                  path: AppRoutePath.customerStoreCarSegment,
+                ),
+              ],
             ),
           ],
         ),
@@ -186,6 +192,15 @@ class CustomerStoreDetailsRoute extends GoRouteData
   Widget build(BuildContext context, GoRouterState state) {
     return CustomerStoreDetailsScreen(storeId: storeId);
   }
+}
+
+class CustomerStoreCarRoute extends GoRouteData with $CustomerStoreCarRoute {
+  const CustomerStoreCarRoute({required this.storeId, required this.carId});
+  final int storeId;
+  final int carId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      CustomerStoreCarScreen(storeId: storeId, carId: carId);
 }
 
 class CustomerOrdersRoute extends GoRouteData with $CustomerOrdersRoute {

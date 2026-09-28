@@ -131,8 +131,13 @@ class CustomerStoreDetailsScreen extends ConsumerWidget {
         return [
           SliverList.separated(
             itemCount: state.page.cars.length,
-            itemBuilder: (context, index) =>
-                StorefrontStoreCarCard(car: state.page.cars[index]),
+            itemBuilder: (context, index) => StorefrontStoreCarCard(
+              car: state.page.cars[index],
+              onTap: () => CustomerStoreCarRoute(
+                storeId: storeId,
+                carId: state.page.cars[index].id,
+              ).push<void>(context),
+            ),
             separatorBuilder: (_, _) =>
                 const SizedBox(height: OctoGearSpacing.medium),
           ),

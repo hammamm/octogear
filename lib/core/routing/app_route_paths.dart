@@ -12,6 +12,7 @@ abstract final class AppRoutePath {
   static const customerHome = '/customer';
   static const customerStores = '/customer/stores';
   static const customerStoreDetailsSegment = ':storeId';
+  static const customerStoreCarSegment = 'cars/:carId';
   static const customerOrders = '/customer/orders';
   static const customerAccount = '/customer/account';
   static const customerCars = '/customer/account/cars';

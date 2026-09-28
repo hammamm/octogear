@@ -10,12 +10,11 @@ import '../../domain/entities/storefront_store_car.dart';
 
 /// Read-only customer summary of one vehicle in a store's inventory.
 ///
-/// Tapping through to the vehicle/component detail is deliberately deferred
-/// until that route has a confirmed API and customer journey.
 class StorefrontStoreCarCard extends StatelessWidget {
-  const StorefrontStoreCarCard({required this.car, super.key});
+  const StorefrontStoreCarCard({required this.car, this.onTap, super.key});
 
   final StorefrontStoreCar car;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +22,7 @@ class StorefrontStoreCarCard extends StatelessWidget {
       context.locale.toLanguageTag(),
     );
     return OctoGearSurfaceCard(
+      onTap: onTap,
       semanticLabel: context.tr(
         'storefront.details.car_semantics',
         args: [car.carName.name, numberFormat.format(car.manufacturingYear)],
@@ -47,7 +47,10 @@ class StorefrontStoreCarCard extends StatelessWidget {
                 Directionality(
                   textDirection: ui.TextDirection.ltr,
                   child: Text(
-                    numberFormat.format(car.manufacturingYear),
+                    NumberFormat(
+                      '0',
+                      context.locale.toLanguageTag(),
+                    ).format(car.manufacturingYear),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: OctoGearColors.structuralGray,
                     ),
@@ -71,6 +74,21 @@ class StorefrontStoreCarCard extends StatelessWidget {
                     args: [numberFormat.format(car.componentsCount)],
                   ),
                 ),
+                if (onTap != null)
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(top: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            context.tr('storefront.car.view_parts'),
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_rounded, size: 18),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

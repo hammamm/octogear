@@ -174,6 +174,13 @@ RouteBase get $customerShellRoute => StatefulShellRouteData.$route(
               path: ':storeId',
               hasOverriddenOnExit: false,
               factory: $CustomerStoreDetailsRoute._fromState,
+              routes: [
+                GoRouteData.$route(
+                  path: 'cars/:carId',
+                  hasOverriddenOnExit: false,
+                  factory: $CustomerStoreCarRoute._fromState,
+                ),
+              ],
             ),
           ],
         ),
@@ -284,6 +291,34 @@ mixin $CustomerStoreDetailsRoute on GoRouteData {
   @override
   String get location => GoRouteData.$location(
     '/customer/stores/${Uri.encodeComponent(_self.storeId.toString())}',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CustomerStoreCarRoute on GoRouteData {
+  static CustomerStoreCarRoute _fromState(GoRouterState state) =>
+      CustomerStoreCarRoute(
+        storeId: int.parse(state.pathParameters['storeId']!),
+        carId: int.parse(state.pathParameters['carId']!),
+      );
+
+  CustomerStoreCarRoute get _self => this as CustomerStoreCarRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/customer/stores/${Uri.encodeComponent(_self.storeId.toString())}/cars/${Uri.encodeComponent(_self.carId.toString())}',
   );
 
   @override

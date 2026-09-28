@@ -24,6 +24,8 @@ import 'package:octogear/features/storefront/domain/use_cases/get_store_details_
 import 'package:octogear/features/storefront/domain/use_cases/search_stores_use_case.dart';
 import 'package:octogear/features/storefront/presentation/controllers/storefront_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:octogear/features/storefront/presentation/controllers/storefront_car_catalog_providers.dart';
+import '../../features/storefront/support/car_catalog_fixtures.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -133,6 +135,18 @@ void main() {
     );
     expect(find.text('Cars available in this store'), findsOneWidget);
     expect(find.text('Camry'), findsOneWidget);
+    await tester.ensureVisible(find.text('Camry'));
+    await tester.tap(find.text('Camry'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const PageStorageKey('store-car-1-7')), findsOneWidget);
+    expect(find.text('Car & parts'), findsOneWidget);
+    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    await tester.tap(find.byType(BackButtonIcon).last);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const PageStorageKey<String>('customer-store-details-1')),
+      findsOneWidget,
+    );
   });
 }
 
@@ -144,6 +158,9 @@ Future<void> _pumpCustomerApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        storefrontCarCatalogRepositoryProvider.overrideWithValue(
+          FakeCarCatalogRepository(),
+        ),
         sessionControllerProvider.overrideWith(_CustomerSessionController.new),
         appLocaleProvider.overrideWith(
           locale == AppLocale.arabic

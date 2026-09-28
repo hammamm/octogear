@@ -591,13 +591,31 @@ The response/list shape contains typed picture metadata, for example:
 
 **Loading/empty/error/offline states:** The public store header and the inventory list are independent reads. While both load, show accessible skeletons. If the store header succeeds but inventory fails, retain the header and show an inline inventory Retry. A successful empty inventory shows a truthful no-vehicles state. A detail `404` shows a safe unavailable state with a route back to Stores; a timeout/no connection/`5xx` keeps the session and offers explicit Retry. Pull-to-refresh reloads both safe `GET` resources. Inventory pagination prevents duplicate loads, stops after `last_page`, and retains earlier cards with a retry footer if a later page fails. No automatic retry is used.
 
-**Navigation inputs/result:** A store card pushes the generated typed child route `/customer/stores/:storeId`, carrying only the numeric store ID. The route refetches authoritative Laravel data rather than receiving a mutable card object. The Back action returns to the existing Stores tab. Inventory-card navigation to individual store-car details is deliberately deferred to the next bounded slice; cards are summaries only in this slice.
+**Navigation inputs/result:** A store card pushes the generated typed child route `/customer/stores/:storeId`, carrying only the numeric store ID. The route refetches authoritative Laravel data rather than receiving a mutable card object. The Back action returns to the existing Stores tab. Inventory cards now push the typed car/components child route described below.
 
 **Locale and RTL behavior:** Static copy is translated through `BuildContext`; Laravel localizes city, companies, vehicle names, colors, and fuel types via the shared `Accept-Language` header. Both detail and inventory providers observe app-locale changes and refetch localized server truth. Layout uses directional spacing and icons. Years remain left-to-right; the customer UI does not surface inventory license plates.
 
 **Analytics/notification behavior:** Deferred. This slice adds no map/call action, contact sharing, notification, Firebase, or analytics behavior.
 
 **Tests:** Laravel covers localized company output and blocks inactive stores from shared detail/inventory reads. Flutter covers trusted detail/inventory media decoding, exact authenticated endpoint/header behavior, independent detail/inventory states, pagination/retry behavior, typed card-to-detail navigation, gallery fallback, supported-company display, and Arabic RTL layout.
+
+## Customer inventory car and components
+
+**User action:** Tap a vehicle in a store to review its photos, manufacturer, year, color, fuel type, section-condition report, and paginated parts. Each part shows its localized name/section, listed price, stock, part number, warranty, and description. This is a read-only catalog; ordering remains a separate phase.
+
+**Roles/permissions:** Authenticated active marketplace users. Laravel validates the active store and nested car/component ownership. Customer car responses omit license plates and management flags. Missing or removed catalog references cannot crash or leak a component response.
+
+**API endpoint(s) and confirmed JSON example:** `GET /stores/{store}/cars/{car}` returns the existing car fields plus localized `company`, public `store: {id, name}`, and `sections: [{section_id, name, condition: "okay"|"damaged"}]`. `GET /stores/{store}/cars/{car}/components?page=1` returns the standard pagination envelope with items such as `{id: 5, component: {id: 2, name: "Alternator"}, section: {id: 3, name: "Engine"}, price: 52000, currency: "SAR", price_scale: 100, stock_quantity: 2, part_number: "ALT-20", warranty_months: 3, description: null}`. Price remains the existing integer minor-unit amount used by PaymentService and demo fixtures; currency metadata makes display unambiguous (52000 = SAR 520.00). No checkout, tax, compatibility, component photos, or payment behavior is inferred.
+
+**Loading/empty/error/offline states:** Independent car and component reads, accessible loading states, explicit retry, truthful empty and out-of-stock states, pull-to-refresh, and a Load more / Retry footer that preserves earlier parts. Reads never retry automatically; locale changes and refresh invalidate stale page results. Not-found responses give a safe Back to stores action.
+
+**Navigation inputs/result:** Typed `/customer/stores/:storeId/cars/:carId`, numeric IDs only, within the existing customer shell. Back returns to the store and retains its browsing position. Gallery uses validated same-origin authenticated car-picture paths.
+
+**Locale and RTL behavior:** Static labels in Arabic/English; locale-aware prices and quantities; ungrouped manufacturing years; LTR part numbers. Both reads reload server-localized names on language change. Layout supports small screens and large text.
+
+**Analytics/notification behavior:** Unchanged. SMS logging, Firebase, registration, and payment stubs remain untouched.
+
+**Tests:** Laravel contract, locale, soft-deleted references, pagination, authorization/nesting, and customer-safe fields. Flutter DTO and authenticated API mapping, price units, pagination/retry/stale response/disposal, typed navigation, independent loading/error/empty states, Arabic RTL and large-text layout. Run analysis and both test suites; visually inspect the new page.
 
 ### Customer-car media deployment and deletion safety
 
