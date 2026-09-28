@@ -16,6 +16,8 @@ import '../../features/customer_garage/presentation/screens/create_customer_car_
 import '../../features/customer_garage/presentation/screens/customer_car_details_screen.dart';
 import '../../features/customer_garage/presentation/screens/customer_cars_screen.dart';
 import '../../features/customer_garage/presentation/screens/edit_customer_car_screen.dart';
+import '../../features/storefront/presentation/screens/customer_storefront_screen.dart';
+import '../../features/storefront/presentation/screens/customer_store_details_screen.dart';
 import '../shells/customer_app_shell.dart';
 import '../shells/role_app_shell.dart';
 
@@ -81,7 +83,14 @@ class SessionUnavailableRoute extends GoRouteData
     ),
     TypedStatefulShellBranch<CustomerStoresBranch>(
       routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<CustomerStoresRoute>(path: AppRoutePath.customerStores),
+        TypedGoRoute<CustomerStoresRoute>(
+          path: AppRoutePath.customerStores,
+          routes: <TypedRoute<RouteData>>[
+            TypedGoRoute<CustomerStoreDetailsRoute>(
+              path: AppRoutePath.customerStoreDetailsSegment,
+            ),
+          ],
+        ),
       ],
     ),
     TypedStatefulShellBranch<CustomerOrdersBranch>(
@@ -161,9 +170,21 @@ class CustomerStoresRoute extends GoRouteData with $CustomerStoresRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const CustomerShellTabScreen(
-      destination: CustomerShellDestination.stores,
-    );
+    return const CustomerStorefrontScreen();
+  }
+}
+
+/// A store ID is the only navigation input; this route refetches current,
+/// customer-safe store information and inventory from Laravel.
+class CustomerStoreDetailsRoute extends GoRouteData
+    with $CustomerStoreDetailsRoute {
+  const CustomerStoreDetailsRoute({required this.storeId});
+
+  final int storeId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return CustomerStoreDetailsScreen(storeId: storeId);
   }
 }
 

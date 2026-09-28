@@ -8,20 +8,30 @@ class OctoGearSurfaceCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(24),
     this.semanticLabel,
+    this.onTap,
     super.key,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final String? semanticLabel;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      container: semanticLabel != null,
+      container: semanticLabel != null || onTap != null,
       label: semanticLabel,
+      button: onTap != null,
       child: Card(
-        child: Padding(padding: padding, child: child),
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(padding: padding, child: child),
+          ),
+        ),
       ),
     );
   }

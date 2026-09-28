@@ -11,6 +11,18 @@ import 'package:octogear/core/localization/app_locale_controller.dart';
 import 'package:octogear/features/authentication/domain/entities/app_user.dart';
 import 'package:octogear/features/authentication/domain/entities/session_outcome.dart';
 import 'package:octogear/features/authentication/presentation/controllers/session_controller.dart';
+import 'package:octogear/features/storefront/domain/entities/marketplace_store.dart';
+import 'package:octogear/features/storefront/domain/entities/storefront_filter_options.dart';
+import 'package:octogear/features/storefront/domain/entities/storefront_filters.dart';
+import 'package:octogear/features/storefront/domain/entities/storefront_page.dart';
+import 'package:octogear/features/storefront/domain/entities/storefront_store_car.dart';
+import 'package:octogear/features/storefront/domain/entities/storefront_store_cars_page.dart';
+import 'package:octogear/features/storefront/domain/entities/storefront_store_details.dart';
+import 'package:octogear/features/storefront/domain/repositories/storefront_repository.dart';
+import 'package:octogear/features/storefront/domain/use_cases/get_store_cars_use_case.dart';
+import 'package:octogear/features/storefront/domain/use_cases/get_store_details_use_case.dart';
+import 'package:octogear/features/storefront/domain/use_cases/search_stores_use_case.dart';
+import 'package:octogear/features/storefront/presentation/controllers/storefront_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -49,10 +61,10 @@ void main() {
     await tester.tap(find.text('Stores'));
     await tester.pumpAndSettle();
     expect(
-      find.byKey(const PageStorageKey<String>('customer-tab-stores')),
+      find.byKey(const PageStorageKey<String>('customer-storefront')),
       findsOneWidget,
     );
-    expect(find.text('Discover stores'), findsOneWidget);
+    expect(find.text('Explore stores'), findsOneWidget);
 
     await tester.tap(find.text('Orders'));
     await tester.pumpAndSettle();
@@ -91,6 +103,37 @@ void main() {
       'rtl',
     );
   });
+
+  testWidgets('opens the real typed store detail and inventory journey', (
+    tester,
+  ) async {
+    await _pumpCustomerApp(
+      tester,
+      translations: englishTranslations,
+      locale: AppLocale.english,
+    );
+
+    await tester.tap(find.text('Stores'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Test Store').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Store details'), findsOneWidget);
+    expect(find.text('Supported manufacturers'), findsOneWidget);
+    expect(find.text('Toyota'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Cars available in this store'),
+      300,
+      scrollable: find.descendant(
+        of: find.byKey(
+          const PageStorageKey<String>('customer-store-details-1'),
+        ),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.text('Cars available in this store'), findsOneWidget);
+    expect(find.text('Camry'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpCustomerApp(
@@ -106,6 +149,15 @@ Future<void> _pumpCustomerApp(
           locale == AppLocale.arabic
               ? _ArabicLocaleController.new
               : _EnglishLocaleController.new,
+        ),
+        searchStoresUseCaseProvider.overrideWithValue(
+          _CustomerStorefrontUseCase(),
+        ),
+        getStoreDetailsUseCaseProvider.overrideWithValue(
+          _CustomerStoreDetailsUseCase(),
+        ),
+        getStoreCarsUseCaseProvider.overrideWithValue(
+          _CustomerStoreCarsUseCase(),
         ),
       ],
       child: EasyLocalization(
@@ -145,6 +197,104 @@ class _EnglishLocaleController extends AppLocaleController {
 class _ArabicLocaleController extends AppLocaleController {
   @override
   AppLocale build() => AppLocale.arabic;
+}
+
+class _CustomerStorefrontUseCase extends SearchStoresUseCase {
+  _CustomerStorefrontUseCase() : super(_UnusedStorefrontRepository());
+
+  @override
+  Future<StorefrontPage> call(
+    StorefrontFilters filters, {
+    required int page,
+  }) async {
+    return const StorefrontPage(
+      stores: [
+        MarketplaceStore(
+          id: 1,
+          name: 'Test Store',
+          nickname: 'Test Store',
+          city: null,
+          primaryPictureUrl: null,
+          averageRating: null,
+        ),
+      ],
+      currentPage: 1,
+      lastPage: 1,
+      perPage: 15,
+      total: 1,
+    );
+  }
+}
+
+class _CustomerStoreDetailsUseCase extends GetStoreDetailsUseCase {
+  _CustomerStoreDetailsUseCase() : super(_UnusedStorefrontRepository());
+
+  @override
+  Future<StorefrontStoreDetails> call(int storeId) async {
+    return const StorefrontStoreDetails(
+      id: 1,
+      name: 'Test Store',
+      nickname: 'Test Store',
+      city: StorefrontReference(id: 1, name: 'Aden'),
+      companies: [StorefrontReference(id: 9, name: 'Toyota')],
+      pictures: [],
+      averageRating: 4.5,
+      soldQuantity: 3,
+    );
+  }
+}
+
+class _CustomerStoreCarsUseCase extends GetStoreCarsUseCase {
+  _CustomerStoreCarsUseCase() : super(_UnusedStorefrontRepository());
+
+  @override
+  Future<StorefrontStoreCarsPage> call(int storeId, {required int page}) async {
+    return const StorefrontStoreCarsPage(
+      cars: [
+        StorefrontStoreCar(
+          id: 7,
+          manufacturingYear: 2020,
+          carName: StorefrontReference(id: 1, name: 'Camry'),
+          color: StorefrontReference(id: 2, name: 'White'),
+          fuelType: StorefrontReference(id: 3, name: 'Petrol'),
+          componentsCount: 5,
+          pictures: [],
+        ),
+      ],
+      currentPage: 1,
+      lastPage: 1,
+      perPage: 15,
+      total: 1,
+    );
+  }
+}
+
+class _UnusedStorefrontRepository implements StorefrontRepository {
+  @override
+  Future<StorefrontFilterOptions> getFilterOptions() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<StorefrontPage> searchStores(
+    StorefrontFilters filters, {
+    required int page,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<StorefrontStoreDetails> getStoreDetails(int storeId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<StorefrontStoreCarsPage> getStoreCars(
+    int storeId, {
+    required int page,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 const _customer = AppUser(

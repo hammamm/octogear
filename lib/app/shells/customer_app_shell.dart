@@ -17,9 +17,9 @@ import '../../features/authentication/presentation/controllers/session_controlle
 /// The persistent customer-only application shell.
 ///
 /// Each destination owns a branch navigator through [StatefulNavigationShell].
-/// That keeps a destination's future scroll position and child route stack when
-/// the customer switches tabs. Feature content deliberately remains static in
-/// this slice; APIs and feature controllers belong to later bounded features.
+/// That keeps a destination's scroll position and child route stack when the
+/// customer switches tabs. Each tab is replaced by a dedicated feature only
+/// when that feature's API-backed slice is ready.
 class CustomerAppShell extends StatelessWidget {
   const CustomerAppShell({required this.navigationShell, super.key});
 

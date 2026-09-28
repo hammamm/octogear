@@ -563,6 +563,42 @@ The response/list shape contains typed picture metadata, for example:
 
 **Tests:** Laravel covers localized company, active-reference validation, owner detail/update/delete authorization, missing/stale resources, and soft removal. Flutter covers typed DTO/repository mapping, route/card tap, detail loading/error/photo gallery, edit validation/save, destructive removal confirmation, list refresh, private image fallback, and Arabic RTL behavior.
 
+## Next feature implementation note: customer storefront discovery
+
+**User action:** A signed-in customer opens the **Stores** tab, browses active stores, searches by store nickname, and optionally filters by city and supported vehicle manufacturer.
+
+**Roles/permissions:** Marketplace browsing is read-only and is protected by Sanctum and the active-user rule. Laravel decides which stores are active. The customer never receives provider-only management actions or provider private data. The browse response exposes only customer-needed listing data: store identity/display name, localized city, controlled store-picture stream metadata, rating, and sales summary. Mobile number, employee name, commercial-registration data/image, and owner-only location-management data remain available only to the owning provider. A later store-detail/contact feature must explicitly define which contact/location fields are public.
+
+**API endpoint(s) and confirmed JSON example:** `GET /stores?query={nickname}&city_id={id}&company_id={id}&page={n}` is an authenticated, localized, paginated read. `query`, `city_id`, and `company_id` are optional; Laravel validates filters and returns active stores only, with `{ data: [...], meta: { current_page, last_page, per_page, total } }`. Public localized reference lists come from `GET /reference/cities` and `GET /reference/companies`. Store picture URLs must be accepted only when they match the documented same-origin API media path `/api/media/stores/{store}/pictures/{picture}`; Flutter attaches the current bearer header through the existing authenticated-image component and never places a token in the URL.
+
+**Loading/empty/error/offline states:** Show accessible skeleton cards for an initial load, a clear empty state for the unfiltered marketplace or an active filter with no matches, a safe inline retry state for initial failure, pull-to-refresh, and an inline retry footer if a later page fails. Debounce nickname input for 400 ms, cancel it when the screen is disposed, and reject stale response results so an earlier query cannot overwrite a later query. Do not auto-retry reads. Prevent duplicate page fetches and stop after `last_page`.
+
+**Navigation inputs/result:** This bounded slice replaces only the static `/customer/stores` shell preview. Store cards intentionally do not fake a detail flow; the typed store-detail route, store cars, and components belong to the next storefront slice.
+
+**Locale and RTL behavior:** All static copy is translated through `BuildContext`. The central `Accept-Language` header localizes city/company names; switching language reloads the current query and filter options. All spacing/icons are directional and filter controls remain usable with Arabic text scaling.
+
+**Analytics/notification behavior:** Deferred. This slice adds no notification, location-permission, map, call, or analytics behavior.
+
+**Tests:** Laravel covers active-only search/filter/pagination and customer-safe response fields. Flutter covers pagination envelope decoding, exact endpoint/query/header behavior, invalid media URL rejection, controller first-page/filter/next-page/error behavior, and loading/empty/error/Arabic/card UI states.
+
+## Next feature implementation note: customer store and inventory overview
+
+**User action:** A signed-in customer selects an active store card and reviews the store’s public identity, supported vehicle manufacturers, gallery, and the first pages of its available vehicles.
+
+**Roles/permissions:** Marketplace viewing is read-only for authenticated active users. A store that is inactive is not a marketplace resource: every shared store-detail, store-car, and nested-store read must return the same safe `404` result rather than exposing an inactive store by an ID guessed outside the listing. Provider management uses its separate provider routes; no customer route exposes `can_manage`, editing, contact, commercial-registration, or private location-management controls.
+
+**API endpoint(s) and confirmed JSON example:** Protected `GET /stores/{store}` returns the standard success envelope with only customer-safe detail data: `id`, `name`, `nick_name`, localized `city`, numeric `average_rating`, integer `sold_quantity`, ordered typed `pictures`, and localized `companies` as `{ id, name }`. The backend must load and serialize `companies`; Flutter must not infer them from search filters. Protected `GET /stores/{store}/cars?page={n}` returns a localized, paginated list of that active store’s inventory vehicles. Each card needs only `id`, `manufacturing_year`, localized `car_name`, localized `color`/`fuel_type`, typed store-car picture metadata, and `components_count`. Private paths, phone numbers, employee names, commercial registration data, and management flags must not enter the customer detail DTO or domain entity. Store image URLs must exactly match `/api/media/stores/{store}/pictures/{picture}`; inventory image URLs must exactly match `/api/media/stores/{store}/cars/{car}/pictures/{picture}` before Flutter attaches a bearer header.
+
+**Loading/empty/error/offline states:** The public store header and the inventory list are independent reads. While both load, show accessible skeletons. If the store header succeeds but inventory fails, retain the header and show an inline inventory Retry. A successful empty inventory shows a truthful no-vehicles state. A detail `404` shows a safe unavailable state with a route back to Stores; a timeout/no connection/`5xx` keeps the session and offers explicit Retry. Pull-to-refresh reloads both safe `GET` resources. Inventory pagination prevents duplicate loads, stops after `last_page`, and retains earlier cards with a retry footer if a later page fails. No automatic retry is used.
+
+**Navigation inputs/result:** A store card pushes the generated typed child route `/customer/stores/:storeId`, carrying only the numeric store ID. The route refetches authoritative Laravel data rather than receiving a mutable card object. The Back action returns to the existing Stores tab. Inventory-card navigation to individual store-car details is deliberately deferred to the next bounded slice; cards are summaries only in this slice.
+
+**Locale and RTL behavior:** Static copy is translated through `BuildContext`; Laravel localizes city, companies, vehicle names, colors, and fuel types via the shared `Accept-Language` header. Both detail and inventory providers observe app-locale changes and refetch localized server truth. Layout uses directional spacing and icons. Years remain left-to-right; the customer UI does not surface inventory license plates.
+
+**Analytics/notification behavior:** Deferred. This slice adds no map/call action, contact sharing, notification, Firebase, or analytics behavior.
+
+**Tests:** Laravel covers localized company output and blocks inactive stores from shared detail/inventory reads. Flutter covers trusted detail/inventory media decoding, exact authenticated endpoint/header behavior, independent detail/inventory states, pagination/retry behavior, typed card-to-detail navigation, gallery fallback, supported-company display, and Arabic RTL layout.
+
 ### Customer-car media deployment and deletion safety
 
 Before deploying this feature, run Laravel migrations, configure the production scheduler to invoke `php artisan schedule:run` every minute, and verify that the hourly customer-car idempotency cleanup command appears in `php artisan schedule:list`. Set PHP and reverse-proxy multipart size limits at or above the API's 5 MiB-per-image contract. Configure and test a GD/Imagick-capable normalization/EXIF-removal worker or approved image service before public production use; client compression is only a usability optimization, not a privacy control.
