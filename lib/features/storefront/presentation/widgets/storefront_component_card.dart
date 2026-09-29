@@ -8,8 +8,13 @@ import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../domain/entities/storefront_car_catalog.dart';
 
 class StorefrontComponentCard extends StatelessWidget {
-  const StorefrontComponentCard({required this.part, super.key});
+  const StorefrontComponentCard({
+    required this.part,
+    this.onRequest,
+    super.key,
+  });
   final StorefrontCarComponent part;
+  final VoidCallback? onRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +145,17 @@ class StorefrontComponentCard extends StatelessWidget {
               Expanded(child: Text(warranty)),
             ],
           ),
+          if (onRequest != null) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: part.inStock ? onRequest : null,
+                icon: const Icon(Icons.add_shopping_cart_outlined),
+                label: Text(context.tr('part_request.title')),
+              ),
+            ),
+          ],
           if (part.description != null) ...[
             const SizedBox(height: 12),
             ExpansionTile(

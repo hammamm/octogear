@@ -87,10 +87,9 @@ class _CustomerBottomNavigation extends StatelessWidget {
           selectedIndex: navigationShell.currentIndex,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: (index) {
-            navigationShell.goBranch(
-              index,
-              initialLocation: index == navigationShell.currentIndex,
-            );
+            // Reselecting a tab must not discard a child form or an uncertain
+            // submission. The page's back action owns draft confirmation.
+            navigationShell.goBranch(index);
           },
           destinations: [
             NavigationDestination(

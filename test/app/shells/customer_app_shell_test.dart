@@ -26,6 +26,13 @@ import 'package:octogear/features/storefront/presentation/controllers/storefront
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:octogear/features/storefront/presentation/controllers/storefront_car_catalog_providers.dart';
 import '../../features/storefront/support/car_catalog_fixtures.dart';
+import 'package:octogear/features/part_requests/presentation/controllers/part_request_providers.dart';
+import 'package:octogear/features/part_requests/presentation/services/part_request_photo_picker.dart';
+import 'package:octogear/features/part_requests/presentation/screens/request_part_screen.dart';
+import '../../features/part_requests/part_request_test.dart'
+    show FakeRequestRepository;
+import '../../features/part_requests/request_part_screen_test.dart'
+    show FakePhotoPicker;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -141,6 +148,41 @@ void main() {
     expect(find.byKey(const PageStorageKey('store-car-1-7')), findsOneWidget);
     expect(find.text('Car & parts'), findsOneWidget);
     expect(find.byType(NavigationDestination), findsNWidgets(4));
+    for (
+      var i = 0;
+      i < 20 && find.text('Request a part').hitTestable().evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(
+        find.byKey(const PageStorageKey('store-car-1-7')),
+        const Offset(0, -180),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    await tester.tap(find.text('Request a part').first);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<RequestPartScreen>(find.byType(RequestPartScreen))
+          .requestKey,
+      (storeId: 1, carId: 7, componentId: 1),
+    );
+    await tester.tap(find.text('Stores').last);
+    await tester.pumpAndSettle();
+    expect(find.byType(RequestPartScreen), findsOneWidget);
+    await tester.tap(find.text('Home').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stores').last);
+    await tester.pumpAndSettle();
+    expect(find.byType(RequestPartScreen), findsOneWidget);
+    await tester.tap(find.byType(BackButtonIcon).last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const PageStorageKey('store-car-1-7')), findsOneWidget);
+    await tester.drag(
+      find.byKey(const PageStorageKey('store-car-1-7')),
+      const Offset(0, 1800),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(BackButtonIcon).last);
     await tester.pumpAndSettle();
     expect(
@@ -158,6 +200,10 @@ Future<void> _pumpCustomerApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        partRequestRepositoryProvider.overrideWithValue(
+          FakeRequestRepository(),
+        ),
+        partRequestPhotoPickerProvider.overrideWithValue(FakePhotoPicker()),
         storefrontCarCatalogRepositoryProvider.overrideWithValue(
           FakeCarCatalogRepository(),
         ),

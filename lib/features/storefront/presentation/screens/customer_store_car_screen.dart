@@ -174,6 +174,11 @@ class CustomerStoreCarScreen extends ConsumerWidget {
           itemBuilder: (_, index) => StorefrontComponentCard(
             key: ValueKey(state.page.components[index].id),
             part: state.page.components[index],
+            onRequest: () => CustomerPartRequestRoute(
+              storeId: storeId,
+              carId: carId,
+              componentId: state.page.components[index].id,
+            ).push<void>(context),
           ),
           separatorBuilder: (_, _) => const SizedBox(height: 12),
         ),
