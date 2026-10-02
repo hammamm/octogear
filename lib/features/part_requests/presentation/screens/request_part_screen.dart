@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../app/routing/app_routes.dart';
+import '../../../customer_orders/presentation/controllers/customer_orders_providers.dart';
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
@@ -159,6 +160,7 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
     if (!mounted) return;
     final result = ref.read(partRequestControllerProvider(widget.requestKey));
     if (result.receipt != null) {
+      ref.invalidate(customerOrdersProvider);
       ref.invalidate(storefrontCarComponentsProvider(_carKey));
     } else if (result.error?.fieldErrors.containsKey(
           'store_car_component_id',
@@ -383,11 +385,12 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
       ),
     );
   }
+
   Widget _formFields(
-      StorefrontCarComponent part,
-      PartRequestState state,
-      bool disabled,
-      ) {
+    StorefrontCarComponent part,
+    PartRequestState state,
+    bool disabled,
+  ) {
     final count = int.tryParse(_quantity.text) ?? 0;
 
     final priceFormatter = NumberFormat.currency(
@@ -423,14 +426,16 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: 12,
+                    runSpacing: 4,
                     children: [
-                      Expanded(
-                        child: Text(
-                         context.tr('part_request.price_per_item'),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
+                      Text(
+                        context.tr('part_request.price_per_item'),
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       Text(
                         unitPriceText,
@@ -441,13 +446,14 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
 
                   const SizedBox(height: 10),
 
-                  Row(
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: 12,
+                    runSpacing: 4,
                     children: [
-                      Expanded(
-                        child: Text(
-                          context.tr('part_request.quantity'),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
+                      Text(
+                        context.tr('part_request.quantity'),
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       Text(
                         '× $count',
@@ -458,13 +464,14 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
 
                   const Divider(height: 24),
 
-                  Row(
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: 12,
+                    runSpacing: 4,
                     children: [
-                      Expanded(
-                        child: Text(
-                          'Total',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                      Text(
+                        context.tr('orders.order_total'),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(
                         totalPriceText,
@@ -493,9 +500,9 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
                   onPressed: disabled || count <= 1
                       ? null
                       : () {
-                    _quantity.text = '${count - 1}';
-                    _changed();
-                  },
+                          _quantity.text = '${count - 1}';
+                          _changed();
+                        },
                   icon: const Icon(Icons.remove_rounded),
                 ),
 
@@ -513,7 +520,7 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
                       TextInputFormatter.withFunction((old, value) {
                         final normalized = value.text.replaceAllMapped(
                           RegExp('[٠-٩۰-۹]'),
-                              (match) {
+                          (match) {
                             final code = match[0]!.codeUnitAt(0);
 
                             return '${code >= 0x6f0 ? code - 0x6f0 : code - 0x660}';
@@ -527,8 +534,7 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
                       LengthLimitingTextInputFormatter(10),
                     ],
                     decoration: InputDecoration(
-                      semanticCounterText:
-                      context.tr('part_request.quantity'),
+                      semanticCounterText: context.tr('part_request.quantity'),
                       errorMaxLines: 3,
                       errorText: _fieldError(state, 'quantity'),
                     ),
@@ -557,9 +563,9 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
                   onPressed: disabled || count >= part.stockQuantity
                       ? null
                       : () {
-                    _quantity.text = '${count + 1}';
-                    _changed();
-                  },
+                          _quantity.text = '${count + 1}';
+                          _changed();
+                        },
                   icon: const Icon(Icons.add_rounded),
                 ),
               ],
@@ -574,10 +580,10 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
                     : 'part_request.out_of_stock',
                 args: part.inStock
                     ? [
-                  NumberFormat.decimalPattern(
-                    context.locale.toLanguageTag(),
-                  ).format(part.stockQuantity),
-                ]
+                        NumberFormat.decimalPattern(
+                          context.locale.toLanguageTag(),
+                        ).format(part.stockQuantity),
+                      ]
                     : [],
               ),
               style: Theme.of(context).textTheme.bodySmall,
@@ -600,8 +606,7 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
                 errorText: _fieldError(state, 'notes'),
               ),
               onChanged: (_) => _changed(),
-              validator: (value) =>
-              (value?.runes.length ?? 0) > 1000
+              validator: (value) => (value?.runes.length ?? 0) > 1000
                   ? context.tr('part_request.notes_error')
                   : null,
             ),
@@ -630,8 +635,7 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
                   height: 150,
                   width: double.infinity,
                   fit: BoxFit.contain,
-                  semanticLabel:
-                  context.tr('part_request.photo_preview'),
+                  semanticLabel: context.tr('part_request.photo_preview'),
                   errorBuilder: (_, _, _) => const SizedBox(
                     height: 100,
                     child: Icon(Icons.broken_image_outlined),
@@ -644,9 +648,7 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
 
             OutlinedButton.icon(
               onPressed: disabled ? null : () => _pickPhoto(),
-              icon: const Icon(
-                Icons.add_photo_alternate_outlined,
-              ),
+              icon: const Icon(Icons.add_photo_alternate_outlined),
               label: Text(
                 context.tr(
                   _picking
@@ -663,23 +665,22 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
                 onPressed: disabled
                     ? null
                     : () {
-                  _photo = null;
-                  _photoError = false;
-                  _changed();
-                },
-                child: Text(
-                  context.tr('part_request.remove_photo'),
-                ),
+                        _photo = null;
+                        _photoError = false;
+                        _changed();
+                      },
+                child: Text(context.tr('part_request.remove_photo')),
               ),
 
             if (_photoError ||
-                _fieldError(state, 'customer_image') != null)
+                (_fieldError(state, 'images') ??
+                        _fieldError(state, 'images.0')) !=
+                    null)
               Text(
-                _fieldError(state, 'customer_image') ??
+                (_fieldError(state, 'images') ??
+                        _fieldError(state, 'images.0')) ??
                     context.tr('part_request.photo_error'),
-                style: const TextStyle(
-                  color: OctoGearColors.error,
-                ),
+                style: const TextStyle(color: OctoGearColors.error),
               ),
           ],
         ),
@@ -760,6 +761,12 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
           ),
           const SizedBox(height: 24),
           FilledButton(
+            onPressed: () =>
+                CustomerOrderDetailsRoute(orderId: receipt.id).go(context),
+            child: Text(context.tr('orders.view_request')),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
             onPressed: _leave,
             child: Text(context.tr('part_request.done')),
           ),

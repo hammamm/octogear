@@ -136,7 +136,7 @@ class _CustomerCarsHeader extends StatelessWidget {
           children: [
             IconButton(
               tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-              onPressed: () => const CustomerAccountRoute().go(context),
+              onPressed: () => const CustomerMoreRoute().go(context),
               icon: const BackButtonIcon(),
             ),
             const Spacer(),

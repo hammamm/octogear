@@ -60,7 +60,7 @@ void main() {
         'quantity': '2',
         'notes': 'Check connector',
       });
-      expect(data.files.single.key, 'customer_image');
+      expect(data.files.single.key, 'images[]');
       expect(data.files.single.value.filename, 'part-photo.png');
       expect(data.files.single.value.contentType.toString(), 'image/png');
       expect(

@@ -17,10 +17,14 @@ import '../../features/customer_garage/presentation/screens/customer_car_details
 import '../../features/customer_garage/presentation/screens/customer_cars_screen.dart';
 import '../../features/customer_garage/presentation/screens/edit_customer_car_screen.dart';
 import '../../features/part_requests/presentation/screens/request_part_screen.dart';
+import '../../features/customer_orders/presentation/screens/customer_orders_screen.dart';
+import '../../features/customer_orders/presentation/screens/customer_order_details_screen.dart';
 import '../../features/storefront/presentation/screens/customer_storefront_screen.dart';
 import '../../features/storefront/presentation/screens/customer_store_details_screen.dart';
 import '../../features/storefront/presentation/screens/customer_store_car_screen.dart';
 import '../shells/customer_app_shell.dart';
+import '../../features/customer_more/presentation/screens/customer_more_screen.dart';
+import '../../features/customer_chats/presentation/screens/customer_chats_screen.dart';
 import '../shells/role_app_shell.dart';
 
 part 'app_routes.g.dart';
@@ -107,14 +111,28 @@ class SessionUnavailableRoute extends GoRouteData
     ),
     TypedStatefulShellBranch<CustomerOrdersBranch>(
       routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<CustomerOrdersRoute>(path: AppRoutePath.customerOrders),
+        TypedGoRoute<CustomerOrdersRoute>(
+          path: AppRoutePath.customerOrders,
+          routes: [
+            TypedGoRoute<CustomerOrderDetailsRoute>(
+              path: AppRoutePath.customerOrderDetailsSegment,
+            ),
+          ],
+        ),
       ],
     ),
-    TypedStatefulShellBranch<CustomerAccountBranch>(
+    TypedStatefulShellBranch<CustomerChatsBranch>(
+      routes: [
+        TypedGoRoute<CustomerChatsRoute>(path: AppRoutePath.customerChats),
+      ],
+    ),
+    TypedStatefulShellBranch<CustomerMoreBranch>(
       routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<CustomerAccountRoute>(
-          path: AppRoutePath.customerAccount,
+        TypedGoRoute<CustomerMoreRoute>(
+          path: AppRoutePath.customerMore,
           routes: <TypedRoute<RouteData>>[
+            TypedGoRoute<CustomerProfileRoute>(path: 'profile'),
+            TypedGoRoute<CustomerSettingsRoute>(path: 'settings'),
             TypedGoRoute<CustomerCarsRoute>(
               path: 'cars',
               routes: <TypedRoute<RouteData>>[
@@ -162,8 +180,12 @@ class CustomerOrdersBranch extends StatefulShellBranchData {
   const CustomerOrdersBranch();
 }
 
-class CustomerAccountBranch extends StatefulShellBranchData {
-  const CustomerAccountBranch();
+class CustomerChatsBranch extends StatefulShellBranchData {
+  const CustomerChatsBranch();
+}
+
+class CustomerMoreBranch extends StatefulShellBranchData {
+  const CustomerMoreBranch();
 }
 
 class CustomerHomeRoute extends GoRouteData with $CustomerHomeRoute {
@@ -230,24 +252,62 @@ class CustomerOrdersRoute extends GoRouteData with $CustomerOrdersRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const CustomerShellTabScreen(
-      destination: CustomerShellDestination.orders,
-    );
+    return const CustomerOrdersScreen();
   }
 }
 
+class CustomerOrderDetailsRoute extends GoRouteData
+    with $CustomerOrderDetailsRoute {
+  const CustomerOrderDetailsRoute({required this.orderId});
+  final int orderId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      CustomerOrderDetailsScreen(orderId: orderId);
+}
+
+@TypedGoRoute<CustomerAccountRoute>(path: AppRoutePath.customerAccount)
 class CustomerAccountRoute extends GoRouteData with $CustomerAccountRoute {
   const CustomerAccountRoute();
 
   @override
+  String redirect(BuildContext context, GoRouterState state) =>
+      const CustomerMoreRoute().location;
+}
+
+class CustomerMoreRoute extends GoRouteData with $CustomerMoreRoute {
+  const CustomerMoreRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const CustomerMoreScreen();
+}
+
+class CustomerProfileRoute extends GoRouteData with $CustomerProfileRoute {
+  const CustomerProfileRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const CustomerProfileScreen();
+}
+
+class CustomerSettingsRoute extends GoRouteData with $CustomerSettingsRoute {
+  const CustomerSettingsRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const CustomerSettingsScreen();
+}
+
+class CustomerChatsRoute extends GoRouteData with $CustomerChatsRoute {
+  const CustomerChatsRoute();
+
+  @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const CustomerShellTabScreen(
-      destination: CustomerShellDestination.account,
-    );
+    return const CustomerChatsScreen();
   }
 }
 
-/// A child flow of Account, so the customer can return to their account after
+/// A child flow of More, so the customer can return to their menu after
 /// reviewing saved cars while the customer shell remains in place.
 class CustomerCarsRoute extends GoRouteData with $CustomerCarsRoute {
   const CustomerCarsRoute();

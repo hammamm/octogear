@@ -99,7 +99,7 @@ CreateCustomerCarCommand _command() {
   return const CreateCustomerCarCommand(
     carNameId: 4,
     manufacturingYear: 2022,
-    licensePlateNumber: 'ABC 1234',
+    transmissionType: 'automatic',
     colorId: 2,
     fuelTypeId: 1,
     pictures: [],
@@ -110,7 +110,7 @@ CreateCustomerCarCommand _command() {
 final _createdCar = CustomerCar(
   id: 9,
   manufacturingYear: 2022,
-  licensePlateNumber: 'ABC 1234',
+  transmissionType: 'automatic',
   company: const CustomerCarReference(id: 1, name: 'Toyota'),
   carName: const CustomerCarReference(id: 4, name: 'Camry'),
   color: const CustomerCarReference(id: 2, name: 'White'),

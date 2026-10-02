@@ -26,7 +26,8 @@ class CustomerCarEditorFields extends StatelessWidget {
     required this.colorId,
     required this.fuelTypeId,
     required this.yearController,
-    required this.plateController,
+    required this.transmissionType,
+    required this.onTransmissionChanged,
     required this.enabled,
     required this.fieldErrors,
     required this.onCompanyChanged,
@@ -45,7 +46,8 @@ class CustomerCarEditorFields extends StatelessWidget {
   final int? colorId;
   final int? fuelTypeId;
   final TextEditingController yearController;
-  final TextEditingController plateController;
+  final String? transmissionType;
+  final ValueChanged<String?> onTransmissionChanged;
   final bool enabled;
   final Map<String, List<String>> fieldErrors;
   final ValueChanged<int?> onCompanyChanged;
@@ -107,25 +109,24 @@ class CustomerCarEditorFields extends StatelessWidget {
           validator: (value) => _validateYear(context, value),
         ),
         const SizedBox(height: OctoGearSpacing.medium),
-        TextFormField(
-          key: const Key('customer_car_plate_field'),
-          controller: plateController,
-          enabled: enabled,
-          keyboardType: TextInputType.text,
-          textDirection: ui.TextDirection.ltr,
-          textInputAction: TextInputAction.next,
-          maxLength: 50,
-          onChanged: onTextChanged,
+        DropdownButtonFormField<String>(
+          key: const Key('customer_car_transmission_field'),
+          initialValue: transmissionType,
+          isExpanded: true,
           decoration: InputDecoration(
-            labelText: context.tr('customer_garage.add.plate_label'),
-            hintText: context.tr('customer_garage.add.plate_hint'),
-            prefixIcon: const Icon(Icons.pin_outlined),
-            counterText: '',
-            errorText: _fieldError('vehicle_plat_number'),
+            labelText: context.tr('vehicle.transmission'),
+            hintText: context.tr('vehicle.transmission_hint'),
+            prefixIcon: const Icon(Icons.settings_outlined),
+            errorText: _fieldError('transmission_type'),
           ),
-          validator: (value) => value?.trim().isEmpty ?? true
-              ? context.tr('customer_garage.add.plate_required')
-              : null,
+          items: [
+            for (final value in ['manual', 'automatic', 'unknown'])
+              DropdownMenuItem(
+                value: value,
+                child: Text(context.tr('vehicle.$value')),
+              ),
+          ],
+          onChanged: enabled ? onTransmissionChanged : null,
         ),
         const SizedBox(height: OctoGearSpacing.medium),
         DropdownButtonFormField<int>(

@@ -9,6 +9,27 @@ import 'package:octogear/features/customer_garage/domain/entities/create_custome
 
 void main() {
   test(
+    'omits optional transmission when creating a car without a selection',
+    () {
+      final request = CreateCustomerCarRequestDto.fromCommand(
+        const CreateCustomerCarCommand(
+          carNameId: 4,
+          manufacturingYear: 2022,
+          colorId: 2,
+          fuelTypeId: 1,
+          pictures: [],
+          idempotencyKey: 'request-uuid',
+        ),
+      );
+      expect(Map.fromEntries(request.toFormData().fields), {
+        'car_name_id': '4',
+        'manufacturing_year': '2022',
+        'color_id': '2',
+        'fuel_type': '1',
+      });
+    },
+  );
+  test(
     'posts a protected multipart customer-car request with the idempotency key',
     () async {
       late RequestOptions request;
@@ -35,7 +56,7 @@ void main() {
         {
           'car_name_id': '4',
           'manufacturing_year': '2022',
-          'vehicle_plat_number': 'ABC 1234',
+          'transmission_type': 'automatic',
           'color_id': '2',
           'fuel_type': '1',
         },
@@ -53,7 +74,7 @@ CreateCustomerCarCommand _command() {
   return CreateCustomerCarCommand(
     carNameId: 4,
     manufacturingYear: 2022,
-    licensePlateNumber: 'ABC 1234',
+    transmissionType: 'automatic',
     colorId: 2,
     fuelTypeId: 1,
     idempotencyKey: 'request-uuid',
@@ -100,7 +121,7 @@ Map<String, Object?> _carEnvelope() {
     'data': {
       'id': 9,
       'manufacturing_year': 2022,
-      'vehicle_plat_number': 'ABC 1234',
+      'transmission_type': 'automatic',
       'company': {'id': 1, 'name': 'Toyota'},
       'car_name': {'id': 4, 'name': 'Camry'},
       'color': {'id': 2, 'name': 'White'},

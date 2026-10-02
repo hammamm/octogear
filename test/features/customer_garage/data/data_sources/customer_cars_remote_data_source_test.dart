@@ -26,7 +26,7 @@ void main() {
         expect(_header(request, 'Accept-Language'), 'en');
         expect(car.id, 9);
         expect(car.manufacturingYear, 2022);
-        expect(car.licensePlateNumber, 'ABC 1234');
+        expect(car.transmissionType, 'automatic');
         expect(car.company.name, 'Toyota');
         expect(car.carName.name, 'Camry');
         expect(car.color.name, 'White');
@@ -51,7 +51,7 @@ void main() {
                 'manufacturing_year': 2022,
                 // The legacy server field is required; malformed data must not
                 // leak a FormatException beyond the API boundary.
-                'vehicle_plat_number': '',
+                'transmission_type': '',
               },
             ],
           }),
@@ -104,7 +104,7 @@ void main() {
           const UpdateCustomerCarRequestDto(
             carNameId: 4,
             manufacturingYear: 2023,
-            licensePlateNumber: 'XYZ 9876',
+            transmissionType: 'manual',
             colorId: 3,
             fuelTypeId: 2,
           ),
@@ -116,7 +116,7 @@ void main() {
         expect(request.data, {
           'car_name_id': 4,
           'manufacturing_year': 2023,
-          'vehicle_plat_number': 'XYZ 9876',
+          'transmission_type': 'manual',
           'color_id': 3,
           'fuel_type': 2,
         });
@@ -185,7 +185,7 @@ Map<String, Object?> _carJson() {
   return {
     'id': 9,
     'manufacturing_year': 2022,
-    'vehicle_plat_number': 'ABC 1234',
+    'transmission_type': 'automatic',
     'company': {'id': 1, 'name': 'Toyota'},
     'car_name': {'id': 4, 'name': 'Camry'},
     'color': {'id': 2, 'name': 'White'},

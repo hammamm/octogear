@@ -7,14 +7,14 @@ class UpdateCustomerCarCommand {
   const UpdateCustomerCarCommand({
     required this.carNameId,
     required this.manufacturingYear,
-    required this.licensePlateNumber,
+    this.transmissionType,
     required this.colorId,
     required this.fuelTypeId,
   });
 
   final int carNameId;
   final int manufacturingYear;
-  final String licensePlateNumber;
+  final String? transmissionType;
   final int colorId;
   final int fuelTypeId;
 }

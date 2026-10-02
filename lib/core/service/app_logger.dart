@@ -129,8 +129,11 @@ class AppLogger {
           'name',
           'national_id',
           'idempotency',
+          'rejection_reason',
           'notes',
-          'customer_image',
+          'images',
+          'pictures',
+          'description',
         ].any(keyText.contains);
         return MapEntry(key, isSecret ? '***' : _redact(item));
       });

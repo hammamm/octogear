@@ -5,14 +5,14 @@ class UpdateCustomerCarRequestDto {
   const UpdateCustomerCarRequestDto({
     required this.carNameId,
     required this.manufacturingYear,
-    required this.licensePlateNumber,
+    this.transmissionType,
     required this.colorId,
     required this.fuelTypeId,
   });
 
   final int carNameId;
   final int manufacturingYear;
-  final String licensePlateNumber;
+  final String? transmissionType;
   final int colorId;
   final int fuelTypeId;
 
@@ -22,17 +22,17 @@ class UpdateCustomerCarRequestDto {
     return UpdateCustomerCarRequestDto(
       carNameId: command.carNameId,
       manufacturingYear: command.manufacturingYear,
-      licensePlateNumber: command.licensePlateNumber,
+      transmissionType: command.transmissionType,
       colorId: command.colorId,
       fuelTypeId: command.fuelTypeId,
     );
   }
 
-  Map<String, Object> toJson() {
+  Map<String, Object?> toJson() {
     return {
       'car_name_id': carNameId,
       'manufacturing_year': manufacturingYear,
-      'vehicle_plat_number': licensePlateNumber,
+      'transmission_type': transmissionType,
       'color_id': colorId,
       'fuel_type': fuelTypeId,
     };

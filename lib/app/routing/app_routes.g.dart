@@ -13,6 +13,7 @@ List<RouteBase> get $appRoutes => [
   $registrationRoute,
   $sessionUnavailableRoute,
   $customerShellRoute,
+  $customerAccountRoute,
   $providerHomeRoute,
 ];
 
@@ -199,16 +200,42 @@ RouteBase get $customerShellRoute => StatefulShellRouteData.$route(
           path: '/customer/orders',
           hasOverriddenOnExit: false,
           factory: $CustomerOrdersRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: ':orderId',
+              hasOverriddenOnExit: false,
+              factory: $CustomerOrderDetailsRoute._fromState,
+            ),
+          ],
         ),
       ],
     ),
     StatefulShellBranchData.$branch(
       routes: [
         GoRouteData.$route(
-          path: '/customer/account',
+          path: '/customer/chats',
           hasOverriddenOnExit: false,
-          factory: $CustomerAccountRoute._fromState,
+          factory: $CustomerChatsRoute._fromState,
+        ),
+      ],
+    ),
+    StatefulShellBranchData.$branch(
+      routes: [
+        GoRouteData.$route(
+          path: '/customer/more',
+          hasOverriddenOnExit: false,
+          factory: $CustomerMoreRoute._fromState,
           routes: [
+            GoRouteData.$route(
+              path: 'profile',
+              hasOverriddenOnExit: false,
+              factory: $CustomerProfileRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'settings',
+              hasOverriddenOnExit: false,
+              factory: $CustomerSettingsRoute._fromState,
+            ),
             GoRouteData.$route(
               path: 'cars',
               hasOverriddenOnExit: false,
@@ -392,12 +419,102 @@ mixin $CustomerOrdersRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-mixin $CustomerAccountRoute on GoRouteData {
-  static CustomerAccountRoute _fromState(GoRouterState state) =>
-      const CustomerAccountRoute();
+mixin $CustomerOrderDetailsRoute on GoRouteData {
+  static CustomerOrderDetailsRoute _fromState(GoRouterState state) =>
+      CustomerOrderDetailsRoute(
+        orderId: int.parse(state.pathParameters['orderId']!),
+      );
+
+  CustomerOrderDetailsRoute get _self => this as CustomerOrderDetailsRoute;
 
   @override
-  String get location => GoRouteData.$location('/customer/account');
+  String get location => GoRouteData.$location(
+    '/customer/orders/${Uri.encodeComponent(_self.orderId.toString())}',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CustomerChatsRoute on GoRouteData {
+  static CustomerChatsRoute _fromState(GoRouterState state) =>
+      const CustomerChatsRoute();
+
+  @override
+  String get location => GoRouteData.$location('/customer/chats');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CustomerMoreRoute on GoRouteData {
+  static CustomerMoreRoute _fromState(GoRouterState state) =>
+      const CustomerMoreRoute();
+
+  @override
+  String get location => GoRouteData.$location('/customer/more');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CustomerProfileRoute on GoRouteData {
+  static CustomerProfileRoute _fromState(GoRouterState state) =>
+      const CustomerProfileRoute();
+
+  @override
+  String get location => GoRouteData.$location('/customer/more/profile');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CustomerSettingsRoute on GoRouteData {
+  static CustomerSettingsRoute _fromState(GoRouterState state) =>
+      const CustomerSettingsRoute();
+
+  @override
+  String get location => GoRouteData.$location('/customer/more/settings');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -418,7 +535,7 @@ mixin $CustomerCarsRoute on GoRouteData {
       const CustomerCarsRoute();
 
   @override
-  String get location => GoRouteData.$location('/customer/account/cars');
+  String get location => GoRouteData.$location('/customer/more/cars');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -439,7 +556,7 @@ mixin $CreateCustomerCarRoute on GoRouteData {
       const CreateCustomerCarRoute();
 
   @override
-  String get location => GoRouteData.$location('/customer/account/cars/add');
+  String get location => GoRouteData.$location('/customer/more/cars/add');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -463,7 +580,7 @@ mixin $CustomerCarDetailsRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location(
-    '/customer/account/cars/${Uri.encodeComponent(_self.carId.toString())}',
+    '/customer/more/cars/${Uri.encodeComponent(_self.carId.toString())}',
   );
 
   @override
@@ -488,8 +605,35 @@ mixin $CustomerCarEditRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location(
-    '/customer/account/cars/${Uri.encodeComponent(_self.carId.toString())}/edit',
+    '/customer/more/cars/${Uri.encodeComponent(_self.carId.toString())}/edit',
   );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $customerAccountRoute => GoRouteData.$route(
+  path: '/customer/account',
+  hasOverriddenOnExit: false,
+  factory: $CustomerAccountRoute._fromState,
+);
+
+mixin $CustomerAccountRoute on GoRouteData {
+  static CustomerAccountRoute _fromState(GoRouterState state) =>
+      const CustomerAccountRoute();
+
+  @override
+  String get location => GoRouteData.$location('/customer/account');
 
   @override
   void go(BuildContext context) => context.go(location);

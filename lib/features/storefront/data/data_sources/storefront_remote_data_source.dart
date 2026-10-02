@@ -1,3 +1,4 @@
+import '../../../../core/api/reference_list_loader.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_failure.dart';
 import '../../domain/entities/storefront_filters.dart';
@@ -149,13 +150,10 @@ class StorefrontRemoteDataSourceImpl implements StorefrontRemoteDataSource {
     );
   }
 
-  Future<List<StorefrontReferenceDto>> _fetchReferences(String path) async {
-    final response = await _apiClient.get<List<StorefrontReferenceDto>>(
-      path,
-      decode: storefrontReferenceListFromJson,
-    );
-    final values = response.data;
-    if (values == null) throw const ApiFailure.unexpected();
-    return values;
-  }
+  Future<List<StorefrontReferenceDto>> _fetchReferences(String path) =>
+      loadReferenceList(
+        _apiClient,
+        path,
+        decode: storefrontReferenceListFromJson,
+      );
 }

@@ -43,6 +43,7 @@ void main() {
       apiClient: _clientThatReturns(const {
         'success': true,
         'message': 'References loaded',
+        'meta': {'current_page': 1, 'last_page': 1, 'per_page': 50, 'total': 1},
         'data': [
           {'id': 2, 'name': 'Aden'},
         ],

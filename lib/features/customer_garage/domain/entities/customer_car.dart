@@ -27,15 +27,11 @@ class CustomerCarPicture {
 }
 
 /// A car saved by the authenticated customer.
-///
-/// This entity uses the correct domain term `licensePlateNumber`. The Laravel
-/// transport field remains `vehicle_plat_number` until that external API
-/// contract is deliberately versioned.
 class CustomerCar {
   const CustomerCar({
     required this.id,
     required this.manufacturingYear,
-    required this.licensePlateNumber,
+    this.transmissionType,
     required this.company,
     required this.carName,
     required this.color,
@@ -46,7 +42,7 @@ class CustomerCar {
 
   final int id;
   final int manufacturingYear;
-  final String licensePlateNumber;
+  final String? transmissionType;
   final CustomerCarReference company;
   final CustomerCarReference carName;
   final CustomerCarReference color;

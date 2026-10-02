@@ -109,7 +109,10 @@ void main() {
 
     expect(find.text('Choose a car name.'), findsOneWidget);
     expect(find.text('Enter the manufacturing year.'), findsOneWidget);
-    expect(find.text('Enter the plate number.'), findsOneWidget);
+    expect(
+      find.byKey(const Key('customer_car_transmission_field')),
+      findsOneWidget,
+    );
     expect(find.text('Choose a color.'), findsOneWidget);
     expect(find.text('Choose a fuel type.'), findsOneWidget);
     expect(createUseCase.commands, isEmpty);
@@ -147,9 +150,10 @@ void main() {
         find.byKey(const Key('customer_car_year_field')),
         '2022',
       );
-      await tester.enterText(
-        find.byKey(const Key('customer_car_plate_field')),
-        'ABC 1234',
+      await _selectDropdown(
+        tester,
+        const Key('customer_car_transmission_field'),
+        'Automatic',
       );
       await _selectDropdown(
         tester,
@@ -176,7 +180,7 @@ void main() {
       final command = createUseCase.commands.single;
       expect(command.carNameId, 11);
       expect(command.manufacturingYear, 2022);
-      expect(command.licensePlateNumber, 'ABC 1234');
+      expect(command.transmissionType, 'automatic');
       expect(command.colorId, 21);
       expect(command.fuelTypeId, 31);
       expect(command.pictures, [_firstPhoto]);
@@ -275,7 +279,7 @@ void main() {
     },
   );
 
-  testWidgets('uses Arabic RTL layout while keeping the plate field LTR', (
+  testWidgets('uses Arabic RTL layout with a localized transmission selector', (
     tester,
   ) async {
     await _pumpScreen(
@@ -285,15 +289,13 @@ void main() {
     );
 
     final title = find.text('إضافة سيارة').first;
-    final plateField = tester.widget<TextField>(
-      find.descendant(
-        of: find.byKey(const Key('customer_car_plate_field')),
-        matching: find.byType(TextField),
-      ),
-    );
-
     expect(Directionality.of(tester.element(title)), ui.TextDirection.rtl);
-    expect(plateField.textDirection, ui.TextDirection.ltr);
+    await _selectDropdown(
+      tester,
+      const Key('customer_car_transmission_field'),
+      'أوتوماتيك',
+    );
+    expect(find.text('أوتوماتيك'), findsOneWidget);
   });
 }
 
@@ -364,9 +366,10 @@ Future<void> _fillValidCarForm(WidgetTester tester) async {
     find.byKey(const Key('customer_car_year_field')),
     '2022',
   );
-  await tester.enterText(
-    find.byKey(const Key('customer_car_plate_field')),
-    'ABC 1234',
+  await _selectDropdown(
+    tester,
+    const Key('customer_car_transmission_field'),
+    'Automatic',
   );
   await _selectDropdown(tester, const Key('customer_car_color_field'), 'White');
   await _selectDropdown(

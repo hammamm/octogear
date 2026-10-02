@@ -49,10 +49,11 @@ class CustomerCarInformationCard extends StatelessWidget {
           ),
           const Divider(height: OctoGearSpacing.large),
           _CustomerCarInformationRow(
-            icon: Icons.pin_outlined,
-            label: context.tr('customer_garage.details.plate_label'),
-            value: car.licensePlateNumber,
-            valueDirection: ui.TextDirection.ltr,
+            icon: Icons.settings_outlined,
+            label: context.tr('vehicle.transmission'),
+            value: context.tr(
+              'vehicle.${car.transmissionType ?? 'not_specified'}',
+            ),
           ),
           const Divider(height: OctoGearSpacing.large),
           _CustomerCarInformationRow(

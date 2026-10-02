@@ -37,7 +37,7 @@ class _CreateCustomerCarScreenState
     extends ConsumerState<CreateCustomerCarScreen> {
   final _formKey = GlobalKey<FormState>();
   final _yearController = TextEditingController();
-  final _plateController = TextEditingController();
+  String? _transmissionType;
 
   int? _companyId;
   int? _carNameId;
@@ -59,7 +59,6 @@ class _CreateCustomerCarScreenState
   @override
   void dispose() {
     _yearController.dispose();
-    _plateController.dispose();
     super.dispose();
   }
 
@@ -174,7 +173,7 @@ class _CreateCustomerCarScreenState
           CreateCustomerCarCommand(
             carNameId: carNameId,
             manufacturingYear: year,
-            licensePlateNumber: _plateController.text.trim(),
+            transmissionType: _transmissionType,
             colorId: colorId,
             fuelTypeId: fuelTypeId,
             pictures: _photos,
@@ -295,7 +294,11 @@ class _CreateCustomerCarScreenState
               colorId: selectedColorId,
               fuelTypeId: selectedFuelTypeId,
               yearController: _yearController,
-              plateController: _plateController,
+              transmissionType: _transmissionType,
+              onTransmissionChanged: (value) {
+                setState(() => _transmissionType = value);
+                _markDraftChanged();
+              },
               enabled: !submission.isSubmitting,
               fieldErrors: apiFailure?.fieldErrors ?? const {},
               onCompanyChanged: (value) {

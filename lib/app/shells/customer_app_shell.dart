@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/design_system/octogear_theme.dart';
+import '../../core/config/customer_features.dart';
 import '../../core/widgets/app_language_toggle_button.dart';
 import '../../core/widgets/octogear_brand_header.dart';
 import '../../core/widgets/octogear_surface_card.dart';
@@ -45,13 +46,16 @@ class CustomerAppShell extends StatelessWidget {
   }
 }
 
-class _CustomerBottomNavigation extends StatelessWidget {
+class _CustomerBottomNavigation extends ConsumerWidget {
   const _CustomerBottomNavigation({required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Branch indices stay stable even while the Stores destination is hidden.
+    final storesEnabled = ref.watch(customerStoresEnabledProvider);
+    final branches = [0, if (storesEnabled) 1, 2, 3, 4];
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: OctoGearColors.surface,
@@ -84,12 +88,14 @@ class _CustomerBottomNavigation extends StatelessWidget {
         ),
         child: NavigationBar(
           height: 76,
-          selectedIndex: navigationShell.currentIndex,
+          selectedIndex: branches
+              .indexOf(navigationShell.currentIndex)
+              .clamp(0, branches.length - 1),
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: (index) {
             // Reselecting a tab must not discard a child form or an uncertain
             // submission. The page's back action owns draft confirmation.
-            navigationShell.goBranch(index);
+            navigationShell.goBranch(branches[index]);
           },
           destinations: [
             NavigationDestination(
@@ -97,20 +103,26 @@ class _CustomerBottomNavigation extends StatelessWidget {
               selectedIcon: const Icon(Icons.home_rounded),
               label: context.tr('customer_shell.home.tab'),
             ),
-            NavigationDestination(
-              icon: const Icon(Icons.storefront_outlined),
-              selectedIcon: const Icon(Icons.storefront_rounded),
-              label: context.tr('customer_shell.stores.tab'),
-            ),
+            if (storesEnabled)
+              NavigationDestination(
+                icon: const Icon(Icons.storefront_outlined),
+                selectedIcon: const Icon(Icons.storefront_rounded),
+                label: context.tr('customer_shell.stores.tab'),
+              ),
             NavigationDestination(
               icon: const Icon(Icons.receipt_long_outlined),
               selectedIcon: const Icon(Icons.receipt_long_rounded),
               label: context.tr('customer_shell.orders.tab'),
             ),
             NavigationDestination(
-              icon: const Icon(Icons.person_outline_rounded),
-              selectedIcon: const Icon(Icons.person_rounded),
-              label: context.tr('customer_shell.account.tab'),
+              icon: const Icon(Icons.chat_bubble_outline_rounded),
+              selectedIcon: const Icon(Icons.chat_bubble_rounded),
+              label: context.tr('customer_chats.tab'),
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.more_horiz_rounded),
+              selectedIcon: const Icon(Icons.more_horiz_rounded),
+              label: context.tr('customer_more.tab'),
             ),
           ],
         ),
@@ -161,7 +173,7 @@ class CustomerShellTabScreen extends ConsumerWidget {
         ),
         const SizedBox(height: OctoGearSpacing.medium),
         if (destination == CustomerShellDestination.account && user != null)
-          _CustomerProfileCard(user: user)
+          CustomerAccountProfileCard(user: user)
         else
           _PurposeCard(
             icon: content.secondaryIcon,
@@ -174,7 +186,7 @@ class CustomerShellTabScreen extends ConsumerWidget {
           const SizedBox(height: OctoGearSpacing.medium),
           _AccountSettingsCard(),
           const SizedBox(height: OctoGearSpacing.medium),
-          _SignOutCard(),
+          const CustomerSignOutCard(),
         ],
       ],
     );
@@ -345,8 +357,8 @@ class _PurposeCard extends StatelessWidget {
   }
 }
 
-class _CustomerProfileCard extends StatelessWidget {
-  const _CustomerProfileCard({required this.user});
+class CustomerAccountProfileCard extends StatelessWidget {
+  const CustomerAccountProfileCard({required this.user, super.key});
 
   final AppUser user;
 
@@ -495,7 +507,8 @@ class _AccountSettingsCard extends StatelessWidget {
   }
 }
 
-class _SignOutCard extends ConsumerWidget {
+class CustomerSignOutCard extends ConsumerWidget {
+  const CustomerSignOutCard({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return OctoGearSurfaceCard(

@@ -1,11 +1,16 @@
 import 'dart:convert';
 
-import 'package:easy_localization/easy_localization.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:octogear/app/octogear_app.dart';
+import 'package:octogear/app/routing/app_router.dart';
+import 'package:octogear/core/config/customer_features.dart';
+import 'package:octogear/features/customer_orders/presentation/controllers/customer_orders_providers.dart';
+import 'package:octogear/features/customer_orders/presentation/screens/customer_order_details_screen.dart';
+import '../../features/customer_orders/order_fixtures.dart';
 import 'package:octogear/core/localization/app_locale.dart';
 import 'package:octogear/core/localization/app_locale_controller.dart';
 import 'package:octogear/features/authentication/domain/entities/app_user.dart';
@@ -59,21 +64,22 @@ void main() {
 
     expect(find.byType(NavigationDestination), findsNWidgets(4));
     expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Stores'), findsOneWidget);
+    expect(find.text('Stores'), findsNothing);
     expect(find.text('Orders'), findsOneWidget);
-    expect(find.text('Account'), findsOneWidget);
+    expect(find.text('Chats'), findsOneWidget);
+    expect(find.text('More'), findsOneWidget);
     expect(
       find.byKey(const PageStorageKey<String>('customer-tab-home')),
       findsOneWidget,
     );
 
-    await tester.tap(find.text('Stores'));
+    await tester.tap(find.text('Chats'));
     await tester.pumpAndSettle();
     expect(
-      find.byKey(const PageStorageKey<String>('customer-storefront')),
+      find.byKey(const PageStorageKey<String>('customer-tab-chats')),
       findsOneWidget,
     );
-    expect(find.text('Explore stores'), findsOneWidget);
+    expect(find.text('Chats are coming soon'), findsOneWidget);
 
     await tester.tap(find.text('Orders'));
     await tester.pumpAndSettle();
@@ -82,14 +88,184 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Your orders'), findsOneWidget);
-
-    await tester.tap(find.text('Account'));
+    await tester.ensureVisible(find.text('Left wheel'));
+    await tester.tap(find.text('Left wheel'));
     await tester.pumpAndSettle();
     expect(
-      find.byKey(const PageStorageKey<String>('customer-tab-account')),
+      tester
+          .widget<CustomerOrderDetailsScreen>(
+            find.byType(CustomerOrderDetailsScreen),
+          )
+          .orderId,
+      1,
+    );
+    await tester.tap(find.byType(BackButtonIcon).last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('More'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const PageStorageKey<String>('customer-tab-more')),
       findsOneWidget,
     );
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
     expect(find.text('Account details'), findsOneWidget);
+    expect(find.text('500000000'), findsOneWidget);
+    await tester.tap(find.byType(BackButtonIcon).last);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const PageStorageKey('customer-tab-more')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('hidden Stores deep links redirect before building the feature', (
+    tester,
+  ) async {
+    await _pumpCustomerApp(
+      tester,
+      translations: englishTranslations,
+      locale: AppLocale.english,
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(OctoGearApp)),
+    );
+    final router = container.read(appRouterProvider);
+    for (final path in [
+      '/customer/stores',
+      '/customer/stores/1/cars/7',
+      '/customer/stores/1/cars/7/components/1/request',
+    ]) {
+      router.go(path);
+      await tester.pumpAndSettle();
+      expect(router.routeInformationProvider.value.uri.path, '/customer');
+      expect(
+        find.byKey(const PageStorageKey('customer-tab-home')),
+        findsOneWidget,
+      );
+      expect(find.byType(RequestPartScreen), findsNothing);
+    }
+  });
+
+  testWidgets(
+    'old account links reach More and tab switching preserves its child stack',
+    (tester) async {
+      await _pumpCustomerApp(
+        tester,
+        translations: englishTranslations,
+        locale: AppLocale.english,
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(OctoGearApp)),
+      );
+      final router = container.read(appRouterProvider);
+      router.go('/customer/account');
+      await tester.pumpAndSettle();
+      expect(router.routeInformationProvider.value.uri.path, '/customer/more');
+      await tester.ensureVisible(find.text('Settings'));
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      expect(find.text('App language'), findsOneWidget);
+      await tester.tap(find.text('Chats').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('More').last);
+      await tester.pumpAndSettle();
+      expect(find.text('App language'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const PageStorageKey('customer-tab-more')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'language settings change app direction without leaving the page',
+    (tester) async {
+      await _pumpCustomerApp(
+        tester,
+        translations: englishTranslations,
+        locale: AppLocale.english,
+        alternateTranslations: arabicTranslations,
+      );
+      await tester.tap(find.text('More'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Settings'));
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('العربية'));
+      await tester.pumpAndSettle();
+      expect(find.text('لغة التطبيق'), findsOneWidget);
+      expect(
+        Directionality.of(tester.element(find.text('لغة التطبيق'))),
+        TextDirection.rtl,
+      );
+      expect(
+        find.byKey(const PageStorageKey('customer-settings')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'More sign out delegates to the session and leaves protected routes',
+    (tester) async {
+      await _pumpCustomerApp(
+        tester,
+        translations: englishTranslations,
+        locale: AppLocale.english,
+      );
+      await tester.tap(find.text('More'));
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(OctoGearApp)),
+      );
+      await tester.scrollUntilVisible(find.text('Sign out'), 200);
+      await tester.tap(find.text('Sign out'));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(sessionControllerProvider).requireValue,
+        isA<SignedOutSession>(),
+      );
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .path,
+        '/auth/phone',
+      );
+      expect(find.byType(NavigationBar), findsNothing);
+    },
+  );
+
+  testWidgets('More and Chats fit a narrow Arabic screen with large text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    tester.platformDispatcher.textScaleFactorTestValue = 1.8;
+    addTearDown(() {
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+      return tester.binding.setSurfaceSize(null);
+    });
+    await _pumpCustomerApp(
+      tester,
+      translations: arabicTranslations,
+      locale: AppLocale.arabic,
+    );
+    await tester.tap(find.text('المزيد').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('الإعدادات'), 180);
+    await tester.tap(find.text('الإعدادات'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('المحادثات').last);
+    await tester.pumpAndSettle();
+    expect(find.text('المحادثات قريباً'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('uses Arabic labels and right-to-left layout', (tester) async {
@@ -100,9 +276,10 @@ void main() {
     );
 
     expect(find.text('الرئيسية'), findsOneWidget);
-    expect(find.text('المتاجر'), findsOneWidget);
+    expect(find.text('المتاجر'), findsNothing);
     expect(find.text('الطلبات'), findsOneWidget);
-    expect(find.text('الحساب'), findsOneWidget);
+    expect(find.text('المحادثات'), findsOneWidget);
+    expect(find.text('المزيد'), findsOneWidget);
     expect(
       Directionality.of(
         tester.element(
@@ -120,6 +297,7 @@ void main() {
       tester,
       translations: englishTranslations,
       locale: AppLocale.english,
+      storesEnabled: true,
     );
 
     await tester.tap(find.text('Stores'));
@@ -147,7 +325,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const PageStorageKey('store-car-1-7')), findsOneWidget);
     expect(find.text('Car & parts'), findsOneWidget);
-    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    expect(find.byType(NavigationDestination), findsNWidgets(5));
     for (
       var i = 0;
       i < 20 && find.text('Request a part').hitTestable().evaluate().isEmpty;
@@ -196,10 +374,16 @@ Future<void> _pumpCustomerApp(
   WidgetTester tester, {
   required Map<String, dynamic> translations,
   required AppLocale locale,
+  bool storesEnabled = false,
+  Map<String, dynamic>? alternateTranslations,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        customerStoresEnabledProvider.overrideWithValue(storesEnabled),
+        customerOrdersRepositoryProvider.overrideWithValue(
+          FakeOrdersRepository(),
+        ),
         partRequestRepositoryProvider.overrideWithValue(
           FakeRequestRepository(),
         ),
@@ -227,7 +411,10 @@ Future<void> _pumpCustomerApp(
         supportedLocales: const [Locale('ar'), Locale('en')],
         startLocale: locale.locale,
         path: 'assets/translations',
-        assetLoader: _PreloadedTranslations(translations),
+        assetLoader: _PreloadedTranslations(
+          translations,
+          alternateTranslations,
+        ),
         saveLocale: false,
         child: const OctoGearApp(),
       ),
@@ -237,29 +424,40 @@ Future<void> _pumpCustomerApp(
 }
 
 class _PreloadedTranslations extends AssetLoader {
-  const _PreloadedTranslations(this.translations);
+  const _PreloadedTranslations(this.translations, this.arabicTranslations);
 
   final Map<String, dynamic> translations;
+  final Map<String, dynamic>? arabicTranslations;
 
   @override
   Future<Map<String, dynamic>> load(String path, Locale locale) {
-    return Future.value(translations);
+    return Future.value(
+      locale.languageCode == 'ar'
+          ? arabicTranslations ?? translations
+          : translations,
+    );
   }
 }
 
 class _CustomerSessionController extends SessionController {
   @override
   Future<SessionOutcome> build() async => const AuthenticatedSession(_customer);
+  @override
+  Future<void> signOut() async => state = const AsyncData(SignedOutSession());
 }
 
 class _EnglishLocaleController extends AppLocaleController {
   @override
   AppLocale build() => AppLocale.english;
+  @override
+  Future<void> select(AppLocale locale) async => state = locale;
 }
 
 class _ArabicLocaleController extends AppLocaleController {
   @override
   AppLocale build() => AppLocale.arabic;
+  @override
+  Future<void> select(AppLocale locale) async => state = locale;
 }
 
 class _CustomerStorefrontUseCase extends SearchStoresUseCase {

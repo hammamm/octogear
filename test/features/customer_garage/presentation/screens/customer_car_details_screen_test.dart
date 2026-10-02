@@ -64,7 +64,7 @@ void main() {
       expect(find.text('Toyota'), findsWidgets);
       expect(find.text('Camry'), findsWidgets);
       expect(find.text('2022'), findsOneWidget);
-      expect(find.text('ABC 1234'), findsOneWidget);
+      expect(find.text('Automatic'), findsOneWidget);
       expect(find.text('White'), findsOneWidget);
       expect(find.text('Petrol'), findsOneWidget);
       expect(find.text('No vehicle photos yet'), findsOneWidget);
@@ -72,9 +72,7 @@ void main() {
     },
   );
 
-  testWidgets('keeps a plate number left-to-right in Arabic details', (
-    tester,
-  ) async {
+  testWidgets('shows localized transmission in Arabic details', (tester) async {
     await _pumpDetailsScreen(
       tester,
       translations: arabicTranslations,
@@ -82,10 +80,13 @@ void main() {
     );
 
     final title = find.text('تفاصيل السيارة');
-    final plate = find.text('ABC 1234');
+    final transmission = find.text('أوتوماتيك');
 
     expect(Directionality.of(tester.element(title)), ui.TextDirection.rtl);
-    expect(Directionality.of(tester.element(plate)), ui.TextDirection.ltr);
+    expect(
+      Directionality.of(tester.element(transmission)),
+      ui.TextDirection.rtl,
+    );
   });
 
   testWidgets('cancelling removal never calls the delete use case', (
@@ -339,7 +340,7 @@ CustomerCar _sampleCar() {
   return CustomerCar(
     id: 9,
     manufacturingYear: 2022,
-    licensePlateNumber: 'ABC 1234',
+    transmissionType: 'automatic',
     company: const CustomerCarReference(id: 1, name: 'Toyota'),
     carName: const CustomerCarReference(id: 4, name: 'Camry'),
     color: const CustomerCarReference(id: 2, name: 'White'),

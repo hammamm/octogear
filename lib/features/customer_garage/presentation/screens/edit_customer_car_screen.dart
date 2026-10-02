@@ -33,7 +33,7 @@ class EditCustomerCarScreen extends ConsumerStatefulWidget {
 class _EditCustomerCarScreenState extends ConsumerState<EditCustomerCarScreen> {
   final _formKey = GlobalKey<FormState>();
   final _yearController = TextEditingController();
-  final _plateController = TextEditingController();
+  String? _transmissionType;
 
   int? _companyId;
   int? _carNameId;
@@ -45,7 +45,6 @@ class _EditCustomerCarScreenState extends ConsumerState<EditCustomerCarScreen> {
   @override
   void dispose() {
     _yearController.dispose();
-    _plateController.dispose();
     super.dispose();
   }
 
@@ -60,7 +59,7 @@ class _EditCustomerCarScreenState extends ConsumerState<EditCustomerCarScreen> {
         _colorId = car.color.id;
         _fuelTypeId = car.fuelType.id;
         _yearController.text = car.manufacturingYear.toString();
-        _plateController.text = car.licensePlateNumber;
+        _transmissionType = car.transmissionType;
         _hasSeededDraft = true;
         _isSchedulingDraftSeed = false;
       });
@@ -100,7 +99,7 @@ class _EditCustomerCarScreenState extends ConsumerState<EditCustomerCarScreen> {
           UpdateCustomerCarCommand(
             carNameId: carNameId,
             manufacturingYear: year,
-            licensePlateNumber: _plateController.text.trim(),
+            transmissionType: _transmissionType,
             colorId: colorId,
             fuelTypeId: fuelTypeId,
           ),
@@ -224,7 +223,11 @@ class _EditCustomerCarScreenState extends ConsumerState<EditCustomerCarScreen> {
               colorId: colorId,
               fuelTypeId: fuelTypeId,
               yearController: _yearController,
-              plateController: _plateController,
+              transmissionType: _transmissionType,
+              onTransmissionChanged: (value) {
+                setState(() => _transmissionType = value);
+                _markDraftChanged();
+              },
               enabled: !submission.isSubmitting,
               fieldErrors: failure?.fieldErrors ?? const {},
               onCompanyChanged: (value) {

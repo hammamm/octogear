@@ -12,7 +12,7 @@ class CreateCustomerCarRequestDto {
   const CreateCustomerCarRequestDto({
     required this.carNameId,
     required this.manufacturingYear,
-    required this.licensePlateNumber,
+    this.transmissionType,
     required this.colorId,
     required this.fuelTypeId,
     required this.pictures,
@@ -25,7 +25,7 @@ class CreateCustomerCarRequestDto {
     return CreateCustomerCarRequestDto(
       carNameId: command.carNameId,
       manufacturingYear: command.manufacturingYear,
-      licensePlateNumber: command.licensePlateNumber.trim(),
+      transmissionType: command.transmissionType,
       colorId: command.colorId,
       fuelTypeId: command.fuelTypeId,
       pictures: List.unmodifiable(command.pictures),
@@ -35,7 +35,7 @@ class CreateCustomerCarRequestDto {
 
   final int carNameId;
   final int manufacturingYear;
-  final String licensePlateNumber;
+  final String? transmissionType;
   final int colorId;
   final int fuelTypeId;
   final List<CustomerCarPhotoUpload> pictures;
@@ -46,9 +46,8 @@ class CreateCustomerCarRequestDto {
     data.fields.addAll([
       MapEntry('car_name_id', '$carNameId'),
       MapEntry('manufacturing_year', '$manufacturingYear'),
-      // Keep the established Laravel key at the HTTP boundary. The domain
-      // uses the correctly named licensePlateNumber field instead.
-      MapEntry('vehicle_plat_number', licensePlateNumber),
+      if (transmissionType != null)
+        MapEntry('transmission_type', transmissionType!),
       MapEntry('color_id', '$colorId'),
       MapEntry('fuel_type', '$fuelTypeId'),
     ]);

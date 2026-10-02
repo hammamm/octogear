@@ -1,3 +1,4 @@
+import '../../../../core/api/reference_list_loader.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_failure.dart';
 import '../models/create_customer_car_request_dto.dart';
@@ -74,12 +75,12 @@ class CustomerCarsRemoteDataSourceImpl implements CustomerCarsRemoteDataSource {
 
   @override
   Future<List<CustomerCarReferenceDto>> fetchColors() {
-    return _fetchReferences('reference/colors');
+    return _fetchReferences('reference/colors', paginated: false);
   }
 
   @override
   Future<List<CustomerCarReferenceDto>> fetchFuelTypes() {
-    return _fetchReferences('reference/fuel-types');
+    return _fetchReferences('reference/fuel-types', paginated: false);
   }
 
   @override
@@ -123,13 +124,13 @@ class CustomerCarsRemoteDataSourceImpl implements CustomerCarsRemoteDataSource {
     );
   }
 
-  Future<List<CustomerCarReferenceDto>> _fetchReferences(String path) async {
-    final response = await _apiClient.get<List<CustomerCarReferenceDto>>(
-      path,
-      decode: customerCarReferenceListFromJson,
-    );
-    final references = response.data;
-    if (references == null) throw const ApiFailure.unexpected();
-    return references;
-  }
+  Future<List<CustomerCarReferenceDto>> _fetchReferences(
+    String path, {
+    bool paginated = true,
+  }) => loadReferenceList(
+    _apiClient,
+    path,
+    decode: customerCarReferenceListFromJson,
+    paginated: paginated,
+  );
 }

@@ -60,6 +60,7 @@ class CustomerCarCard extends StatelessWidget {
                         icon: Icons.calendar_today_outlined,
                         label: context.tr('customer_garage.cars.year_label'),
                         value: year,
+                        valueDirection: ui.TextDirection.ltr,
                       ),
                     ],
                   ),
@@ -90,10 +91,11 @@ class CustomerCarCard extends StatelessWidget {
             ),
             const SizedBox(height: OctoGearSpacing.small),
             _CarDetailLine(
-              icon: Icons.pin_outlined,
-              label: context.tr('customer_garage.cars.plate_label'),
-              value: car.licensePlateNumber,
-              valueDirection: ui.TextDirection.ltr,
+              icon: Icons.settings_outlined,
+              label: context.tr('vehicle.transmission'),
+              value: context.tr(
+                'vehicle.${car.transmissionType ?? 'not_specified'}',
+              ),
             ),
           ],
         ),

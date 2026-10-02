@@ -8,25 +8,20 @@ import 'package:octogear/features/customer_garage/data/repositories/customer_gar
 
 void main() {
   group('CustomerGarageRepositoryImpl', () {
-    test(
-      'maps the legacy plate DTO field into the correct domain entity',
-      () async {
-        final repository = CustomerGarageRepositoryImpl(
-          remoteDataSource: _FakeCustomerCarsRemoteDataSource(
-            cars: [_carDto()],
-          ),
-        );
+    test('maps the transmission DTO field into the domain entity', () async {
+      final repository = CustomerGarageRepositoryImpl(
+        remoteDataSource: _FakeCustomerCarsRemoteDataSource(cars: [_carDto()]),
+      );
 
-        final car = (await repository.getCustomerCars()).single;
+      final car = (await repository.getCustomerCars()).single;
 
-        expect(car.licensePlateNumber, 'ABC 1234');
-        expect(car.company.name, 'Toyota');
-        expect(car.carName.name, 'Camry');
-        expect(car.color.name, 'White');
-        expect(car.fuelType.name, 'Petrol');
-        expect(car.pictures.single.mimeType, 'image/jpeg');
-      },
-    );
+      expect(car.transmissionType, 'automatic');
+      expect(car.company.name, 'Toyota');
+      expect(car.carName.name, 'Camry');
+      expect(car.color.name, 'White');
+      expect(car.fuelType.name, 'Petrol');
+      expect(car.pictures.single.mimeType, 'image/jpeg');
+    });
 
     test(
       'maps a malformed transport result to a safe unexpected failure',
@@ -56,7 +51,7 @@ CustomerCarDto _carDto() {
   return CustomerCarDto.fromJson({
     'id': 9,
     'manufacturing_year': 2022,
-    'vehicle_plat_number': 'ABC 1234',
+    'transmission_type': 'automatic',
     'company': {'id': 1, 'name': 'Toyota'},
     'car_name': {'id': 4, 'name': 'Camry'},
     'color': {'id': 2, 'name': 'White'},

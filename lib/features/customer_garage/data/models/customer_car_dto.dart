@@ -4,7 +4,7 @@ class CustomerCarDto {
   const CustomerCarDto({
     required this.id,
     required this.manufacturingYear,
-    required this.licensePlateNumber,
+    this.transmissionType,
     required this.company,
     required this.carName,
     required this.color,
@@ -15,7 +15,7 @@ class CustomerCarDto {
 
   final int id;
   final int manufacturingYear;
-  final String licensePlateNumber;
+  final String? transmissionType;
   final CustomerCarReferenceDto company;
   final CustomerCarReferenceDto carName;
   final CustomerCarReferenceDto color;
@@ -30,16 +30,17 @@ class CustomerCarDto {
       json['manufacturing_year'],
       fieldName: 'customer car manufacturing_year',
     );
-    final licensePlateNumber = _nonEmptyString(
-      json['vehicle_plat_number'],
-      fieldName: 'customer car vehicle_plat_number',
-    );
+    final transmissionType = json['transmission_type'];
+    if (transmissionType != null &&
+        !const ['manual', 'automatic', 'unknown'].contains(transmissionType)) {
+      throw const FormatException('Invalid customer car transmission_type.');
+    }
     final createdAt = _dateTime(json['created_at']);
 
     return CustomerCarDto(
       id: id,
       manufacturingYear: manufacturingYear,
-      licensePlateNumber: licensePlateNumber,
+      transmissionType: transmissionType as String?,
       company: CustomerCarReferenceDto.fromJson(
         json['company'],
         description: 'customer car company',
@@ -65,7 +66,7 @@ class CustomerCarDto {
     return CustomerCar(
       id: id,
       manufacturingYear: manufacturingYear,
-      licensePlateNumber: licensePlateNumber,
+      transmissionType: transmissionType,
       company: company.toEntity(),
       carName: carName.toEntity(),
       color: color.toEntity(),

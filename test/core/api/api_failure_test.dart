@@ -38,7 +38,7 @@ void main() {
         data: {
           'message': 'Please correct the highlighted fields.',
           'errors': {
-            'vehicle_plat_number': ['The plate number is required.'],
+            'transmission_type': ['The transmission type is invalid.'],
           },
         },
       ),
@@ -46,8 +46,8 @@ void main() {
 
     expect(failure.type, ApiFailureType.validation);
     expect(failure.serverMessage, 'Please correct the highlighted fields.');
-    expect(failure.fieldErrors['vehicle_plat_number'], [
-      'The plate number is required.',
+    expect(failure.fieldErrors['transmission_type'], [
+      'The transmission type is invalid.',
     ]);
   });
 }

@@ -1,3 +1,4 @@
+import '../../../../core/api/reference_list_loader.dart';
 import '../../../../core/api/api_client.dart';
 import '../models/authentication_dtos.dart';
 import '../models/current_user_dto.dart';
@@ -76,11 +77,9 @@ class AuthenticationRemoteDataSourceImpl
   }
 
   @override
-  Future<List<CityDto>> fetchCities() async {
-    final response = await _apiClient.get<List<CityDto>>(
-      'reference/cities',
-      decode: cityListFromJson,
-    );
-    return response.data ?? const [];
-  }
+  Future<List<CityDto>> fetchCities() => loadReferenceList(
+    _apiClient,
+    'reference/cities',
+    decode: cityListFromJson,
+  );
 }

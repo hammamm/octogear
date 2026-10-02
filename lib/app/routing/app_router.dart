@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/routing/app_route_paths.dart';
+import '../../core/config/customer_features.dart';
 import '../../core/service/app_logger.dart';
 import '../../features/authentication/domain/entities/session_outcome.dart';
 import '../../features/authentication/presentation/controllers/authentication_flow_controller.dart';
@@ -22,11 +23,31 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     observers: [AppRouteObserver()],
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
-      return redirectForSession(
+      final sessionRedirect = redirectForSession(
         session: ref.read(sessionControllerProvider),
         authenticationFlow: ref.read(authenticationFlowProvider),
         currentPath: state.uri.path,
       );
+      if (sessionRedirect != null) return sessionRedirect;
+      final path = state.uri.path;
+      if (!ref.read(customerStoresEnabledProvider) &&
+          (path == AppRoutePath.customerStores ||
+              path.startsWith('${AppRoutePath.customerStores}/'))) {
+        return AppRoutePath.customerHome;
+      }
+      // Keep old account and saved-car deep links usable after the tab rename.
+      if (path == AppRoutePath.customerAccount ||
+          path.startsWith('${AppRoutePath.customerAccount}/')) {
+        return state.uri
+            .replace(
+              path: path.replaceFirst(
+                AppRoutePath.customerAccount,
+                AppRoutePath.customerMore,
+              ),
+            )
+            .toString();
+      }
+      return null;
     },
     errorBuilder: (context, state) => UnknownRouteScreen(error: state.error),
   );
@@ -36,6 +57,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 /// subscriptions, while this notifier is disposed with the router provider.
 class _RouteRefreshNotifier extends ChangeNotifier {
   _RouteRefreshNotifier(Ref ref) {
+    ref.listen<bool>(
+      customerStoresEnabledProvider,
+      (_, _) => notifyListeners(),
+    );
     ref.listen<AsyncValue<SessionOutcome>>(
       sessionControllerProvider,
       (_, _) => notifyListeners(),

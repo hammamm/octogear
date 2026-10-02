@@ -3,6 +3,24 @@ import 'package:octogear/features/customer_garage/data/models/customer_car_dto.d
 
 void main() {
   group('CustomerCarDto', () {
+    test(
+      'accepts cars without plate data and nullable or known transmission',
+      () {
+        for (final value in [null, 'manual', 'automatic', 'unknown']) {
+          final json = _carJson()..['transmission_type'] = value;
+          expect(
+            CustomerCarDto.fromJson(json).toEntity().transmissionType,
+            value,
+          );
+        }
+        expect(
+          () => CustomerCarDto.fromJson(
+            _carJson()..['transmission_type'] = 'invalid',
+          ),
+          throwsFormatException,
+        );
+      },
+    );
     test('maps private picture metadata without exposing a storage path', () {
       final car = CustomerCarDto.fromJson(_carJson()).toEntity();
       final picture = car.pictures.single;
@@ -51,7 +69,7 @@ Map<String, Object?> _carJson() {
   return {
     'id': 9,
     'manufacturing_year': 2022,
-    'vehicle_plat_number': 'ABC 1234',
+    'transmission_type': 'automatic',
     'company': {'id': 1, 'name': 'Toyota'},
     'car_name': {'id': 4, 'name': 'Camry'},
     'color': {'id': 2, 'name': 'White'},

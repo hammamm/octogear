@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:octogear/app/octogear_app.dart';
 import 'package:octogear/app/routing/app_routes.dart';
+import 'package:octogear/app/routing/app_router.dart';
 import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/core/design_system/octogear_theme.dart';
 import 'package:octogear/core/localization/app_locale.dart';
@@ -130,13 +131,11 @@ void main() {
     expect(find.text('2022', findRichText: true), findsOneWidget);
     expect(find.text('White'), findsOneWidget);
     expect(find.text('Petrol'), findsOneWidget);
-    expect(find.text('ABC 1234'), findsOneWidget);
+    expect(find.text('Automatic'), findsOneWidget);
     expect(find.byIcon(Icons.directions_car_outlined), findsWidgets);
   });
 
-  testWidgets('uses Arabic RTL UI while keeping a plate value left-to-right', (
-    tester,
-  ) async {
+  testWidgets('uses Arabic RTL UI with localized transmission', (tester) async {
     await _pumpCarsScreen(
       tester,
       translations: arabicTranslations,
@@ -146,12 +145,12 @@ void main() {
 
     expect(find.text('سياراتي'), findsOneWidget);
     final title = find.text('سياراتي');
-    final plate = find.text('ABC 1234');
+    final transmission = find.text('أوتوماتيك');
     expect(Directionality.of(tester.element(title)).name, 'rtl');
-    expect(Directionality.of(tester.element(plate)).name, 'ltr');
+    expect(Directionality.of(tester.element(transmission)).name, 'rtl');
   });
 
-  testWidgets('Account opens the typed My Cars child route', (tester) async {
+  testWidgets('More opens the typed My Cars child route', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -161,9 +160,9 @@ void main() {
       useCase: _PopulatedCustomerCarsUseCase(),
     );
 
-    await tester.tap(find.text('Account'));
+    await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
-    final garageEntry = find.bySemanticsLabel('My cars');
+    final garageEntry = find.text('My cars');
     expect(garageEntry, findsOneWidget);
 
     await tester.scrollUntilVisible(garageEntry, 200);
@@ -173,6 +172,15 @@ void main() {
     final screen = find.byType(CustomerCarsScreen);
     expect(screen, findsOneWidget);
     expect(const CustomerCarsRoute().location, AppRoutePath.customerCars);
+    final container = ProviderScope.containerOf(tester.element(screen));
+    final router = container.read(appRouterProvider);
+    router.go('/customer/account/cars');
+    await tester.pumpAndSettle();
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      AppRoutePath.customerCars,
+    );
+    expect(find.byType(CustomerCarsScreen), findsOneWidget);
   });
 }
 
@@ -338,7 +346,7 @@ CustomerCar _sampleCar() {
   return CustomerCar(
     id: 9,
     manufacturingYear: 2022,
-    licensePlateNumber: 'ABC 1234',
+    transmissionType: 'automatic',
     company: const CustomerCarReference(id: 1, name: 'Toyota'),
     carName: const CustomerCarReference(id: 4, name: 'Camry'),
     color: const CustomerCarReference(id: 2, name: 'White'),

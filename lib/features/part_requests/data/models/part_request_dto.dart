@@ -24,7 +24,7 @@ class PartRequestDto {
       };
       data.files.add(
         MapEntry(
-          'customer_image',
+          'images[]',
           MultipartFile.fromBytes(
             photo.bytes,
             filename: 'part-photo.$extension',
