@@ -6,7 +6,7 @@ import 'customer_cars_providers.dart';
 
 /// Loads the three independent localized selector lists in parallel.
 final customerCarFormReferencesControllerProvider =
-    AsyncNotifierProvider.autoDispose<
+    AsyncNotifierProvider<
       CustomerCarFormReferencesController,
       CustomerCarFormReferences
     >(

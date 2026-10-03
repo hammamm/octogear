@@ -1,3 +1,4 @@
+import '../../features/customer_orders/presentation/screens/edit_customer_order_screen.dart';
 import '../../features/customer_orders/presentation/screens/customer_offer_details_screen.dart';
 import '../../features/customer_orders/presentation/screens/refuse_customer_offer_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -128,6 +129,9 @@ class SessionUnavailableRoute extends GoRouteData
             TypedGoRoute<CustomerOrderDetailsRoute>(
               path: AppRoutePath.customerOrderDetailsSegment,
               routes: [
+                TypedGoRoute<EditCustomerOrderRoute>(
+                  path: AppRoutePath.customerOrderEditSegment,
+                ),
                 TypedGoRoute<CustomerOfferDetailsRoute>(
                   path: AppRoutePath.customerOfferDetailsSegment,
                   routes: [
@@ -460,4 +464,12 @@ class RefuseCustomerOfferRoute extends GoRouteData
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       RefuseCustomerOfferScreen(orderId: orderId, offerId: offerId);
+}
+
+class EditCustomerOrderRoute extends GoRouteData with $EditCustomerOrderRoute {
+  const EditCustomerOrderRoute({required this.orderId});
+  final int orderId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      EditCustomerOrderScreen(orderId: orderId);
 }

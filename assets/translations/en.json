@@ -256,6 +256,7 @@
     "switch_to_arabic": "العربية"
   },
   "auth": {
+    "testing_otp": "Testing code · local development",
     "welcome": "Welcome to OctoGear",
     "description": "Enter your mobile number to get started.",
     "next_step": "Secure phone sign-in is the next authentication step.",
@@ -562,5 +563,25 @@
     "automatic": "Automatic",
     "unknown": "Not sure",
     "not_specified": "Not specified"
+  },
+  "order_management": {
+    "edit": "Edit", "delete": "Delete", "edit_title": "Edit request",
+    "delete_title": "Delete this request?",
+    "delete_hint": "Delete “{}” from your requests? Its offers will no longer be available. You cannot undo this in the app.",
+    "keep": "Keep request", "deleted": "Request deleted.",
+    "edit_locked": "Requests can be edited before the first offer arrives.",
+    "refresh_hint": "We couldn’t confirm the change. Refresh to check the latest request before trying again. Refreshing replaces any unsaved edits.",
+    "refresh": "Refresh request", "vehicle": "Vehicle details",
+    "vehicle_hint": "These details apply to this request. Your saved cars stay unchanged.",
+    "use_vehicle": "Use these details", "change_vehicle": "Change vehicle",
+    "discard_title": "Discard your changes?", "discard_hint": "Your changes haven’t been saved.",
+    "keep_editing": "Keep editing", "discard": "Discard changes", "saved": "Request updated.",
+    "unavailable": "Editing is no longer available for this request. Return to its details to see the latest status.",
+    "back": "Back to request", "edit_hint": "Update the details below, then save your changes.",
+    "part": "Part name", "custom_part": "Write a name", "catalog_part": "Choose from list",
+    "part_required": "Choose a part or enter its name.", "choose_part": "Search for a part",
+    "quantity": "Quantity", "quantity_invalid": "Enter a valid quantity of at least 1.",
+    "notes": "Additional details (optional)", "photos_retained": "Your existing photos will be kept.",
+    "save": "Save changes", "cancel": "Cancel"
   }
 }

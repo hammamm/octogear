@@ -56,7 +56,7 @@ class _FakeAuthenticationRepository implements AuthenticationRepository {
   }) => throw UnimplementedError();
 
   @override
-  Future<void> sendOtp(SaudiMobileNumber mobile) async {}
+  Future<String?> sendOtp(SaudiMobileNumber mobile) async => null;
 
   @override
   Future<OtpVerificationResult> verifyOtp({

@@ -4,6 +4,23 @@ import 'package:octogear/core/api/api_client.dart';
 import 'package:octogear/features/authentication/data/data_sources/authentication_remote_data_source.dart';
 
 void main() {
+  test(
+    'send returns an optional testing code without losing leading zeroes',
+    () async {
+      for (final value in ['0042', null, 1234, '12345', 'oops']) {
+        final source = AuthenticationRemoteDataSourceImpl(
+          apiClient: _clientThatReturns({
+            'success': true,
+            'data': value == null ? null : {'test_otp': value},
+          }),
+        );
+        expect(
+          await source.sendOtp('500000001'),
+          value == '0042' ? '0042' : null,
+        );
+      }
+    },
+  );
   group('AuthenticationRemoteDataSourceImpl.register', () {
     test(
       'sends the optional device token with a new-user registration',

@@ -4,7 +4,7 @@ import '../entities/saudi_mobile_number.dart';
 
 /// Business contract for the authentication capability.
 abstract interface class AuthenticationRepository {
-  Future<void> sendOtp(SaudiMobileNumber mobile);
+  Future<String?> sendOtp(SaudiMobileNumber mobile);
   Future<OtpVerificationResult> verifyOtp({
     required SaudiMobileNumber mobile,
     required String otp,

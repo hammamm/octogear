@@ -72,7 +72,7 @@ class _CapturingDataSource implements AuthenticationRemoteDataSource {
   Future<List<CityDto>> fetchCities() => throw UnimplementedError();
 
   @override
-  Future<void> sendOtp(String mobile) => throw UnimplementedError();
+  Future<String?> sendOtp(String mobile) => throw UnimplementedError();
 
   @override
   Future<OtpVerificationDto> verifyOtp({

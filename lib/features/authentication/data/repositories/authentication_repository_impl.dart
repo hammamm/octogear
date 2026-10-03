@@ -21,7 +21,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   final DeviceTokenReader _deviceTokenReader;
 
   @override
-  Future<void> sendOtp(SaudiMobileNumber mobile) {
+  Future<String?> sendOtp(SaudiMobileNumber mobile) {
     return _remoteDataSource.sendOtp(mobile.nationalNumber);
   }
 

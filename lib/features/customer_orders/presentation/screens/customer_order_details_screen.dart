@@ -1,3 +1,4 @@
+import '../widgets/order_management_actions.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,6 +73,8 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
               ),
             ],
             data: (order) => [
+              OrderManagementActions(order: order),
+              if (order.canEdit || order.canDelete) const SizedBox(height: 12),
               if (order.isGeneral)
                 GeneralOrderDetails(order: order)
               else

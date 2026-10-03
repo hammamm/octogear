@@ -6,7 +6,7 @@ import '../models/current_user_dto.dart';
 /// Network-only authentication endpoints. This layer only knows endpoint
 /// paths, request JSON, and DTO decoding.
 abstract interface class AuthenticationRemoteDataSource {
-  Future<void> sendOtp(String mobile);
+  Future<String?> sendOtp(String mobile);
   Future<OtpVerificationDto> verifyOtp({
     required String mobile,
     required String otp,
@@ -28,12 +28,18 @@ class AuthenticationRemoteDataSourceImpl
   final ApiClient _apiClient;
 
   @override
-  Future<void> sendOtp(String mobile) async {
-    await _apiClient.post<void>(
+  Future<String?> sendOtp(String mobile) async {
+    final response = await _apiClient.post<String?>(
       'auth/otp/send',
       data: {'mobile': mobile},
-      decode: (_) {},
+      decode: (data) {
+        final code = data is Map ? data['test_otp'] : null;
+        return code is String && RegExp(r'^[0-9]{4}$').hasMatch(code)
+            ? code
+            : null;
+      },
     );
+    return response.data;
   }
 
   @override

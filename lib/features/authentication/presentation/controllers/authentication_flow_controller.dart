@@ -1,4 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
+
+import '../../../../core/api/api_providers.dart';
+import '../../../../core/configuration/app_configuration.dart';
 
 import '../../domain/entities/saudi_mobile_number.dart';
 
@@ -11,10 +15,15 @@ final authenticationFlowProvider =
     );
 
 class AuthenticationFlowState {
-  const AuthenticationFlowState({this.mobile, this.temporaryRegistrationToken});
+  const AuthenticationFlowState({
+    this.mobile,
+    this.temporaryRegistrationToken,
+    this.testOtp,
+  });
 
   final SaudiMobileNumber? mobile;
   final String? temporaryRegistrationToken;
+  final String? testOtp;
 
   bool get hasPhone => mobile != null;
   bool get hasTemporaryRegistrationToken =>
@@ -25,8 +34,32 @@ class AuthenticationFlowController extends Notifier<AuthenticationFlowState> {
   @override
   AuthenticationFlowState build() => const AuthenticationFlowState();
 
-  void startOtp(SaudiMobileNumber mobile) {
-    state = AuthenticationFlowState(mobile: mobile);
+  void startOtp(SaudiMobileNumber mobile, {String? testOtp}) {
+    state = AuthenticationFlowState(
+      mobile: mobile,
+      testOtp: _visibleTestCode(testOtp),
+    );
+  }
+
+  void setTestOtp(SaudiMobileNumber mobile, String? testOtp) {
+    if (state.mobile?.nationalNumber != mobile.nationalNumber ||
+        state.hasTemporaryRegistrationToken) {
+      return;
+    }
+    state = AuthenticationFlowState(
+      mobile: state.mobile,
+      testOtp: _visibleTestCode(testOtp),
+    );
+  }
+
+  String? _visibleTestCode(String? code) {
+    return kDebugMode &&
+            ref.read(appConfigurationProvider).environment ==
+                AppEnvironment.development &&
+            code != null &&
+            RegExp(r'^[0-9]{4}$').hasMatch(code)
+        ? code
+        : null;
   }
 
   void requireRegistration(String temporaryRegistrationToken) {

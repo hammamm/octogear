@@ -6,5 +6,5 @@ class SendOtpUseCase {
 
   final AuthenticationRepository _repository;
 
-  Future<void> call(SaudiMobileNumber mobile) => _repository.sendOtp(mobile);
+  Future<String?> call(SaudiMobileNumber mobile) => _repository.sendOtp(mobile);
 }

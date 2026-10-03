@@ -44,8 +44,11 @@ class PhoneSignInController extends Notifier<PhoneSignInState> {
       successfulSubmissionCount: state.successfulSubmissionCount,
     );
     try {
-      await ref.read(sendOtpUseCaseProvider).call(mobile);
-      ref.read(authenticationFlowProvider.notifier).startOtp(mobile);
+      final testOtp = await ref.read(sendOtpUseCaseProvider).call(mobile);
+      if (!ref.mounted) return;
+      ref
+          .read(authenticationFlowProvider.notifier)
+          .startOtp(mobile, testOtp: testOtp);
       state = PhoneSignInState(
         successfulSubmissionCount: state.successfulSubmissionCount + 1,
       );

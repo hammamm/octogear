@@ -48,6 +48,11 @@ class CustomerOrder {
     required this.createdAt,
     required this.offersCount,
     required this.offers,
+    this.canEdit = false,
+    this.canDelete = false,
+    this.editToken,
+    this.componentId,
+    this.vehicleIds = const {},
     this.partName,
     this.partNumber,
     this.carName,
@@ -67,6 +72,10 @@ class CustomerOrder {
     this.imagePaths = const [],
   });
   final int id;
+  final bool canEdit, canDelete;
+  final String? editToken;
+  final int? componentId;
+  final Map<String, int?> vehicleIds;
   final CustomerOrderType type;
   final CustomerOrderStatus status;
   final int? quantity;

@@ -34,6 +34,19 @@ class CustomerOrderDto {
       CustomerOrder(
         id: id,
         type: type,
+        canEdit: json['can_edit'] == true && json['edit_token'] is String,
+        canDelete: json['can_delete'] == true && json['edit_token'] is String,
+        editToken: _text(json['edit_token']),
+        componentId: _nullableInt(json['component_id']),
+        vehicleIds: Map.unmodifiable({
+          for (final key in [
+            'car_name_id',
+            'car_company_id',
+            'color_id',
+            'fuel_type',
+          ])
+            key: _nullableInt(vehicle?[key]),
+        }),
         quantity: type == CustomerOrderType.specific
             ? _int(json['quantity'], positive: true)
             : null,

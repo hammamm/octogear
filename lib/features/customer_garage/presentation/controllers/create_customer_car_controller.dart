@@ -5,10 +5,9 @@ import '../../domain/entities/customer_car.dart';
 import 'customer_cars_providers.dart';
 
 final createCustomerCarControllerProvider =
-    NotifierProvider.autoDispose<
-      CreateCustomerCarController,
-      CreateCustomerCarState
-    >(CreateCustomerCarController.new);
+    NotifierProvider<CreateCustomerCarController, CreateCustomerCarState>(
+      CreateCustomerCarController.new,
+    );
 
 /// Submission state only. Form fields and photo-selection UI stay with the
 /// screen so validation failures never erase a customer's draft.

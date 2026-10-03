@@ -5,10 +5,7 @@ import '../../domain/entities/customer_car.dart';
 import 'customer_cars_providers.dart';
 
 final customerCarsControllerProvider =
-    AsyncNotifierProvider.autoDispose<
-      CustomerCarsController,
-      List<CustomerCar>
-    >(
+    AsyncNotifierProvider<CustomerCarsController, List<CustomerCar>>(
       CustomerCarsController.new,
       // Riverpod otherwise retries an initial async failure automatically.
       // This screen deliberately waits for an explicit customer Retry or

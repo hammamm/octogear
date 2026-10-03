@@ -214,6 +214,11 @@ RouteBase get $customerShellRoute => StatefulShellRouteData.$route(
               factory: $CustomerOrderDetailsRoute._fromState,
               routes: [
                 GoRouteData.$route(
+                  path: 'edit',
+                  hasOverriddenOnExit: false,
+                  factory: $EditCustomerOrderRoute._fromState,
+                ),
+                GoRouteData.$route(
                   path: 'offers/:offerId',
                   hasOverriddenOnExit: false,
                   factory: $CustomerOfferDetailsRoute._fromState,
@@ -472,6 +477,33 @@ mixin $CustomerOrderDetailsRoute on GoRouteData {
   @override
   String get location => GoRouteData.$location(
     '/customer/orders/${Uri.encodeComponent(_self.orderId.toString())}',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $EditCustomerOrderRoute on GoRouteData {
+  static EditCustomerOrderRoute _fromState(GoRouterState state) =>
+      EditCustomerOrderRoute(
+        orderId: int.parse(state.pathParameters['orderId']!),
+      );
+
+  EditCustomerOrderRoute get _self => this as EditCustomerOrderRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/customer/orders/${Uri.encodeComponent(_self.orderId.toString())}/edit',
   );
 
   @override

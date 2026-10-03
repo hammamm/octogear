@@ -199,11 +199,11 @@ class _FakeAuthenticationRepository implements AuthenticationRepository {
   final pendingSends = <Completer<void>>[];
 
   @override
-  Future<void> sendOtp(SaudiMobileNumber mobile) {
+  Future<String?> sendOtp(SaudiMobileNumber mobile) {
     submittedNumbers.add(mobile.nationalNumber);
     final pending = Completer<void>();
     pendingSends.add(pending);
-    return pending.future;
+    return pending.future.then((_) => null);
   }
 
   @override

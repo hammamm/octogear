@@ -19,6 +19,7 @@ import '../controllers/otp_resend_controller.dart';
 import '../controllers/otp_verification_controller.dart';
 import '../controllers/session_controller.dart';
 import '../widgets/authentication_failure_text.dart';
+import '../widgets/testing_otp_banner.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
   const OtpVerificationScreen({super.key});
@@ -39,6 +40,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   }
 
   Future<void> _verify() async {
+    if (ref.read(otpResendControllerProvider).isSubmitting) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final mobile = ref.read(authenticationFlowProvider).mobile;
     if (mobile == null) return;
@@ -49,10 +51,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   }
 
   Future<void> _resend() async {
+    if (ref.read(otpVerificationControllerProvider).isLoading) return;
     final mobile = ref.read(authenticationFlowProvider).mobile;
     if (mobile == null) return;
 
     await ref.read(otpResendControllerProvider.notifier).resend(mobile);
+    if (mounted) setState(() => _otpController.clear());
   }
 
   Future<void> _handleOutcome(OtpVerificationOutcome outcome) async {
@@ -88,7 +92,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     final verification = ref.watch(otpVerificationControllerProvider);
     final resend = ref.watch(otpResendControllerProvider);
     final canSubmit =
-        _otpController.text.length == 4 && !verification.isLoading;
+        _otpController.text.length == 4 &&
+        !verification.isLoading &&
+        !resend.isSubmitting;
     final error = verification.asError?.error;
 
     return OctoGearPageScaffold(
@@ -146,6 +152,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                     ),
                   ),
                 ),
+                const TestingOtpBanner(),
                 const SizedBox(height: OctoGearSpacing.xLarge),
                 Form(
                   key: _formKey,
@@ -198,7 +205,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 ),
                 const SizedBox(height: OctoGearSpacing.small),
                 TextButton(
-                  onPressed: resend.isSubmitting ? null : _resend,
+                  onPressed: resend.isSubmitting || verification.isLoading
+                      ? null
+                      : _resend,
                   child: resend.isSubmitting
                       ? const SizedBox(
                           height: 20,
