@@ -1,3 +1,5 @@
+import 'package:octogear/features/customer_garage/presentation/controllers/customer_cars_providers.dart';
+import '../../features/general_requests/general_request_fixtures.dart';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
@@ -55,6 +57,161 @@ void main() {
             as Map<String, dynamic>;
   });
 
+  testWidgets('Home opens the guided request flow and existing requests', (
+    tester,
+  ) async {
+    await _pumpCustomerApp(
+      tester,
+      translations: englishTranslations,
+      locale: AppLocale.english,
+    );
+    final homeScroll = find
+        .descendant(
+          of: find.byKey(const PageStorageKey('customer-tab-home')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('home-request-part')),
+      180,
+      scrollable: homeScroll,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('home-request-part')));
+    await tester.pumpAndSettle();
+    expect(find.text('Step 1 of 3 · Vehicle'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('general-back')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('home-view-requests')),
+      180,
+      scrollable: homeScroll,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('home-view-requests')));
+    await tester.pumpAndSettle();
+    expect(find.text('Your orders'), findsOneWidget);
+  });
+
+  testWidgets('Home banners swipe and change language without opening on tap', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await _pumpCustomerApp(
+      tester,
+      translations: englishTranslations,
+      alternateTranslations: arabicTranslations,
+      locale: AppLocale.english,
+    );
+    final carousel = find.byKey(const ValueKey('home-promotions'));
+    final panel = find.byKey(const ValueKey('home-request-panel'));
+    expect(
+      tester.getBottomLeft(carousel).dy,
+      lessThan(tester.getTopLeft(panel).dy),
+    );
+    expect(tester.getSize(panel).height, lessThan(844 / 3));
+    final requestButton = tester.getSize(
+      find.byKey(const ValueKey('home-request-part')),
+    );
+    expect(requestButton.width, lessThan(tester.getSize(panel).width * .75));
+    expect(requestButton.height, greaterThanOrEqualTo(48));
+    expect(
+      find.byKey(const ValueKey('home-banner-en-parts')).hitTestable(),
+      findsOneWidget,
+    );
+    final banner = tester.widget<Image>(
+      find.byKey(const ValueKey('home-banner-en-parts')),
+    );
+    expect(banner.fit, BoxFit.contain);
+    expect(banner.matchTextDirection, isFalse);
+    await tester.drag(carousel, const Offset(-340, 0));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('home-banner-en-details')).hitTestable(),
+      findsOneWidget,
+    );
+    await tester.tap(find.byTooltip('Previous tip'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('home-banner-en-parts')).hitTestable(),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('home-banner-en-parts')));
+    await tester.pumpAndSettle();
+    expect(find.byType(InteractiveViewer), findsNothing);
+    expect(find.byType(Dialog), findsNothing);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(OctoGearApp)),
+    );
+    await container.read(appLocaleProvider.notifier).select(AppLocale.arabic);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('home-banner-ar-parts')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(Directionality.of(tester.element(carousel)), TextDirection.rtl);
+    await tester.drag(carousel, const Offset(340, 0));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('home-banner-ar-details')).hitTestable(),
+      findsOneWidget,
+    );
+    await tester.tap(find.byTooltip('النصيحة التالية'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('home-banner-ar-offers')).hitTestable(),
+      findsOneWidget,
+    );
+    await container.read(appLocaleProvider.notifier).select(AppLocale.english);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('home-banner-en-parts')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final locale in AppLocale.values) {
+    testWidgets('Home fits narrow ${locale.name} with large text', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(320, 800));
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(() {
+        tester.platformDispatcher.clearTextScaleFactorTestValue();
+        return tester.binding.setSurfaceSize(null);
+      });
+      await _pumpCustomerApp(
+        tester,
+        translations: locale == AppLocale.arabic
+            ? arabicTranslations
+            : englishTranslations,
+        locale: locale,
+      );
+      final carousel = find.byKey(const ValueKey('home-promotions'));
+      await tester.drag(
+        carousel,
+        Offset(locale == AppLocale.arabic ? 300 : -300, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('home-request-part')),
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const PageStorageKey('customer-tab-home')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('home-request-part')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('renders and switches all customer destinations', (tester) async {
     await _pumpCustomerApp(
       tester,
@@ -380,6 +537,9 @@ Future<void> _pumpCustomerApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        customerGarageRepositoryProvider.overrideWithValue(
+          RequestGarageRepository(),
+        ),
         customerStoresEnabledProvider.overrideWithValue(storesEnabled),
         customerOrdersRepositoryProvider.overrideWithValue(
           FakeOrdersRepository(),

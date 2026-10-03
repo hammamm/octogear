@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/design_system/octogear_theme.dart';
+import '../../features/customer_home/presentation/screens/customer_home_screen.dart';
 import '../../core/routing/app_route_paths.dart';
 import '../../core/widgets/octogear_brand_header.dart';
 import '../../core/widgets/octogear_page_scaffold.dart';
@@ -17,6 +18,7 @@ import '../../features/customer_garage/presentation/screens/customer_car_details
 import '../../features/customer_garage/presentation/screens/customer_cars_screen.dart';
 import '../../features/customer_garage/presentation/screens/edit_customer_car_screen.dart';
 import '../../features/part_requests/presentation/screens/request_part_screen.dart';
+import '../../features/general_requests/presentation/screens/general_part_request_screen.dart';
 import '../../features/customer_orders/presentation/screens/customer_orders_screen.dart';
 import '../../features/customer_orders/presentation/screens/customer_order_details_screen.dart';
 import '../../features/storefront/presentation/screens/customer_storefront_screen.dart';
@@ -84,7 +86,14 @@ class SessionUnavailableRoute extends GoRouteData
   branches: <TypedStatefulShellBranch<StatefulShellBranchData>>[
     TypedStatefulShellBranch<CustomerHomeBranch>(
       routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<CustomerHomeRoute>(path: AppRoutePath.customerHome),
+        TypedGoRoute<CustomerHomeRoute>(
+          path: AppRoutePath.customerHome,
+          routes: [
+            TypedGoRoute<GeneralPartRequestRoute>(
+              path: AppRoutePath.customerGeneralRequestSegment,
+            ),
+          ],
+        ),
       ],
     ),
     TypedStatefulShellBranch<CustomerStoresBranch>(
@@ -193,9 +202,7 @@ class CustomerHomeRoute extends GoRouteData with $CustomerHomeRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const CustomerShellTabScreen(
-      destination: CustomerShellDestination.home,
-    );
+    return const CustomerHomeScreen();
   }
 }
 
@@ -409,4 +416,12 @@ class UnknownRouteScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class GeneralPartRequestRoute extends GoRouteData
+    with $GeneralPartRequestRoute {
+  const GeneralPartRequestRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const GeneralPartRequestScreen();
 }

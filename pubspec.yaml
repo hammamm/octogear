@@ -81,6 +81,21 @@ flutter:
   assets:
     - assets/icons/
     - assets/translations/
+    - assets/images/home/parts-ar.png
+    - assets/images/home/parts-en.png
+    - assets/images/home/details-ar.png
+    - assets/images/home/details-en.png
+    - assets/images/home/offers-ar.png
+    - assets/images/home/offers-en.png
+    - assets/fonts/NotoSansArabic-OFL.txt
+    - assets/fonts/NotoSans-OFL.txt
+  fonts:
+    - family: Noto Sans Arabic
+      fonts:
+        - asset: assets/fonts/NotoSansArabic.ttf
+    - family: Noto Sans
+      fonts:
+        - asset: assets/fonts/NotoSans.ttf
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

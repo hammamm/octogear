@@ -27,7 +27,7 @@ class OctoGearApp extends ConsumerWidget {
       // Keeping the brand literal avoids asking EasyLocalization for a value
       // before MaterialApp has installed its localization delegates.
       title: 'OctoGear',
-      theme: OctoGearTheme.lightTheme,
+      theme: OctoGearTheme.forLocale(locale.locale),
       locale: locale.locale,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,

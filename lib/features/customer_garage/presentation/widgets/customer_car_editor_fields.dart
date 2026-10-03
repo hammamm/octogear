@@ -7,11 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
+import '../../../../core/widgets/octogear_searchable_select_field.dart';
 import '../../domain/entities/customer_car.dart';
 import '../../domain/entities/customer_car_form_references.dart';
 import '../customer_garage_failure_message.dart';
 
-/// Reusable scalar vehicle fields shared by Add Car and Edit Car.
+/// Vehicle fields shared by Add Car, Edit Car and general part requests.
 ///
 /// Photo selection stays outside this widget because new local images and
 /// existing private server images have different lifecycle and retry rules.
@@ -36,6 +37,7 @@ class CustomerCarEditorFields extends StatelessWidget {
     required this.onFuelTypeChanged,
     required this.onTextChanged,
     this.onRetryCarNames,
+    this.transmissionRequired = false,
     super.key,
   });
 
@@ -56,23 +58,26 @@ class CustomerCarEditorFields extends StatelessWidget {
   final ValueChanged<int?> onFuelTypeChanged;
   final ValueChanged<String> onTextChanged;
   final VoidCallback? onRetryCarNames;
+  final bool transmissionRequired;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DropdownButtonFormField<int>(
+        OctoGearSearchableSelectField<int>(
           key: const Key('customer_car_company_field'),
-          initialValue: companyId,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: context.tr('customer_garage.add.company_label'),
-            hintText: context.tr('customer_garage.add.company_hint'),
-            prefixIcon: const Icon(Icons.factory_outlined),
-            errorText: _fieldError('company_id'),
-          ),
-          items: _referenceItems(references.companies),
+          value: companyId,
+          label: context.tr('customer_garage.add.company_label'),
+          hint: context.tr('customer_garage.add.company_hint'),
+          searchHint: context.tr('customer_garage.add.company_search'),
+          noResultsText: context.tr('customer_garage.add.company_no_results'),
+          icon: Icons.factory_outlined,
+          apiError: _fieldError('company_id'),
+          options: [
+            for (final item in references.companies)
+              OctoGearSelectOption(value: item.id, label: item.name),
+          ],
           onChanged: enabled ? onCompanyChanged : null,
           validator: (value) => _isValid(value, references.companies)
               ? null
@@ -115,7 +120,11 @@ class CustomerCarEditorFields extends StatelessWidget {
           isExpanded: true,
           decoration: InputDecoration(
             labelText: context.tr('vehicle.transmission'),
-            hintText: context.tr('vehicle.transmission_hint'),
+            hintText: context.tr(
+              transmissionRequired
+                  ? 'vehicle.transmission_required_hint'
+                  : 'vehicle.transmission_hint',
+            ),
             prefixIcon: const Icon(Icons.settings_outlined),
             errorText: _fieldError('transmission_type'),
           ),
@@ -127,6 +136,9 @@ class CustomerCarEditorFields extends StatelessWidget {
               ),
           ],
           onChanged: enabled ? onTransmissionChanged : null,
+          validator: (value) => transmissionRequired && value == null
+              ? context.tr('vehicle.transmission_required')
+              : null,
         ),
         const SizedBox(height: OctoGearSpacing.medium),
         DropdownButtonFormField<int>(
@@ -244,17 +256,19 @@ class _CustomerCarNameField extends StatelessWidget {
         final selectedId = values.any((value) => value.id == selectedCarNameId)
             ? selectedCarNameId
             : null;
-        return DropdownButtonFormField<int>(
+        return OctoGearSearchableSelectField<int>(
           key: const Key('customer_car_name_field'),
-          initialValue: selectedId,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: context.tr('customer_garage.add.car_name_label'),
-            hintText: context.tr('customer_garage.add.car_name_hint'),
-            prefixIcon: const Icon(Icons.directions_car_outlined),
-            errorText: apiError,
-          ),
-          items: CustomerCarEditorFields._referenceItems(values),
+          value: selectedId,
+          label: context.tr('customer_garage.add.car_name_label'),
+          hint: context.tr('customer_garage.add.car_name_hint'),
+          searchHint: context.tr('customer_garage.add.car_name_search'),
+          noResultsText: context.tr('customer_garage.add.car_name_no_results'),
+          icon: Icons.directions_car_outlined,
+          apiError: apiError,
+          options: [
+            for (final item in values)
+              OctoGearSelectOption(value: item.id, label: item.name),
+          ],
           onChanged: enabled ? onChanged : null,
           validator: (value) => values.any((item) => item.id == value)
               ? null

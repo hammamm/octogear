@@ -10,6 +10,7 @@ abstract final class AppRoutePath {
   static const registration = '/auth/register';
   static const sessionUnavailable = '/session-unavailable';
   static const customerHome = '/customer';
+  static const customerGeneralRequestSegment = 'request';
   static const customerStores = '/customer/stores';
   static const customerStoreDetailsSegment = ':storeId';
   static const customerStoreCarSegment = 'cars/:carId';

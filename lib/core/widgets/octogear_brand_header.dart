@@ -52,7 +52,7 @@ class OctoGearBrandHeader extends StatelessWidget {
               textDirection: ui.TextDirection.ltr,
               style: TextStyle(
                 color: OctoGearColors.navy,
-                fontFamily: 'Arial',
+                fontFamily: 'Noto Sans',
                 fontSize: compact ? 20 : 28,
                 fontWeight: FontWeight.w800,
                 height: 1,

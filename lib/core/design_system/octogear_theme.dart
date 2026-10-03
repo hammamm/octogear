@@ -36,6 +36,36 @@ abstract final class OctoGearRadii {
 }
 
 abstract final class OctoGearTheme {
+  static ThemeData forLocale(Locale locale) {
+    final base = lightTheme;
+    final family = locale.languageCode == 'ar'
+        ? 'Noto Sans Arabic'
+        : 'Noto Sans';
+    ButtonStyle? withFont(ButtonStyle? style) => style?.copyWith(
+      textStyle: WidgetStatePropertyAll(
+        style.textStyle
+            ?.resolve({})
+            ?.copyWith(
+              fontFamily: family,
+              fontFamilyFallback: const ['Noto Sans Arabic', 'Noto Sans'],
+            ),
+      ),
+    );
+    return base.copyWith(
+      filledButtonTheme: FilledButtonThemeData(
+        style: withFont(base.filledButtonTheme.style),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: withFont(base.textButtonTheme.style),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: withFont(base.outlinedButtonTheme.style),
+      ),
+      textTheme: base.textTheme.apply(fontFamily: family),
+      primaryTextTheme: base.primaryTextTheme.apply(fontFamily: family),
+    );
+  }
+
   static ThemeData get lightTheme {
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
@@ -56,11 +86,7 @@ abstract final class OctoGearTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: OctoGearColors.canvas,
       fontFamily: 'Noto Sans Arabic',
-      fontFamilyFallback: const [
-        'Noto Sans Arabic',
-        'Noto Kufi Arabic',
-        'Arial',
-      ],
+      fontFamilyFallback: const ['Noto Sans Arabic', 'Noto Sans'],
       textTheme: const TextTheme(
         displaySmall: TextStyle(
           color: OctoGearColors.navy,

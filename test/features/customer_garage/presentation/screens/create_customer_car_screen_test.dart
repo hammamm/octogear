@@ -388,6 +388,15 @@ Future<void> _selectDropdown(
   await tester.ensureVisible(field);
   await tester.tap(field);
   await tester.pumpAndSettle();
+  if (fieldKey == const Key('customer_car_company_field') ||
+      fieldKey == const Key('customer_car_name_field')) {
+    await tester.enterText(
+      find.byKey(const Key('searchable-select-query')),
+      option.substring(0, 3).toLowerCase(),
+    );
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, option), findsOneWidget);
+  }
   await tester.tap(find.text(option).last);
   await tester.pumpAndSettle();
 }
