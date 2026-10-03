@@ -5,17 +5,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
-import '../../../../core/widgets/octogear_surface_card.dart';
+import '../../../customer_orders/domain/entities/customer_order.dart';
+import '../../../customer_orders/presentation/controllers/customer_orders_providers.dart';
 import '../../../authentication/domain/entities/session_outcome.dart';
 import '../../../authentication/presentation/controllers/session_controller.dart';
 import '../widgets/home_promotions.dart';
+import '../widgets/home_offers.dart';
+import '../widgets/home_recent_requests.dart';
 
-/// Entry point for general requests; live offer summaries remain a later slice.
+/// Entry point for requests and a compact summary of their latest status.
 class CustomerHomeScreen extends ConsumerWidget {
   const CustomerHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final orders = ref.watch(customerOrdersProvider(CustomerOrderFilter.all));
     final session = ref.watch(sessionControllerProvider).asData?.value;
     final name = session is AuthenticatedSession
         ? session.user.fullName.trim().split(RegExp(r'\s+')).first
@@ -25,89 +29,64 @@ class CustomerHomeScreen extends ConsumerWidget {
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720),
-        child: ListView(
-          key: const PageStorageKey('customer-tab-home'),
-          padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 24),
-          children: [
-            Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.asset(
-                    'assets/icons/app_icon.png',
-                    width: 42,
-                    height: 42,
-                    semanticLabel: context.tr('app.name'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    context.tr(
-                      name.isEmpty ? 'home.welcome' : 'home.greeting',
-                      args: name.isEmpty ? [] : [name],
-                    ),
-                    style: text.titleMedium,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const AppLanguageToggleButton(compact: true),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const HomePromotions(),
-            const SizedBox(height: 8),
-            const _RequestPanel(),
-            const SizedBox(height: 24),
-            Semantics(
-              header: true,
-              child: Text(
-                context.tr('home.offers_title'),
-                style: text.titleMedium,
-              ),
-            ),
-            const SizedBox(height: 12),
-            OctoGearSurfaceCard(
-              key: const ValueKey('home-view-requests'),
-              padding: const EdgeInsetsDirectional.all(OctoGearSpacing.medium),
-              onTap: () => const CustomerOrdersRoute().go(context),
-              child: Row(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            final provider = customerOrdersProvider(CustomerOrderFilter.all);
+            try {
+              ref.invalidate(provider);
+              await ref.read(provider.future);
+            } catch (_) {
+              // The section displays the provider error and a retry action.
+            }
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            key: const PageStorageKey('customer-tab-home'),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 24),
+            children: [
+              Row(
                 children: [
-                  const Icon(
-                    Icons.receipt_long_outlined,
-                    size: 24,
-                    color: OctoGearColors.navy,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      'assets/icons/app_icon.png',
+                      width: 42,
+                      height: 42,
+                      semanticLabel: context.tr('app.name'),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.tr('home.view_requests'),
-                          style: text.labelLarge?.copyWith(
-                            fontSize: 14,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          context.tr('home.offers_description'),
-                          style: text.bodyMedium,
-                        ),
-                      ],
+                    child: Text(
+                      context.tr(
+                        name.isEmpty ? 'home.welcome' : 'home.greeting',
+                        args: name.isEmpty ? [] : [name],
+                      ),
+                      style: text.titleMedium,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 20,
-                    color: OctoGearColors.navy,
-                  ),
+                  const SizedBox(width: 8),
+                  const AppLanguageToggleButton(compact: true),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              const HomePromotions(),
+              const SizedBox(height: 8),
+              const _RequestPanel(),
+              const SizedBox(height: 24),
+              if (orders.asData case final data?)
+                HomeOffers(
+                  key: ValueKey(context.locale.languageCode),
+                  page: data.value.page,
+                ),
+              HomeRecentRequests(
+                orders: orders,
+                onRetry: () => ref.invalidate(
+                  customerOrdersProvider(CustomerOrderFilter.all),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

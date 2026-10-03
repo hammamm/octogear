@@ -724,3 +724,23 @@ Text/scroll controllers, form keys, selected references and photos remain owned 
 Verification: all 25 focused request/shell tests pass, including an extended inline-vehicle test that revisits vehicle and part steps before submitting. Both Arabic/English rendered preview tests pass; all 12 generated screenshots match their pre-refactor files byte for byte.
 
 **Refactor validation:** Flutter analysis and custom lint report no issues. The Android debug APK builds successfully; the existing Firebase Kotlin Gradle compatibility warning remains unchanged.
+
+## Home recent requests — 2026-10-03
+
+Home now shows up to three recent requests below the existing banners and compact request action. Each small, naturally sized card shows the requested part, vehicle, current status and (for general requests with offers) offer count. Pending general requests distinguish waiting for offers from offers received. Tapping a card opens its existing details route; View all opens Orders. Individual store/price offer previews remain a separate follow-up.
+
+The Home screen keeps the existing customerOrdersProvider(all) subscription alive while the summary scrolls offscreen. It shares the Orders cache and successful-request invalidation, supports pull-to-refresh, and uses the authenticated localized order list without per-order detail calls or new API contracts. A sorted copy provides newest-first summaries without changing the shared paginated list. Loading, retryable failure and empty states are distinct. The empty message points to the existing request button rather than duplicating a large action.
+
+HomeRecentRequests and HomeRequestCard stay in the Home feature. Existing core surfaces, colors, typography and localization remain shared. Cards expand for accessibility text sizes; directional layout and arrows work in Arabic and English. Checks cover summary limits/order, offer status/count, detail navigation, refresh/invalidation, loading/error/retry/empty states and 320 dp layouts at 200% text scale. Arabic/English previews are rendered with bundled fonts in ignored build/home-*-recent-requests.png files.
+
+**Home summary validation:** All 161 Flutter tests pass, together with two rendered Arabic/English preview checks. Flutter analysis and custom lint report no issues. The Android debug APK builds successfully; the existing Firebase Kotlin Gradle compatibility warning is unchanged.
+
+## Home offer previews — 2026-10-03
+
+Home now places an Offers to review carousel above recent requests. Cards show store, requested part, request reference and explicitly labelled whole-request offer total, using the existing SAR/minor-unit formatter. Tapping opens the owning request details; View all opens Orders. Adjacent cards peek into view, with horizontal swiping, accessible previous/next buttons, RTL direction and reduced-motion support. Cards grow with text size rather than clipping into a fixed-height carousel.
+
+The section reuses offers embedded in the existing authenticated order-list response, without new API calls, contracts or packages. It shows at most eight pending offers from pending general requests that have no selected offer, ordered by descending offer ID. Rejected, unselected, unknown and accepted offers, and closed/selected requests, are excluded from these available choices. This is explicitly a preview for recent requests: it uses the currently loaded Orders pages, not the entire account history. Older requests and their full offer history remain accessible through Orders. No extra empty panel appears when the loaded requests have no available choices; request cards retain their waiting/status feedback.
+
+The shared Home refresh and order-cache invalidation refresh both sections. Feature widgets and preview selection remain inside customer_home, while core surfaces/theme and order currency/domain types are reused. Tests cover eligibility/limits, correct total price, owning-request navigation, Arabic/English swiping and controls at 200% text size. Font-rendered previews are in ignored build/home-*-offers.png files.
+
+**Offer-preview validation:** All 34 focused Home/shell/order tests pass, and both Arabic/English rendered preview checks pass. Flutter analysis and custom lint report no issues. The Android debug APK builds successfully; the existing Firebase Kotlin Gradle compatibility warning remains unchanged.

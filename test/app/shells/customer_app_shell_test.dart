@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'package:octogear/core/api/api_failure.dart';
+import 'package:octogear/features/customer_orders/domain/entities/customer_order.dart';
+import 'package:octogear/features/customer_orders/data/models/customer_order_dto.dart';
 import 'package:octogear/features/customer_garage/presentation/controllers/customer_cars_providers.dart';
 import '../../features/general_requests/general_request_fixtures.dart';
 import 'dart:convert';
@@ -56,6 +60,158 @@ void main() {
         jsonDecode(await rootBundle.loadString('assets/translations/ar.json'))
             as Map<String, dynamic>;
   });
+
+  testWidgets('Home offer opens its request and uses whole-request total', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repo = FakeOrdersRepository()
+      ..onList = (_, _) async => ordersPage([
+        CustomerOrderDto.fromJson(
+          orderJson(id: 17, general: true)
+            ..['part_name'] = 'Front headlight'
+            ..['offers_count'] = 1
+            ..['offers'] = [
+              {
+                'id': 42,
+                'price': 12550,
+                'status': 'pending',
+                'images': [],
+                'store': {'id': 6, 'name': 'Parts store'},
+              },
+            ],
+        ).value,
+      ]);
+    await _pumpCustomerApp(
+      tester,
+      translations: englishTranslations,
+      locale: AppLocale.english,
+      ordersRepository: repo,
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('home-offer-42')),
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const PageStorageKey('customer-tab-home')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.text('Parts store'), findsOneWidget);
+    expect(find.textContaining('125.50'), findsOneWidget);
+    expect(repo.detailCalls, isEmpty);
+    expect(repo.calls, hasLength(1));
+    await tester.tap(find.byKey(const ValueKey('home-offer-42')));
+    await tester.pumpAndSettle();
+    expect(repo.detailCalls, [17]);
+    expect(find.byType(CustomerOrderDetailsScreen), findsOneWidget);
+  });
+  testWidgets(
+    'Home shows three latest requests and opens the selected details',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final repo = FakeOrdersRepository()
+        ..onList = (_, _) async => ordersPage([
+          for (final id in [1, 4, 2, 3])
+            CustomerOrderDto.fromJson(
+              orderJson(id: id, general: true)
+                ..['part_name'] = 'Headlight $id'
+                ..['offers_count'] = id == 4 ? 2 : 0,
+            ).value,
+        ]);
+      await _pumpCustomerApp(
+        tester,
+        translations: englishTranslations,
+        locale: AppLocale.english,
+        ordersRepository: repo,
+      );
+      await tester.ensureVisible(find.byKey(const ValueKey('home-request-4')));
+      expect(find.byKey(const ValueKey('home-request-1')), findsNothing);
+      expect(find.byKey(const ValueKey('home-request-2')), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.byKey(const ValueKey('home-request-4'))).dy,
+        lessThan(
+          tester.getTopLeft(find.byKey(const ValueKey('home-request-3'))).dy,
+        ),
+      );
+      expect(find.text('Offers received'), findsOneWidget);
+      expect(find.text('Offers: 2'), findsOneWidget);
+      expect(repo.calls, hasLength(1));
+      expect(repo.detailCalls, isEmpty);
+      await tester.tap(find.byKey(const ValueKey('home-request-4')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CustomerOrderDetailsScreen), findsOneWidget);
+      expect(repo.detailCalls, [4]);
+    },
+  );
+
+  testWidgets('Home loads, retries a failure and shows an honest empty state', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final pending = Completer<CustomerOrdersPage>();
+    final repo = FakeOrdersRepository()..onList = (_, _) => pending.future;
+    await _pumpCustomerApp(
+      tester,
+      translations: englishTranslations,
+      locale: AppLocale.english,
+      ordersRepository: repo,
+      settle: false,
+    );
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    pending.completeError(const ApiFailure(type: ApiFailureType.noConnection));
+    await tester.pumpAndSettle();
+    expect(find.text('Couldn’t load your requests'), findsOneWidget);
+    expect(repo.calls, hasLength(1));
+    expect(find.byKey(const ValueKey('home-empty-requests')), findsNothing);
+    repo.onList = (_, _) async => ordersPage([]);
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('home-retry-requests')),
+    );
+    await tester.tap(find.byKey(const ValueKey('home-retry-requests')));
+    await tester.pumpAndSettle();
+    expect(find.text('No requests yet'), findsOneWidget);
+    expect(repo.calls, hasLength(2));
+    expect(find.byKey(const ValueKey('home-request-part')), findsOneWidget);
+  });
+
+  testWidgets(
+    'Home refreshes orders and reacts to submission cache invalidation',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final repo = FakeOrdersRepository()
+        ..onList = (_, _) async => ordersPage([]);
+      await _pumpCustomerApp(
+        tester,
+        translations: englishTranslations,
+        locale: AppLocale.english,
+        ordersRepository: repo,
+      );
+      repo.onList = (_, _) async =>
+          ordersPage([fixtureOrder(id: 8, general: true)]);
+      await tester.drag(
+        find.byKey(const PageStorageKey('customer-tab-home')),
+        const Offset(0, 500),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('home-request-8')), findsOneWidget);
+      expect(repo.calls, hasLength(2));
+      repo.onList = (_, _) async =>
+          ordersPage([fixtureOrder(id: 9, general: true)]);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(OctoGearApp)),
+      );
+      container.invalidate(customerOrdersProvider);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('home-request-9')), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-request-8')), findsNothing);
+    },
+  );
 
   testWidgets('Home opens the guided request flow and existing requests', (
     tester,
@@ -188,6 +344,28 @@ void main() {
             ? arabicTranslations
             : englishTranslations,
         locale: locale,
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('home-request-1')),
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const PageStorageKey('customer-tab-home')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('home-promotions')),
+        -180,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const PageStorageKey('customer-tab-home')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
       );
       final carousel = find.byKey(const ValueKey('home-promotions'));
       await tester.drag(
@@ -532,6 +710,8 @@ Future<void> _pumpCustomerApp(
   required Map<String, dynamic> translations,
   required AppLocale locale,
   bool storesEnabled = false,
+  FakeOrdersRepository? ordersRepository,
+  bool settle = true,
   Map<String, dynamic>? alternateTranslations,
 }) async {
   await tester.pumpWidget(
@@ -542,7 +722,7 @@ Future<void> _pumpCustomerApp(
         ),
         customerStoresEnabledProvider.overrideWithValue(storesEnabled),
         customerOrdersRepositoryProvider.overrideWithValue(
-          FakeOrdersRepository(),
+          ordersRepository ?? FakeOrdersRepository(),
         ),
         partRequestRepositoryProvider.overrideWithValue(
           FakeRequestRepository(),
@@ -580,7 +760,12 @@ Future<void> _pumpCustomerApp(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }
 
 class _PreloadedTranslations extends AssetLoader {

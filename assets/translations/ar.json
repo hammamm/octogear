@@ -45,6 +45,18 @@
     "success_hint": "يمكنك متابعة هذا الطلب والاطلاع على عروض المتاجر في صفحة الطلبات."
   },
   "home": {
+      "review_offers": "عروض بانتظارك",
+      "recent_offers_hint": "عروض المتاجر لطلباتك الأخيرة",
+      "offer_total_label": "السعر الإجمالي للعرض",
+      "swipe_offers": "اسحب لمقارنة العروض",
+      "previous_offer": "العرض السابق",
+      "next_offer": "العرض التالي",
+      "recent_requests": "آخر الطلبات",
+      "view_all": "عرض الكل",
+      "no_requests": "لا توجد طلبات بعد",
+      "no_requests_hint": "اطلب قطعة من الزر أعلاه، وتابع حالة طلبك وعروضه هنا.",
+      "requests_error": "تعذّر تحميل طلباتك",
+      "offers_received": "وصلت عروض",
     "welcome": "أهلاً بك في أوكتوجير",
     "greeting": "أهلاً، {}",
     "request_title": "ما القطعة التي تحتاجها؟",

@@ -45,6 +45,18 @@
     "success_hint": "You can follow this request and view store offers in Orders."
   },
   "home": {
+      "review_offers": "Offers to review",
+      "recent_offers_hint": "Store offers for your recent requests",
+      "offer_total_label": "Total offer price",
+      "swipe_offers": "Swipe to compare",
+      "previous_offer": "Previous offer",
+      "next_offer": "Next offer",
+      "recent_requests": "Recent requests",
+      "view_all": "View all",
+      "no_requests": "No requests yet",
+      "no_requests_hint": "Request a part above. Follow its progress and offers here.",
+      "requests_error": "Couldn’t load your requests",
+      "offers_received": "Offers received",
     "welcome": "Welcome to OctoGear",
     "greeting": "Welcome, {}",
     "request_title": "Which part do you need?",
