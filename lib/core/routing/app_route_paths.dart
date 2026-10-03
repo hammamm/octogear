@@ -17,6 +17,8 @@ abstract final class AppRoutePath {
   static const customerPartRequestSegment = 'components/:componentId/request';
   static const customerOrders = '/customer/orders';
   static const customerOrderDetailsSegment = ':orderId';
+  static const customerOfferDetailsSegment = 'offers/:offerId';
+  static const customerOfferRefuseSegment = 'refuse';
   static const customerAccount = '/customer/account';
   static const customerChats = '/customer/chats';
   static const customerMore = '/customer/more';

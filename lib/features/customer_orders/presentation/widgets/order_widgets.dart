@@ -54,7 +54,11 @@ class OrderStatusBadge extends StatelessWidget {
       child: Text(
         context.tr(
           order.status == CustomerOrderStatus.pending && order.isGeneral
-              ? 'orders.awaiting_offers'
+              ? order.offers.any(
+                      (offer) => offer.status == CustomerOfferStatus.pending,
+                    )
+                    ? 'offer_flow.offers_ready'
+                    : 'orders.awaiting_offers'
               : 'orders.status_${order.status.name}',
         ),
         style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),

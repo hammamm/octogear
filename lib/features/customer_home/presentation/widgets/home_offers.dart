@@ -102,8 +102,9 @@ class _HomeOffersState extends State<HomeOffers> {
                                     'home-offer-${offers[index].offer.id}',
                                   ),
                                   item: offers[index],
-                                  onTap: () => CustomerOrderDetailsRoute(
+                                  onTap: () => CustomerOfferDetailsRoute(
                                     orderId: offers[index].order.id,
+                                    offerId: offers[index].offer.id,
                                   ).push<void>(context),
                                 ),
                               ),

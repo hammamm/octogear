@@ -1,3 +1,5 @@
+import '../../features/customer_orders/presentation/screens/customer_offer_details_screen.dart';
+import '../../features/customer_orders/presentation/screens/refuse_customer_offer_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -125,6 +127,16 @@ class SessionUnavailableRoute extends GoRouteData
           routes: [
             TypedGoRoute<CustomerOrderDetailsRoute>(
               path: AppRoutePath.customerOrderDetailsSegment,
+              routes: [
+                TypedGoRoute<CustomerOfferDetailsRoute>(
+                  path: AppRoutePath.customerOfferDetailsSegment,
+                  routes: [
+                    TypedGoRoute<RefuseCustomerOfferRoute>(
+                      path: AppRoutePath.customerOfferRefuseSegment,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
@@ -424,4 +436,28 @@ class GeneralPartRequestRoute extends GoRouteData
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const GeneralPartRequestScreen();
+}
+
+class CustomerOfferDetailsRoute extends GoRouteData
+    with $CustomerOfferDetailsRoute {
+  const CustomerOfferDetailsRoute({
+    required this.orderId,
+    required this.offerId,
+  });
+  final int orderId, offerId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      CustomerOfferDetailsScreen(orderId: orderId, offerId: offerId);
+}
+
+class RefuseCustomerOfferRoute extends GoRouteData
+    with $RefuseCustomerOfferRoute {
+  const RefuseCustomerOfferRoute({
+    required this.orderId,
+    required this.offerId,
+  });
+  final int orderId, offerId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      RefuseCustomerOfferScreen(orderId: orderId, offerId: offerId);
 }

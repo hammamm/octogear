@@ -66,7 +66,7 @@ class HomeOfferCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  context.tr('orders.view_request'),
+                  context.tr('offer_flow.view_offer'),
                   style: text.labelMedium,
                 ),
               ),

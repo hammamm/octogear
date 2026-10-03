@@ -1,3 +1,6 @@
+import 'package:octogear/features/customer_orders/presentation/screens/customer_offer_details_screen.dart';
+import 'package:octogear/features/customer_orders/presentation/screens/refuse_customer_offer_screen.dart';
+import 'package:octogear/features/customer_chats/presentation/screens/customer_chats_screen.dart';
 import 'dart:async';
 import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/features/customer_orders/domain/entities/customer_order.dart';
@@ -61,53 +64,66 @@ void main() {
             as Map<String, dynamic>;
   });
 
-  testWidgets('Home offer opens its request and uses whole-request total', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final repo = FakeOrdersRepository()
-      ..onList = (_, _) async => ordersPage([
-        CustomerOrderDto.fromJson(
-          orderJson(id: 17, general: true)
-            ..['part_name'] = 'Front headlight'
-            ..['offers_count'] = 1
-            ..['offers'] = [
-              {
-                'id': 42,
-                'price': 12550,
-                'status': 'pending',
-                'images': [],
-                'store': {'id': 6, 'name': 'Parts store'},
-              },
-            ],
-        ).value,
-      ]);
-    await _pumpCustomerApp(
-      tester,
-      translations: englishTranslations,
-      locale: AppLocale.english,
-      ordersRepository: repo,
-    );
-    await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('home-offer-42')),
-      180,
-      scrollable: find
-          .descendant(
-            of: find.byKey(const PageStorageKey('customer-tab-home')),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    expect(find.text('Parts store'), findsOneWidget);
-    expect(find.textContaining('125.50'), findsOneWidget);
-    expect(repo.detailCalls, isEmpty);
-    expect(repo.calls, hasLength(1));
-    await tester.tap(find.byKey(const ValueKey('home-offer-42')));
-    await tester.pumpAndSettle();
-    expect(repo.detailCalls, [17]);
-    expect(find.byType(CustomerOrderDetailsScreen), findsOneWidget);
-  });
+  testWidgets(
+    'Home offer opens the specific offer, refusal page and Chats tab',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final repo = FakeOrdersRepository()
+        ..onList = (_, _) async => ordersPage([
+          CustomerOrderDto.fromJson(
+            orderJson(id: 17, general: true)
+              ..['part_name'] = 'Front headlight'
+              ..['offers_count'] = 1
+              ..['offers'] = [
+                {
+                  'id': 42,
+                  'price': 12550,
+                  'status': 'pending',
+                  'images': [],
+                  'store': {'id': 6, 'name': 'Parts store'},
+                },
+              ],
+          ).value,
+        ]);
+      repo.onGet = (_) async =>
+          (await repo.onList!(CustomerOrderFilter.all, 1)).orders.single;
+      await _pumpCustomerApp(
+        tester,
+        translations: englishTranslations,
+        locale: AppLocale.english,
+        ordersRepository: repo,
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('home-offer-42')),
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const PageStorageKey('customer-tab-home')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      expect(find.text('Parts store'), findsOneWidget);
+      expect(find.textContaining('125.50'), findsOneWidget);
+      expect(repo.detailCalls, isEmpty);
+      expect(repo.calls, hasLength(1));
+      await tester.tap(find.byKey(const ValueKey('home-offer-42')));
+      await tester.pumpAndSettle();
+      expect(repo.detailCalls, [17]);
+      expect(find.byType(CustomerOfferDetailsScreen), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const ValueKey('offer-refuse')));
+      await tester.tap(find.byKey(const ValueKey('offer-refuse')));
+      await tester.pumpAndSettle();
+      expect(find.byType(RefuseCustomerOfferScreen), findsOneWidget);
+      await tester.tap(find.byType(BackButtonIcon).last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const ValueKey('offer-chat')));
+      await tester.tap(find.byKey(const ValueKey('offer-chat')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CustomerChatsScreen), findsOneWidget);
+    },
+  );
   testWidgets(
     'Home shows three latest requests and opens the selected details',
     (tester) async {

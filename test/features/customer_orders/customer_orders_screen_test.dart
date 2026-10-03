@@ -120,13 +120,19 @@ void main() {
     expect(find.text('General part request'), findsOneWidget);
     expect(find.text('Awaiting payment'), findsOneWidget);
     expect(find.text('Quantity'), findsNothing);
-    await reveal(tester, find.text('Selected offer total'));
+    expect(find.text('Your selected offer'), findsOneWidget);
     expect(find.textContaining('150.00'), findsWidgets);
-    await reveal(tester, find.text('Store offers (2)'));
-    await reveal(tester, find.text('Original part'));
-    expect(find.text('Selected store'), findsWidgets);
-    await reveal(tester, find.text('Reason: Not suitable'));
+    expect(find.text('Original part'), findsNothing);
+    expect(find.text('No store selected yet'), findsNothing);
+    await reveal(tester, find.text('Previous offers (1)'));
+    await tester.tap(find.text('Previous offers (1)'));
+    await tester.pumpAndSettle();
     expect(find.text('Store details unavailable'), findsWidgets);
+    await reveal(tester, find.text('Request information'));
+    expect(find.text('Check connector'), findsNothing);
+    await tester.tap(find.text('Request information'));
+    await tester.pumpAndSettle();
+    await reveal(tester, find.text('Check connector'));
     expect(tester.takeException(), isNull);
   });
   testWidgets(
@@ -174,8 +180,12 @@ void main() {
         ..onGet = (_) async => CustomerOrderDto.fromJson(json).value;
       await pump(tester, repo, detailId: 2);
       expect(find.text('Quantity'), findsNothing);
-      await reveal(tester, find.text('Purchased mirror set'));
-      await reveal(tester, find.text('Alternative mirror set'));
+      expect(find.text('Your selected offer'), findsOneWidget);
+      expect(find.textContaining('300.00'), findsOneWidget);
+      expect(find.text('Purchased mirror set'), findsNothing);
+      await reveal(tester, find.text('Previous offers (1)'));
+      await tester.tap(find.text('Previous offers (1)'));
+      await tester.pumpAndSettle();
       expect(find.text('Not selected'), findsOneWidget);
       expect(find.textContaining('Unit price'), findsNothing);
       expect(tester.takeException(), isNull);
@@ -197,8 +207,14 @@ void main() {
         ).name,
         'rtl',
       );
-      await reveal(tester, find.text('لم يُختر متجر بعد'));
-      await reveal(tester, find.text('لا توجد عروض لعرضها'));
+      expect(find.text('لم يُختر متجر بعد'), findsNothing);
+      await reveal(
+        tester,
+        find.text('بانتظار عروض المتاجر. يمكنك العودة هنا لمتابعة المستجدات.'),
+      );
+      await reveal(tester, find.text('معلومات الطلب'));
+      await tester.tap(find.text('معلومات الطلب'));
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },
   );
