@@ -6,5 +6,6 @@ class GetRegistrationCitiesUseCase {
 
   final AuthenticationRepository _repository;
 
-  Future<List<AppCity>> call() => _repository.getRegistrationCities();
+  Future<AppCityPage> call({String search = '', int page = 1}) =>
+      _repository.getRegistrationCities(search: search, page: page);
 }

@@ -2,11 +2,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../localization/app_locale.dart';
+import '../configuration/api_configuration_loader.dart';
 
 /// The narrow secure-session contract used by the application and tests.
 abstract interface class SessionStorage {
   String? get cachedAccessToken;
- 
+
   Future<String?> readAccessToken();
   Future<void> saveAccessToken(String accessToken);
   Future<void> clearSession();
@@ -27,7 +28,8 @@ abstract interface class ProfileCacheStorage {
 /// Stores OctoGear's sensitive session in Keychain/Keystore and its selected
 /// locale in preferences. No feature may access either platform package
 /// directly.
-class AppStorage implements SessionStorage, ProfileCacheStorage {
+class AppStorage
+    implements SessionStorage, ProfileCacheStorage, ApiConfigurationCache {
   AppStorage({
     FlutterSecureStorage? secureStorage,
     Future<SharedPreferences> Function()? preferencesLoader,
@@ -37,6 +39,7 @@ class AppStorage implements SessionStorage, ProfileCacheStorage {
   static const _accessTokenKey = 'octogear.session.access_token';
   static const _cachedProfileKey = 'octogear.session.profile';
   static const _localeKey = 'octogear.preferences.locale';
+  static const _apiBaseUrlKey = 'octogear.configuration.api_base_url';
 
   final FlutterSecureStorage _secureStorage;
   final Future<SharedPreferences> Function() _preferencesLoader;
@@ -54,6 +57,20 @@ class AppStorage implements SessionStorage, ProfileCacheStorage {
   String? get cachedProfileJson => _cachedProfileJson;
 
   AppLocale get cachedLocale => _cachedLocale;
+
+  @override
+  String? readApiBaseUrl(String environment) =>
+      _preferences?.getString('$_apiBaseUrlKey.$environment');
+
+  @override
+  Future<void> saveApiBaseUrl(String environment, String value) async {
+    await initialize();
+    final saved = await _preferences!.setString(
+      '$_apiBaseUrlKey.$environment',
+      value,
+    );
+    if (!saved) throw StateError('Could not save API configuration.');
+  }
 
   Future<void> initialize() {
     return _initialization ??= _initialize();

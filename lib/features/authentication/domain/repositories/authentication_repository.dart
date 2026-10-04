@@ -14,5 +14,5 @@ abstract interface class AuthenticationRepository {
     required String fullName,
     required int cityId,
   });
-  Future<List<AppCity>> getRegistrationCities();
+  Future<AppCityPage> getRegistrationCities({String search = '', int page = 1});
 }

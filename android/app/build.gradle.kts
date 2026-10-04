@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -6,6 +8,20 @@ plugins {
     // END: FlutterFire Configuration
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Flutter encodes --dart-define entries as comma-separated base64 strings.
+// Match the Dart default and aliases so release development APKs allow HTTP.
+val octoGearDefines = (project.findProperty("dart-defines") as? String)
+    ?.split(",")
+    ?.filter { it.isNotEmpty() }
+    ?.associate {
+        val entry = String(Base64.getDecoder().decode(it), Charsets.UTF_8)
+        entry.substringBefore("=") to entry.substringAfter("=", "")
+    } ?: emptyMap()
+val octoGearEnvironment = (octoGearDefines["OCTOGEAR_ENV"] ?: "development").trim().lowercase()
+require(octoGearEnvironment in setOf("development", "dev", "staging", "test", "production", "prod")) {
+    "OCTOGEAR_ENV must be development, staging or production."
 }
 
 android {
@@ -27,6 +43,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["octoGearCleartextTraffic"] =
+            (octoGearEnvironment in setOf("development", "dev")).toString()
     }
 
     buildTypes {

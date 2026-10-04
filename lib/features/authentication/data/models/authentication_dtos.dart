@@ -1,5 +1,17 @@
 import 'current_user_dto.dart';
 
+class CityPageDto {
+  const CityPageDto({
+    required this.items,
+    required this.page,
+    required this.lastPage,
+  });
+
+  final List<CityDto> items;
+  final int page;
+  final int lastPage;
+}
+
 class OtpVerificationDto {
   const OtpVerificationDto({
     required this.isNew,

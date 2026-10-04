@@ -32,7 +32,7 @@ Flutter and Laravel are separate repositories. The Flutter Git history and GitHu
 - Android Firebase is configured and verified for project `octogear-1d72b` and Android package `com.octogear.app`.
 - Firebase Core, Messaging, Crashlytics, and Analytics initialize on Android; an FCM token was retrieved on an emulator.
 - The official Android FlutterFire configuration has been generated.
-- iOS work and all Firebase work except the explicitly scoped Android first-time device-token capture are deferred for the current phase. Leave the existing Android Firebase configuration intact; do not add notification delivery, permission, token-refresh, or iOS Firebase behavior, and do not depend on Firebase for the foundation/session flow.
+- iOS work and Firebase work other than Android first-time device-token capture and the approved staging Remote Config API URL bootstrap are deferred. Leave the existing Android Firebase project configuration intact; do not add notification delivery, permission, token-refresh, or iOS Firebase behavior. The selected environment resolves its API destination before the existing session flow starts.
 - The old iOS bundle identifier, display name, and `GoogleService-Info.plist` are intentionally untouched while iOS is deferred. They must be replaced together with the confirmed iOS bundle identifier and new Firebase configuration before any iOS build or release; never copy the old Sahala Firebase identity into OctoGear.
 - The legacy Sahala Flutter scaffold has been removed: its GetIt wiring, old routes, sample features, old login/OTP code, widgets, extensions, legacy storage/messaging wrappers, old Poppins assets, and obsolete tests are not part of OctoGear. The root Dart package and project lint package are named `octogear` and `octogear_lints`.
 - The external YARDY wireframes remain unchanged as a functional product reference. They must never be deleted as part of Flutter source cleanup.
@@ -115,7 +115,7 @@ lib/
 ├── app/                         # Bootstrap, root app, router, app-level providers
 ├── core/                        # Cross-feature technical infrastructure only
 │   ├── api/                     # Dio, interceptors, typed API envelope, failures
-│   ├── configuration/           # --dart-define/flavor configuration
+│   ├── configuration/           # Remote Config URL bootstrap and environment
 │   ├── design_system/           # OctoGear tokens, theme, shared primitives
 │   ├── localization/            # Locale persistence, API locale resolver
 │   ├── logging/                 # Redacted AppLogger and Crashlytics integration
@@ -247,17 +247,15 @@ Reference endpoints provide localized cities, companies, names, models, fuel typ
 
 ### Environment configuration for the current phase
 
-The local Laravel development server root is `http://127.0.0.1:8000`. The Flutter API base URL therefore resolves to `http://127.0.0.1:8000/api` because Laravel API routes live below `/api`.
+Approved 2026-10-04: select `development` (default, alias `dev`), `staging` or `production` (alias `prod`) using `--dart-define=OCTOGEAR_ENV=...` on run/build commands. Development and production URLs are manually edited in `lib/core/configuration/app_configuration.dart` (`developmentApiBaseUrl`, `productionApiBaseUrl`). The owner supplied `http://127.0.0.1:8000/api` for development; Android devices/emulators use `adb reverse tcp:8000 tcp:8000` to reach the PC, repeated after reconnection if needed. Production remains empty until supplied. Development accepts HTTP or HTTPS; production requires HTTPS. Neither reads Remote Config or cached API URLs. Invalid manual values show a bilingual configuration error and block API startup until rebuilt.
 
-Use `--dart-define` configuration rather than source edits when an environment is deployed:
+Startup resolves the environment configuration before constructing the existing Riverpod API/session tree. All URLs must be absolute and end in `/api`, without credentials, query or fragment. Android derives its release cleartext setting from the same environment argument to allow development HTTP; debug builds retain their existing tooling support. The Dio boundary, bearer token resolvers, locale headers, repositories and session validation remain unchanged.
 
-| Environment | Temporary API value | Rule |
-| --- | --- | --- |
-| development | `http://127.0.0.1:8000/api` | Default for the current development setup. When Laravel is bound to the Windows loopback address, bridge LDPlayer/ADB with `adb reverse tcp:8000 tcp:8000`; use `http://10.0.2.2:8000/api` only when the host server is intentionally reachable from the emulator network. |
-| test/staging | `https://api-staging.octogear.invalid/api` | Safe placeholder that must be replaced before deployment. |
-| production | `https://api.octogear.invalid/api` | Safe placeholder that must be replaced with the real HTTPS production API. |
+Staging alone reads the Firebase Client Remote Config String parameter `api_base_url`, declared as `AppConfiguration.apiBaseUrlKey` in the same file. Staging requires HTTPS, such as a Cloudflare Tunnel URL exposing local Laravel. Publish the parameter and fully relaunch to use a new URL. Other Firebase services retain their current initialization; only the API URL source changes.
 
-The `.invalid` hostnames deliberately fail rather than accidentally sending test or production traffic to an unknown server.
+Staging uses a zero minimum fetch interval for launch-time updates, subject to Firebase throttling. The SDK fetch timeout is 10 seconds with a 12-second overall bound. On failure, use a validated activated value or saved staging URL. Malformed/empty values cannot overwrite the saved URL. A fresh staging install without a usable value shows the bilingual Retry screen. Development/production never fall back to staging. Configuration failures never clear session tokens.
+
+The destination is immutable for each app launch. Tests cover environment routing, manual URL validation, no remote/cache access outside staging, staging timeout/fallback isolation, and bilingual configuration errors. The existing Android application/Firebase identity is unchanged and iOS remains deferred. These environment commands do not create separate side-by-side installations. See README.md for run/build commands, local networking, and staging publishing instructions.
 
 ## Authentication and session contract
 
@@ -381,6 +379,16 @@ Firebase initialization alone does not make product notifications work. When pus
 Chat must define participants, creation rules, message pagination, attachments, read state, blocking/reporting/moderation policy, and notification behavior before a production implementation.
 
 ## Testing and delivery standard
+
+### Registration city pagination (2026-10-04)
+
+**User action and roles:** A new customer completing registration opens the city picker, searches for a city, optionally loads more results, and selects one city. The selected city and typed name remain in the form when the picker is dismissed.
+
+**API contract:** Existing public `GET /api/reference/cities?search=...&page=1&per_page=50`, with localized `{id, name}` items and `meta: {current_page, last_page, per_page, total}`. Fetch exactly one page per initial load, search or Load more action. Laravel is unchanged; registration still sends the selected `city_id`.
+
+**State and navigation:** The city selector is a modal picker, with loading, empty/search-no-results, failure/Retry and Load more states. Additional-page errors retain current results and retry the same page. Search is debounced and stale responses cannot replace a newer query. No automatic whole-list download or automatic error retries. Dismissal preserves the existing form selection; no authentication or route changes.
+
+**Locale/RTL and tests:** Use localized Arabic/English labels and backend names, refresh results for locale changes, and support keyboard, scrolling and large text. Cover one-page requests, search/pagination, stale responses, retry, selection persistence and unchanged registration payloads. No analytics or notification changes.
 
 Before a feature is complete, include:
 
@@ -765,7 +773,7 @@ Request details now offers compact Edit and Delete controls based on server-prov
 
 Laravel now provides authenticated PATCH and DELETE /api/customer/orders/{order}. CustomerOrderResource adds can_edit, can_delete and edit_token. Clients echo edit_token; the server locks the order, checks ownership through policy, then rechecks eligibility and the revision before mutating. Editing requires pending status, no accepted offer, no payment record and no offer history (including withdrawn offers). Deletion allows pending/rejected/cancelled requests only without an accepted offer or payment record. Deletion soft-deletes the request and its offers, retaining media metadata/history and the original creation idempotency key. Paid/completed/accepted requests cannot be deleted. No schema migration or payment change is required.
 
-PATCH accepts optional general description, component_id OR component_name, and customer_car_id OR a complete vehicle object. Omitted part/vehicle fields preserve the original snapshot, including retired references. Specific updates accept quantity and notes, validating changed quantity against active stock. Images and identity/status/pricing fields are not editable through this endpoint. A stale token or changed eligibility returns 409; validation errors return 422. No automatic write retries occur. Uncertain outcomes require an explicit read before another attempt; 404 after an uncertain deletion reconciles as no longer available. Successful changes invalidate both request details and shared Orders/Home data.
+PATCH accepts optional general description, component_id OR component_name, and a complete vehicle object. As approved on 2026-10-04, customer_car_id is prohibited for updates: vehicle edits replace only the request snapshot, never a garage car. POST creation still supports customer_car_id or vehicle. Omitted part/vehicle fields preserve the original snapshot and saved-car reference, including retired references; an explicit vehicle replacement becomes a request-only snapshot. Specific updates accept quantity and notes, validating changed quantity against active stock. Images and identity/status/pricing fields are not editable through this endpoint. A stale token or changed eligibility returns 409; validation errors return 422. No automatic write retries occur. Uncertain outcomes require an explicit read before another attempt; 404 after an uncertain deletion reconciles as no longer available. Successful changes invalidate both request details and shared Orders/Home data. Regression tests cover rejected saved-car updates, unchanged snapshots on rejection/omission, manual edits without garage mutations, rollback and preserved saved-car creation.
 
 The typed edit route is /customer/orders/:orderId/edit. Feature files separate API mapping, repository, mutation controller, edit form, vehicle draft and management feedback/actions. The backend reuses vehicle/component validation from general request creation. Tests use fake app repositories and an in-memory SQLite backend database; no real customer request is modified. Font-rendered review images are under ignored build/order-management-*.png.
 

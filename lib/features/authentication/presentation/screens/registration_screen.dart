@@ -14,7 +14,7 @@ import '../../../../core/widgets/octogear_page_scaffold.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../domain/entities/app_user.dart';
 import '../controllers/authentication_flow_controller.dart';
-import '../controllers/registration_cities_controller.dart';
+import '../widgets/registration_city_field.dart';
 import '../controllers/registration_controller.dart';
 import '../controllers/session_controller.dart';
 import '../widgets/authentication_failure_text.dart';
@@ -74,7 +74,6 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
       }
     });
 
-    final cities = ref.watch(registrationCitiesProvider);
     final registration = ref.watch(registrationControllerProvider);
     final apiFailure = registration.error as ApiFailure?;
 
@@ -135,51 +134,15 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                             : null,
                       ),
                       const SizedBox(height: OctoGearSpacing.medium),
-                      cities.when(
-                        loading: () => const _CitiesLoading(),
-                        error: (error, _) => _CitiesError(
-                          message: authenticationFailureText(context, error),
-                          onRetry: () => ref
-                              .read(registrationCitiesProvider.notifier)
-                              .retry(),
-                        ),
-                        data: (values) {
-                          if (values.isEmpty) {
-                            return _CitiesError(
-                              message: context.tr('auth.cities_empty'),
-                              onRetry: () => ref
-                                  .read(registrationCitiesProvider.notifier)
-                                  .retry(),
-                            );
-                          }
-                          return DropdownButtonFormField<AppCity>(
-                            initialValue: _selectedCity,
-                            isExpanded: true,
-                            decoration: InputDecoration(
-                              labelText: context.tr('auth.city_label'),
-                              prefixIcon: const Icon(
-                                Icons.location_city_outlined,
-                              ),
-                              errorText:
-                                  apiFailure?.fieldErrors['city_id']?.first,
-                            ),
-                            items: values
-                                .map(
-                                  (city) => DropdownMenuItem(
-                                    value: city,
-                                    child: Text(city.name),
-                                  ),
-                                )
-                                .toList(growable: false),
-                            onChanged: registration.isSubmitting
-                                ? null
-                                : (city) =>
-                                      setState(() => _selectedCity = city),
-                            validator: (city) => city == null
-                                ? context.tr('auth.city_required')
-                                : null,
-                          );
-                        },
+                      RegistrationCityField(
+                        value: _selectedCity,
+                        apiError: apiFailure?.fieldErrors['city_id']?.first,
+                        onChanged: registration.isSubmitting
+                            ? null
+                            : (city) => setState(() => _selectedCity = city),
+                        validator: (city) => city == null
+                            ? context.tr('auth.city_required')
+                            : null,
                       ),
                     ],
                   ),
@@ -197,9 +160,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                 ],
                 const SizedBox(height: OctoGearSpacing.large),
                 FilledButton(
-                  onPressed: registration.isSubmitting || cities.isLoading
-                      ? null
-                      : _register,
+                  onPressed: registration.isSubmitting ? null : _register,
                   child: registration.isSubmitting
                       ? const SizedBox(
                           height: 22,
@@ -216,60 +177,6 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _CitiesLoading extends StatelessWidget {
-  const _CitiesLoading();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsetsDirectional.all(16),
-      decoration: BoxDecoration(
-        color: OctoGearColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(OctoGearRadii.small),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(
-            height: 20,
-            width: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          const SizedBox(width: OctoGearSpacing.small),
-          Expanded(
-            child: Text(
-              context.tr('auth.cities_loading'),
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CitiesError extends StatelessWidget {
-  const _CitiesError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        OctoGearFeedbackBanner(
-          message: message,
-          tone: OctoGearFeedbackTone.error,
-        ),
-        const SizedBox(height: OctoGearSpacing.xSmall),
-        TextButton(onPressed: onRetry, child: Text(context.tr('common.retry'))),
-      ],
     );
   }
 }

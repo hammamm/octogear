@@ -6,6 +6,7 @@
 
     <application
         android:label="OctoGear"
+        android:usesCleartextTraffic="${octoGearCleartextTraffic}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

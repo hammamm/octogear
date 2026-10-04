@@ -1,4 +1,9 @@
 {
+  "startup": {
+    "connecting": "Getting OctoGear ready…",
+    "invalid_configuration": "This app build has no valid server address. Please contact the app developer for a configured version.",
+    "unavailable": "We couldn’t connect to get the app ready. Check your internet connection and try again."
+  },
   "offer_flow": {
     "offers_ready": "Offers available",
     "title": "Offer details",
@@ -280,6 +285,9 @@
     "city_label": "City",
     "city_required": "Choose your city.",
     "cities_empty": "No cities are available right now. Please try again.",
+    "search_cities": "Search for your city",
+    "cities_no_results": "No cities match your search.",
+    "more_cities": "Load more cities",
     "cities_loading": "Loading available cities...",
     "complete_registration": "Complete registration"
   },

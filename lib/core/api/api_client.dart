@@ -27,7 +27,10 @@ class ApiClient {
            Dio(
              BaseOptions(
                baseUrl: _baseUrlForDio(
-                 (configuration ?? AppConfiguration.fromDartDefines())
+                 (configuration ??
+                         (throw ArgumentError(
+                           'Supply resolved configuration or an injected Dio.',
+                         )))
                      .apiBaseUrl,
                ),
                connectTimeout: const Duration(seconds: 15),

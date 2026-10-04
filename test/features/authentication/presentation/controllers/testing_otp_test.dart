@@ -17,7 +17,10 @@ class TestingAuthRepository implements AuthenticationRepository {
   @override
   Future<String?> sendOtp(SaudiMobileNumber mobile) => onSend();
   @override
-  Future<List<AppCity>> getRegistrationCities() => throw UnimplementedError();
+  Future<AppCityPage> getRegistrationCities({
+    String search = '',
+    int page = 1,
+  }) => throw UnimplementedError();
   @override
   Future<String> register({
     required String temporaryRegistrationToken,
@@ -38,7 +41,15 @@ void main() {
     () async {
       final repo = TestingAuthRepository();
       final container = ProviderContainer(
-        overrides: [authenticationRepositoryProvider.overrideWithValue(repo)],
+        overrides: [
+          authenticationRepositoryProvider.overrideWithValue(repo),
+          appConfigurationProvider.overrideWithValue(
+            const AppConfiguration(
+              environment: AppEnvironment.development,
+              apiBaseUrl: 'https://example.test/api',
+            ),
+          ),
+        ],
       );
       addTearDown(container.dispose);
       container.listen(otpResendControllerProvider, (_, _) {});
@@ -91,7 +102,16 @@ void main() {
     });
   }
   test('resend cannot populate another phone or a cleared flow', () {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [
+        appConfigurationProvider.overrideWithValue(
+          const AppConfiguration(
+            environment: AppEnvironment.development,
+            apiBaseUrl: 'https://example.test/api',
+          ),
+        ),
+      ],
+    );
     addTearDown(container.dispose);
     final flow = container.read(authenticationFlowProvider.notifier);
     flow.startOtp(SaudiMobileNumber.tryParse('500000002')!);

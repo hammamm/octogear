@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:octogear/app/configuration_bootstrap.dart';
 import 'package:octogear/app/octogear_app.dart';
+import 'package:octogear/core/api/api_providers.dart';
+import 'package:octogear/core/configuration/api_configuration_loader.dart';
+import 'package:octogear/core/configuration/app_configuration.dart';
+import 'package:octogear/core/configuration/firebase_api_configuration_source.dart';
 import 'package:octogear/core/localization/app_locale.dart';
 import 'package:octogear/core/service/app_logger.dart';
 import 'package:octogear/core/storage/app_storage.dart';
@@ -25,6 +31,12 @@ void main() async {
   final octoGearStorage = AppStorage();
   await octoGearStorage.initialize();
 
+  final configurationLoader = ApiConfigurationLoader(
+    source: () => FirebaseApiConfigurationSource(FirebaseRemoteConfig.instance),
+    cache: octoGearStorage,
+    environment: AppEnvironment.fromDartDefines(),
+  );
+
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('ar'), Locale('en')],
@@ -32,9 +44,15 @@ void main() async {
       fallbackLocale: AppLocale.arabic.locale,
       startLocale: octoGearStorage.cachedLocale.locale,
       saveLocale: false,
-      child: ProviderScope(
-        overrides: [appStorageProvider.overrideWithValue(octoGearStorage)],
-        child: const OctoGearApp(),
+      child: ConfigurationBootstrap(
+        loadConfiguration: configurationLoader.load,
+        builder: (configuration) => ProviderScope(
+          overrides: [
+            appStorageProvider.overrideWithValue(octoGearStorage),
+            appConfigurationProvider.overrideWithValue(configuration),
+          ],
+          child: const OctoGearApp(),
+        ),
       ),
     ),
   );

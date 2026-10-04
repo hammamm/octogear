@@ -220,5 +220,8 @@ class _FakeAuthenticationRepository implements AuthenticationRepository {
   }) => throw UnimplementedError();
 
   @override
-  Future<List<AppCity>> getRegistrationCities() => throw UnimplementedError();
+  Future<AppCityPage> getRegistrationCities({
+    String search = '',
+    int page = 1,
+  }) => throw UnimplementedError();
 }

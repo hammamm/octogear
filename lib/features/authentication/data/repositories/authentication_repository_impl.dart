@@ -78,12 +78,22 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   }
 
   @override
-  Future<List<AppCity>> getRegistrationCities() async {
+  Future<AppCityPage> getRegistrationCities({
+    String search = '',
+    int page = 1,
+  }) async {
     try {
-      final cities = await _remoteDataSource.fetchCities();
-      return cities
-          .map((city) => AppCity(id: city.id, name: city.name))
-          .toList(growable: false);
+      final result = await _remoteDataSource.fetchCities(
+        search: search,
+        page: page,
+      );
+      return AppCityPage(
+        items: List.unmodifiable(
+          result.items.map((city) => AppCity(id: city.id, name: city.name)),
+        ),
+        page: result.page,
+        lastPage: result.lastPage,
+      );
     } on ApiFailure {
       rethrow;
     } on FormatException {

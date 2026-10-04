@@ -21,6 +21,19 @@ class AppCity {
   final String name;
 }
 
+class AppCityPage {
+  const AppCityPage({
+    required this.items,
+    required this.page,
+    required this.lastPage,
+  });
+
+  final List<AppCity> items;
+  final int page;
+  final int lastPage;
+  bool get hasMore => page < lastPage;
+}
+
 /// The shared profile returned by `GET /profile`.
 class AppUser {
   const AppUser({

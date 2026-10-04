@@ -1,4 +1,4 @@
-import '../../../../core/api/reference_list_loader.dart';
+import '../../../../core/api/api_failure.dart';
 import '../../../../core/api/api_client.dart';
 import '../models/authentication_dtos.dart';
 import '../models/current_user_dto.dart';
@@ -17,7 +17,7 @@ abstract interface class AuthenticationRemoteDataSource {
     required int cityId,
     required String? deviceToken,
   });
-  Future<List<CityDto>> fetchCities();
+  Future<CityPageDto> fetchCities({String search = '', int page = 1});
 }
 
 class AuthenticationRemoteDataSourceImpl
@@ -83,9 +83,28 @@ class AuthenticationRemoteDataSourceImpl
   }
 
   @override
-  Future<List<CityDto>> fetchCities() => loadReferenceList(
-    _apiClient,
-    'reference/cities',
-    decode: cityListFromJson,
-  );
+  Future<CityPageDto> fetchCities({String search = '', int page = 1}) async {
+    final response = await _apiClient.get<List<CityDto>>(
+      'reference/cities',
+      queryParameters: {
+        'page': page,
+        'per_page': 50,
+        if (search.trim().isNotEmpty) 'search': search.trim(),
+      },
+      decode: cityListFromJson,
+    );
+    final items = response.data;
+    final meta = response.pagination;
+    if (items == null ||
+        meta == null ||
+        meta.currentPage != page ||
+        (items.isEmpty && meta.currentPage < meta.lastPage)) {
+      throw const ApiFailure.unexpected();
+    }
+    return CityPageDto(
+      items: items,
+      page: meta.currentPage,
+      lastPage: meta.lastPage,
+    );
+  }
 }

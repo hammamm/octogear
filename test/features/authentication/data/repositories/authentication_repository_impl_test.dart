@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:octogear/core/service/device_token_reader.dart';
 import 'package:octogear/features/authentication/data/data_sources/authentication_remote_data_source.dart';
 import 'package:octogear/features/authentication/data/models/authentication_dtos.dart';
-import 'package:octogear/features/authentication/data/models/current_user_dto.dart';
+
 import 'package:octogear/features/authentication/data/repositories/authentication_repository_impl.dart';
 
 void main() {
@@ -69,7 +69,8 @@ class _CapturingDataSource implements AuthenticationRemoteDataSource {
   }
 
   @override
-  Future<List<CityDto>> fetchCities() => throw UnimplementedError();
+  Future<CityPageDto> fetchCities({String search = '', int page = 1}) =>
+      throw UnimplementedError();
 
   @override
   Future<String?> sendOtp(String mobile) => throw UnimplementedError();
