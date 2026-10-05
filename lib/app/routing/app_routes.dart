@@ -1,3 +1,5 @@
+import '../../features/customer_chats/domain/chat.dart';
+import '../../features/customer_chats/presentation/screens/chat_conversation_screen.dart';
 import '../../features/customer_orders/presentation/screens/edit_customer_order_screen.dart';
 import '../../features/customer_orders/presentation/screens/customer_offer_details_screen.dart';
 import '../../features/customer_orders/presentation/screens/refuse_customer_offer_screen.dart';
@@ -138,6 +140,7 @@ class SessionUnavailableRoute extends GoRouteData
                     TypedGoRoute<RefuseCustomerOfferRoute>(
                       path: AppRoutePath.customerOfferRefuseSegment,
                     ),
+                    TypedGoRoute<CustomerOfferChatRoute>(path: 'chat'),
                   ],
                 ),
               ],
@@ -148,7 +151,12 @@ class SessionUnavailableRoute extends GoRouteData
     ),
     TypedStatefulShellBranch<CustomerChatsBranch>(
       routes: [
-        TypedGoRoute<CustomerChatsRoute>(path: AppRoutePath.customerChats),
+        TypedGoRoute<CustomerChatsRoute>(
+          path: AppRoutePath.customerChats,
+          routes: [
+            TypedGoRoute<CustomerConversationRoute>(path: ':conversationId'),
+          ],
+        ),
       ],
     ),
     TypedStatefulShellBranch<CustomerMoreBranch>(
@@ -378,7 +386,17 @@ class CustomerCarEditRoute extends GoRouteData with $CustomerCarEditRoute {
   }
 }
 
-@TypedGoRoute<ProviderHomeRoute>(path: AppRoutePath.providerHome)
+@TypedGoRoute<ProviderHomeRoute>(
+  path: AppRoutePath.providerHome,
+  routes: [
+    TypedGoRoute<ProviderChatsRoute>(
+      path: 'chats',
+      routes: [
+        TypedGoRoute<ProviderConversationRoute>(path: ':conversationId'),
+      ],
+    ),
+  ],
+)
 class ProviderHomeRoute extends GoRouteData with $ProviderHomeRoute {
   const ProviderHomeRoute();
 
@@ -472,4 +490,40 @@ class EditCustomerOrderRoute extends GoRouteData with $EditCustomerOrderRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       EditCustomerOrderScreen(orderId: orderId);
+}
+
+class CustomerOfferChatRoute extends GoRouteData with $CustomerOfferChatRoute {
+  const CustomerOfferChatRoute({required this.orderId, required this.offerId});
+  final int orderId, offerId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ChatConversationScreen(target: ChatTarget.offer(orderId, offerId));
+}
+
+class CustomerConversationRoute extends GoRouteData
+    with $CustomerConversationRoute {
+  const CustomerConversationRoute({required this.conversationId});
+  final int conversationId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ChatConversationScreen(target: ChatTarget.conversation(conversationId));
+}
+
+class ProviderChatsRoute extends GoRouteData with $ProviderChatsRoute {
+  const ProviderChatsRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const CustomerChatsScreen(provider: true);
+}
+
+class ProviderConversationRoute extends GoRouteData
+    with $ProviderConversationRoute {
+  const ProviderConversationRoute({required this.conversationId});
+  final int conversationId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ChatConversationScreen(
+        target: ChatTarget.conversation(conversationId),
+        provider: true,
+      );
 }

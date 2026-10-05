@@ -134,6 +134,8 @@ class AppLogger {
           'images',
           'pictures',
           'description',
+          'content',
+          'client_message_id',
         ].any(keyText.contains);
         return MapEntry(key, isSecret ? '***' : _redact(item));
       });

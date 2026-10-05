@@ -785,3 +785,26 @@ The login send endpoint retains its existing local server logging and optionally
 Flutter carries the nullable code through sendOtp into ephemeral authentication-flow state and displays a localized Testing code box above the normal OTP input only in debug development builds. Release/staging/production configurations do not retain or display it. The customer still enters and verifies the code normally. Resend clears the old testing code while pending, replaces it on success and leaves it hidden on failure. Codes preserve leading zeroes, stay out of routes/persistent storage, use existing OTP log redaction, and are cleared by authentication-flow completion/registration. Resend and verification cannot run together from the screen.
 
 Validation: all 200 Flutter tests pass. All 25 focused Laravel authentication tests pass (129 assertions), covering local opt-in/out, production/staging gating, matching log/hash/code, resend, expiry and one-time verification. Widget tests cover Arabic/English at 200% text size and confirm the testing code does not autofill the verification field. Tests use mocked responses and the isolated in-memory test database; no real phone login was performed.
+
+## Offer text chat — 2026-10-04
+
+The customer Chat action now opens an offer-specific conversation. Opening is a
+read-only lookup. Laravel creates the conversation and first message in one
+transaction only on Send, and reuses it when the same offer is reopened. UUID
+message keys make manual retries safe after uncertain responses. The store and
+employee name come from the authorized offer's store. A small provider Chats
+entry enables replies without introducing provider-order or inventory features.
+
+See [CHAT_IMPLEMENTATION.md](CHAT_IMPLEMENTATION.md) for endpoints, permissions,
+state handling, migration, navigation and validation. Earlier notes describing
+Chats as a placeholder are superseded by this implementation. Messages have
+individual local times and calendar-day separators, navy outgoing/white incoming
+bubbles, text selection, unread counts, paginated history and manual failure retry.
+The visible latest-message view polls every 10 seconds; the visible inbox polls
+its first page every 15 seconds. Polling pauses in the background, on hidden routes,
+while reading older history, or after an error. No push, calls or attachments.
+
+The additive Laravel migration was applied to the local database without resetting
+data. Deploy that migration before installing the updated Flutter build elsewhere.
+Existing participant-only legacy chats remain readable; the mobile inbox requests
+with_messages=true so old empty conversations do not appear.

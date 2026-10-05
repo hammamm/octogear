@@ -1,6 +1,9 @@
+import '../../features/customer_chats/chat_fixtures.dart';
+import 'package:octogear/features/customer_chats/presentation/controllers/chat_providers.dart';
+import 'package:octogear/features/customer_chats/presentation/screens/chat_conversation_screen.dart';
 import 'package:octogear/features/customer_orders/presentation/screens/customer_offer_details_screen.dart';
 import 'package:octogear/features/customer_orders/presentation/screens/refuse_customer_offer_screen.dart';
-import 'package:octogear/features/customer_chats/presentation/screens/customer_chats_screen.dart';
+
 import 'dart:async';
 import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/features/customer_orders/domain/entities/customer_order.dart';
@@ -65,7 +68,7 @@ void main() {
   });
 
   testWidgets(
-    'Home offer opens the specific offer, refusal page and Chats tab',
+    'Home offer opens the specific offer, refusal page and offer conversation',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -121,7 +124,7 @@ void main() {
       await tester.ensureVisible(find.byKey(const ValueKey('offer-chat')));
       await tester.tap(find.byKey(const ValueKey('offer-chat')));
       await tester.pumpAndSettle();
-      expect(find.byType(CustomerChatsScreen), findsOneWidget);
+      expect(find.byType(ChatConversationScreen), findsOneWidget);
     },
   );
   testWidgets(
@@ -430,7 +433,12 @@ void main() {
       find.byKey(const PageStorageKey<String>('customer-tab-chats')),
       findsOneWidget,
     );
-    expect(find.text('Chats are coming soon'), findsOneWidget);
+    expect(
+      find.text(
+        'No conversations yet. Open an offer and message its store to get started.',
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Orders'));
     await tester.pumpAndSettle();
@@ -615,7 +623,7 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('المحادثات').last);
     await tester.pumpAndSettle();
-    expect(find.text('المحادثات قريباً'), findsOneWidget);
+    expect(find.text('لا توجد محادثات بعد. افتح عرضًا وراسل المتجر للبدء.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -733,6 +741,7 @@ Future<void> _pumpCustomerApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        chatRepositoryProvider.overrideWithValue(FakeChatRepository()),
         customerGarageRepositoryProvider.overrideWithValue(
           RequestGarageRepository(),
         ),

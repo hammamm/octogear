@@ -230,7 +230,10 @@ class CustomerOfferDetailsScreen extends ConsumerWidget {
                         ),
                         onPressed: action.busy
                             ? null
-                            : () => const CustomerChatsRoute().go(context),
+                            : () => CustomerOfferChatRoute(
+                                orderId: orderId,
+                                offerId: offerId,
+                              ).push<void>(context),
                         icon: const Icon(
                           Icons.chat_bubble_outline_rounded,
                           size: 20,

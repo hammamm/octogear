@@ -228,6 +228,11 @@ RouteBase get $customerShellRoute => StatefulShellRouteData.$route(
                       hasOverriddenOnExit: false,
                       factory: $RefuseCustomerOfferRoute._fromState,
                     ),
+                    GoRouteData.$route(
+                      path: 'chat',
+                      hasOverriddenOnExit: false,
+                      factory: $CustomerOfferChatRoute._fromState,
+                    ),
                   ],
                 ),
               ],
@@ -242,6 +247,13 @@ RouteBase get $customerShellRoute => StatefulShellRouteData.$route(
           path: '/customer/chats',
           hasOverriddenOnExit: false,
           factory: $CustomerChatsRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: ':conversationId',
+              hasOverriddenOnExit: false,
+              factory: $CustomerConversationRoute._fromState,
+            ),
+          ],
         ),
       ],
     ),
@@ -576,12 +588,67 @@ mixin $RefuseCustomerOfferRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
+mixin $CustomerOfferChatRoute on GoRouteData {
+  static CustomerOfferChatRoute _fromState(GoRouterState state) =>
+      CustomerOfferChatRoute(
+        orderId: int.parse(state.pathParameters['orderId']!),
+        offerId: int.parse(state.pathParameters['offerId']!),
+      );
+
+  CustomerOfferChatRoute get _self => this as CustomerOfferChatRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/customer/orders/${Uri.encodeComponent(_self.orderId.toString())}/offers/${Uri.encodeComponent(_self.offerId.toString())}/chat',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
 mixin $CustomerChatsRoute on GoRouteData {
   static CustomerChatsRoute _fromState(GoRouterState state) =>
       const CustomerChatsRoute();
 
   @override
   String get location => GoRouteData.$location('/customer/chats');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CustomerConversationRoute on GoRouteData {
+  static CustomerConversationRoute _fromState(GoRouterState state) =>
+      CustomerConversationRoute(
+        conversationId: int.parse(state.pathParameters['conversationId']!),
+      );
+
+  CustomerConversationRoute get _self => this as CustomerConversationRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/customer/chats/${Uri.encodeComponent(_self.conversationId.toString())}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -783,6 +850,20 @@ RouteBase get $providerHomeRoute => GoRouteData.$route(
   path: '/provider',
   hasOverriddenOnExit: false,
   factory: $ProviderHomeRoute._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: 'chats',
+      hasOverriddenOnExit: false,
+      factory: $ProviderChatsRoute._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: ':conversationId',
+          hasOverriddenOnExit: false,
+          factory: $ProviderConversationRoute._fromState,
+        ),
+      ],
+    ),
+  ],
 );
 
 mixin $ProviderHomeRoute on GoRouteData {
@@ -791,6 +872,54 @@ mixin $ProviderHomeRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/provider');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderChatsRoute on GoRouteData {
+  static ProviderChatsRoute _fromState(GoRouterState state) =>
+      const ProviderChatsRoute();
+
+  @override
+  String get location => GoRouteData.$location('/provider/chats');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderConversationRoute on GoRouteData {
+  static ProviderConversationRoute _fromState(GoRouterState state) =>
+      ProviderConversationRoute(
+        conversationId: int.parse(state.pathParameters['conversationId']!),
+      );
+
+  ProviderConversationRoute get _self => this as ProviderConversationRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/chats/${Uri.encodeComponent(_self.conversationId.toString())}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

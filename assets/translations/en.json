@@ -591,5 +591,23 @@
     "quantity": "Quantity", "quantity_invalid": "Enter a valid quantity of at least 1.",
     "notes": "Additional details (optional)", "photos_retained": "Your existing photos will be kept.",
     "save": "Save changes", "cancel": "Cancel"
-  }
+  },
+  "chat": {
+  "inbox_empty": "No conversations yet. Open an offer and message its store to get started.",
+  "today": "Today",
+  "sent": "Sent",
+  "refresh_error": "Could not update messages.",
+  "start": "Ask the store about this offer. Your conversation starts when you send your first message.",
+  "send": "Send",
+  "latest": "Latest messages",
+  "yesterday": "Yesterday",
+  "older": "Load older messages",
+  "load_error": "Could not load chat. Try again.",
+  "request": "Request #{}",
+  "read_only": "This conversation is now read-only.",
+  "loading": "Loading…",
+  "more": "Load more",
+  "message_hint": "Write a message",
+  "send_error": "Message not confirmed. Retry safely."
+}
 }

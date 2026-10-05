@@ -1,3 +1,4 @@
+import '../routing/app_routes.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,7 +51,13 @@ class _RoleAppShell extends ConsumerWidget {
           ),
           const SizedBox(height: OctoGearSpacing.medium),
           const OctoGearBrandHeader(compact: true),
-          const SizedBox(height: 56),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: () => const ProviderChatsRoute().push<void>(context),
+            icon: const Icon(Icons.chat_bubble_outline),
+            label: Text(context.tr('customer_chats.tab')),
+          ),
+          const SizedBox(height: 24),
           OctoGearSurfaceCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

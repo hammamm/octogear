@@ -1,57 +1,209 @@
+import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
-import '../../../../core/widgets/octogear_surface_card.dart';
+import '../controllers/chat_providers.dart';
 
-/// Intentional release placeholder. No messaging providers or API calls.
-class CustomerChatsScreen extends StatelessWidget {
-  const CustomerChatsScreen({super.key});
+class CustomerChatsScreen extends ConsumerStatefulWidget {
+  const CustomerChatsScreen({super.key, this.provider = false});
+  final bool provider;
+  @override
+  ConsumerState<CustomerChatsScreen> createState() =>
+      _CustomerChatsScreenState();
+}
+
+class _CustomerChatsScreenState extends ConsumerState<CustomerChatsScreen>
+    with WidgetsBindingObserver {
+  bool _loadingMore = false;
+  Object? _pageError;
+  Timer? _timer;
+  bool _resumed = true;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted &&
+          _resumed &&
+          TickerMode.valuesOf(context).enabled &&
+          (ModalRoute.of(context)?.isCurrent ?? false) &&
+          !_loadingMore &&
+          !ref.read(chatInboxProvider).isLoading &&
+          (ref.read(chatInboxProvider).asData?.value.page ?? 1) == 1 &&
+          !ref.read(chatInboxProvider).hasError) {
+        ref.invalidate(chatInboxProvider);
+      }
+    });
+  }
 
   @override
-  Widget build(BuildContext context) => ListView(
-    key: const PageStorageKey('customer-tab-chats'),
-    padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
-    children: [
-      Row(
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _resumed = state == AppLifecycleState.resumed;
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _open(int id) async {
+    if (widget.provider) {
+      await ProviderConversationRoute(conversationId: id).push<void>(context);
+    } else {
+      await CustomerConversationRoute(conversationId: id).push<void>(context);
+    }
+    if (mounted) ref.invalidate(chatInboxProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final data = ref.watch(chatInboxProvider);
+    final body = RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(chatInboxProvider);
+        try {
+          await ref.read(chatInboxProvider.future);
+        } catch (_) {
+          /* Rendered by the provider error state. */
+        }
+      },
+      child: ListView(
+        key: const PageStorageKey('customer-tab-chats'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
         children: [
-          Expanded(
-            child: Text(
-              context.tr('customer_chats.tab'),
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.tr('customer_chats.tab'),
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ),
+              const AppLanguageToggleButton(compact: true),
+            ],
           ),
-          const AppLanguageToggleButton(compact: true),
+          const SizedBox(height: 20),
+          ...data.when(
+            loading: () => [const Center(child: CircularProgressIndicator())],
+            error: (_, _) => [
+              Text(context.tr('chat.load_error')),
+              TextButton(
+                onPressed: () => ref.invalidate(chatInboxProvider),
+                child: Text(context.tr('common.retry')),
+              ),
+            ],
+            data: (inbox) => [
+              if (inbox.chats.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 48),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.forum_outlined,
+                        size: 48,
+                        color: OctoGearColors.structuralGray,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        context.tr('chat.inbox_empty'),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              for (final chat in inbox.chats)
+                Card(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(12),
+                    leading: const CircleAvatar(
+                      backgroundColor: OctoGearColors.yellowSoft,
+                      child: Icon(
+                        Icons.storefront_outlined,
+                        color: OctoGearColors.navy,
+                      ),
+                    ),
+                    title: Text(
+                      (widget.provider
+                          ? chat.name
+                          : chat.storeName ?? chat.name),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (chat.orderId != null)
+                          Text(
+                            context.tr(
+                              'chat.request',
+                              args: ['${chat.orderId}'],
+                            ),
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        Text(
+                          chat.latestText ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (chat.updatedAt != null)
+                          Text(
+                            DateFormat.MMMd(
+                              context.locale.languageCode,
+                            ).add_jm().format(chat.updatedAt!.toLocal()),
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                      ],
+                    ),
+                    trailing: chat.unread > 0
+                        ? Badge(
+                            label: Text('${chat.unread}'),
+                            backgroundColor: OctoGearColors.navy,
+                          )
+                        : null,
+                    onTap: () => unawaited(_open(chat.id)),
+                  ),
+                ),
+              if (_pageError != null) Text(context.tr('chat.load_error')),
+              if (inbox.page < inbox.lastPage)
+                TextButton(
+                  onPressed: _loadingMore
+                      ? null
+                      : () async {
+                          setState(() {
+                            _loadingMore = true;
+                            _pageError = null;
+                          });
+                          try {
+                            await ref
+                                .read(chatInboxProvider.notifier)
+                                .loadMore();
+                          } catch (error) {
+                            if (mounted) setState(() => _pageError = error);
+                          } finally {
+                            if (mounted) setState(() => _loadingMore = false);
+                          }
+                        },
+                  child: Text(
+                    context.tr(_loadingMore ? 'chat.loading' : 'chat.more'),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
-      const SizedBox(height: 32),
-      OctoGearSurfaceCard(
-        child: Column(
-          children: [
-            const CircleAvatar(
-              radius: 36,
-              backgroundColor: OctoGearColors.yellowSoft,
-              child: Icon(
-                Icons.chat_bubble_outline_rounded,
-                size: 32,
-                color: OctoGearColors.navy,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              context.tr('customer_chats.coming_soon'),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              context.tr('customer_chats.description'),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
+    );
+    return widget.provider
+        ? Scaffold(
+            appBar: AppBar(),
+            body: SafeArea(child: body),
+          )
+        : body;
+  }
 }
