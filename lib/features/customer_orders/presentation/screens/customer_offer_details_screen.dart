@@ -219,6 +219,17 @@ class CustomerOfferDetailsScreen extends ConsumerWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
+                      if (selected)
+                        FilledButton.icon(
+                          key: const Key('offer-track-order'),
+                          onPressed: action.busy
+                              ? null
+                              : () => CustomerOrderDetailsRoute(
+                                  orderId: orderId,
+                                ).go(context),
+                          icon: const Icon(Icons.receipt_long_outlined),
+                          label: Text(context.tr('order_flow.view_order')),
+                        ),
                       OutlinedButton.icon(
                         key: const ValueKey('offer-chat'),
                         style: OutlinedButton.styleFrom(

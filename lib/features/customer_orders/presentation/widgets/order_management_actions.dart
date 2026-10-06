@@ -6,6 +6,7 @@ import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../domain/entities/customer_order.dart';
 import '../controllers/order_management_controller.dart';
+import '../controllers/order_lifecycle_controller.dart';
 import 'order_widgets.dart';
 
 class OrderManagementActions extends ConsumerWidget {
@@ -15,7 +16,13 @@ class OrderManagementActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(orderManagementProvider(order.id));
     final controller = ref.read(orderManagementProvider(order.id).notifier);
-    final enabled = !state.busy && !state.needsRefresh && !state.deleted;
+    final lifecycle = ref.watch(orderLifecycleProvider(order.id));
+    final enabled =
+        !state.busy &&
+        !state.needsRefresh &&
+        !state.deleted &&
+        !lifecycle.busy &&
+        !lifecycle.needsRefresh;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

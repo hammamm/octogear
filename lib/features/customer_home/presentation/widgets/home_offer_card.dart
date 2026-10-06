@@ -20,6 +20,20 @@ class HomeOfferCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (item.awaitingPayment) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: OctoGearColors.yellowSoft,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                context.tr('home.accepted_awaiting_payment'),
+                style: text.labelMedium?.copyWith(color: OctoGearColors.navy),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -66,7 +80,11 @@ class HomeOfferCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  context.tr('offer_flow.view_offer'),
+                  context.tr(
+                    item.awaitingPayment
+                        ? 'home.view_payment_details'
+                        : 'offer_flow.view_offer',
+                  ),
                   style: text.labelMedium,
                 ),
               ),

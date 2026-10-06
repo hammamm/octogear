@@ -3,11 +3,13 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:octogear/core/design_system/octogear_theme.dart';
 import 'package:octogear/features/customer_home/presentation/widgets/home_offer_summary.dart';
 import 'package:octogear/features/customer_home/presentation/widgets/home_offers.dart';
 import 'package:octogear/features/customer_orders/data/models/customer_order_dto.dart';
+import 'package:octogear/features/customer_orders/domain/entities/customer_order.dart';
 import '../customer_orders/order_fixtures.dart';
 
 Map<String, Object?> offer(int id, {String status = 'pending'}) => {
@@ -65,6 +67,125 @@ void main() {
     },
   );
 
+  test(
+    'accepted unpaid offers precede newer offers before the eight-card limit',
+    () {
+      CustomerOrder selected(int id, String status) =>
+          CustomerOrderDto.fromJson(
+            orderJson(id: id, general: true)
+              ..['status'] = status
+              ..['accepted_offer_id'] = id
+              ..['offers'] = [offer(id, status: 'accepted'), offer(1000 + id)],
+          ).value;
+      final available = CustomerOrderDto.fromJson(
+        orderJson(id: 30, general: true)
+          ..['offers'] = [for (var i = 100; i < 112; i++) offer(i)],
+      ).value;
+      final result = homeOffers([
+        available,
+        selected(1, 'awaiting_payment'),
+        selected(2, 'awaiting_payment'),
+        selected(3, 'paid'),
+        selected(4, 'completed'),
+        selected(5, 'cancelled'),
+      ]);
+      expect(result.map((item) => item.offer.id), [
+        2,
+        1,
+        111,
+        110,
+        109,
+        108,
+        107,
+        106,
+      ]);
+      expect(result.take(2).every((item) => item.awaitingPayment), isTrue);
+      expect(
+        homeOffers([
+          selected(3, 'paid'),
+          selected(4, 'completed'),
+          selected(5, 'cancelled'),
+        ]),
+        isEmpty,
+      );
+    },
+  );
+
+  testWidgets('acceptance reveals the first reminder and opens its order', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final json = orderJson(id: 7, general: true)
+      ..['offers'] = [offer(1), offer(2), offer(3)];
+    final page = ValueNotifier(
+      ordersPage([CustomerOrderDto.fromJson(json).value]),
+    );
+    addTearDown(page.dispose);
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => Scaffold(
+            body: SingleChildScrollView(
+              child: ValueListenableBuilder<CustomerOrdersPage>(
+                valueListenable: page,
+                builder: (_, value, _) => HomeOffers(page: value),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/customer/orders/7',
+          builder: (_, _) =>
+              const Scaffold(body: Text('Order payment details')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      EasyLocalization(
+        supportedLocales: const [Locale('en'), Locale('ar')],
+        startLocale: const Locale('en'),
+        saveLocale: false,
+        path: 'assets/translations',
+        assetLoader: _Translations(translations),
+        child: _RoutedApp(router),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final scroll = find.byKey(const ValueKey('home-offers-scroll'));
+    final position = tester
+        .state<ScrollableState>(
+          find.descendant(of: scroll, matching: find.byType(Scrollable)),
+        )
+        .position;
+    position.jumpTo(position.maxScrollExtent);
+    await tester.pumpAndSettle();
+    expect(position.pixels, greaterThan(0));
+    final accepted = CustomerOrderDto.fromJson(
+      orderJson(id: 17, general: true)
+        ..['status'] = 'awaiting_payment'
+        ..['accepted_offer_id'] = 10
+        ..['offers'] = [offer(10, status: 'accepted')],
+    ).value;
+    // Keep multiple cards so reset is explicit rather than a content-size clamp.
+    json['status'] = 'awaiting_payment';
+    json['accepted_offer_id'] = 1;
+    json['offers'] = [offer(1, status: 'accepted')];
+    page.value = ordersPage([CustomerOrderDto.fromJson(json).value, accepted]);
+    await tester.pumpAndSettle();
+    expect(position.pixels, 0);
+    // The most recent accepted offer appears first; the other reminder also
+    // opens the owning order rather than the acceptance screen.
+    await tester.drag(scroll, const Offset(-600, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('home-offer-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Order payment details'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final code in ['en', 'ar']) {
     testWidgets('offers fit and scroll at 200 percent text in $code', (
       tester,
@@ -85,7 +206,19 @@ void main() {
           path: 'assets/translations',
           saveLocale: false,
           assetLoader: _Translations(translations),
-          child: _App(child: HomeOffers(page: ordersPage([order]))),
+          child: _App(
+            child: HomeOffers(
+              page: ordersPage([
+                CustomerOrderDto.fromJson(
+                  orderJson(id: 8, general: true)
+                    ..['status'] = 'awaiting_payment'
+                    ..['accepted_offer_id'] = 3
+                    ..['offers'] = [offer(3, status: 'accepted')],
+                ).value,
+                order,
+              ]),
+            ),
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -111,7 +244,15 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(position.pixels, greaterThan(0));
-      expect(find.textContaining('125.50'), findsNWidgets(2));
+      expect(find.textContaining('125.50'), findsNWidgets(3));
+      expect(
+        find.text(
+          code == 'ar'
+              ? 'مقبول · بانتظار الدفع'
+              : 'Accepted · Awaiting payment',
+        ),
+        findsOneWidget,
+      );
       expect(find.textContaining('251.00'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.ensureVisible(
@@ -131,6 +272,19 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+}
+
+class _RoutedApp extends StatelessWidget {
+  const _RoutedApp(this.router);
+  final GoRouter router;
+  @override
+  Widget build(BuildContext context) => MaterialApp.router(
+    routerConfig: router,
+    theme: OctoGearTheme.forLocale(context.locale),
+    locale: context.locale,
+    supportedLocales: context.supportedLocales,
+    localizationsDelegates: context.localizationDelegates,
+  );
 }
 
 class _Translations extends AssetLoader {

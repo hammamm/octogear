@@ -19,6 +19,23 @@ class _HomeOffersState extends State<HomeOffers> {
   final _scroll = ScrollController();
 
   @override
+  void didUpdateWidget(covariant HomeOffers oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final previous = homeOffers(oldWidget.page.orders).firstOrNull;
+    final first = homeOffers(widget.page.orders).firstOrNull;
+    if (first != null &&
+        first.awaitingPayment &&
+        (previous?.offer.id != first.offer.id ||
+            previous?.awaitingPayment != true)) {
+      // Returning from acceptance should reveal the payment reminder even if
+      // the customer previously scrolled to another card (including in RTL).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scroll.hasClients) _scroll.jumpTo(0);
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _scroll.dispose();
     super.dispose();
@@ -57,7 +74,11 @@ class _HomeOffersState extends State<HomeOffers> {
                 child: Semantics(
                   header: true,
                   child: Text(
-                    context.tr('home.review_offers'),
+                    context.tr(
+                      offers.first.awaitingPayment
+                          ? 'home.payment_offers_title'
+                          : 'home.review_offers',
+                    ),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -71,7 +92,11 @@ class _HomeOffersState extends State<HomeOffers> {
             ],
           ),
           Text(
-            context.tr('home.recent_offers_hint'),
+            context.tr(
+              offers.first.awaitingPayment
+                  ? 'home.payment_offers_hint'
+                  : 'home.recent_offers_hint',
+            ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 12),
@@ -102,10 +127,14 @@ class _HomeOffersState extends State<HomeOffers> {
                                     'home-offer-${offers[index].offer.id}',
                                   ),
                                   item: offers[index],
-                                  onTap: () => CustomerOfferDetailsRoute(
-                                    orderId: offers[index].order.id,
-                                    offerId: offers[index].offer.id,
-                                  ).push<void>(context),
+                                  onTap: () => offers[index].awaitingPayment
+                                      ? CustomerOrderDetailsRoute(
+                                          orderId: offers[index].order.id,
+                                        ).push<void>(context)
+                                      : CustomerOfferDetailsRoute(
+                                          orderId: offers[index].order.id,
+                                          offerId: offers[index].offer.id,
+                                        ).push<void>(context),
                                 ),
                               ),
                             ),

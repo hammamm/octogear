@@ -37,6 +37,12 @@ class CustomerOrderDto {
         canEdit: json['can_edit'] == true && json['edit_token'] is String,
         canDelete: json['can_delete'] == true && json['edit_token'] is String,
         editToken: _text(json['edit_token']),
+        canCancel:
+            json['can_cancel'] == true &&
+            ['pending', 'awaiting_payment'].contains(json['status']),
+        canConfirmReceived:
+            json['can_confirm_received'] == true && json['status'] == 'paid',
+        payment: _payment(json['payment_summary'], id),
         componentId: _nullableInt(json['component_id']),
         vehicleIds: Map.unmodifiable({
           for (final key in [
@@ -136,6 +142,27 @@ OrderStore? _store(Object? value) {
   return OrderStore(
     id: _int(store['id'], positive: true),
     name: _text(store['name']),
+    employeeName: _text(store['employee_name']),
+    locationUrl: _text(store['url_location']),
+  );
+}
+
+OrderPaymentSummary? _payment(Object? value, int orderId) {
+  if (value == null) return null;
+  final json = _map(value);
+  final date = DateTime.tryParse(_text(json['created_at']) ?? '');
+  if (json['order_id'] != orderId || date == null) {
+    throw const FormatException('Invalid payment summary.');
+  }
+  final status = _text(json['payment_status']);
+  return OrderPaymentSummary(
+    id: _int(json['id'], positive: true),
+    amount: _int(json['amount']),
+    status: ['pending', 'paid', 'failed', 'refunded'].contains(status)
+        ? status!
+        : 'unknown',
+    method: _text(json['payment_method']) ?? 'unknown',
+    createdAt: date,
   );
 }
 

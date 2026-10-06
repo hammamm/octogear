@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../controllers/customer_orders_providers.dart';
+import '../controllers/order_lifecycle_controller.dart';
 import '../widgets/order_widgets.dart';
 import '../widgets/general_order_details.dart';
 import '../widgets/specific_order_details.dart';
@@ -16,15 +17,11 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final order = ref.watch(customerOrderProvider(orderId));
+    final lifecycle = ref.watch(orderLifecycleProvider(orderId));
     return RefreshIndicator(
       onRefresh: () async {
-        try {
-          ref.invalidate(customerOrderProvider(orderId));
-          await ref.read(customerOrderProvider(orderId).future);
-          ref.invalidate(customerOrdersProvider);
-        } catch (_) {
-          /* Visible provider error. */
-        }
+        if (lifecycle.busy) return;
+        await ref.read(orderLifecycleProvider(orderId).notifier).refresh();
       },
       child: ListView(
         key: PageStorageKey('order-details-$orderId'),
@@ -69,7 +66,9 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                 message: ordersErrorMessage(context, error),
                 icon: Icons.receipt_long_outlined,
                 action: context.tr('common.retry'),
-                onAction: () => ref.invalidate(customerOrderProvider(orderId)),
+                onAction: () => ref
+                    .read(orderLifecycleProvider(orderId).notifier)
+                    .refresh(),
               ),
             ],
             data: (order) => [

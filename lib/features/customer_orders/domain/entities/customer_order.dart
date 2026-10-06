@@ -15,9 +15,28 @@ enum CustomerOrderStatus {
 enum CustomerOfferStatus { pending, accepted, rejected, notSelected, unknown }
 
 class OrderStore {
-  const OrderStore({required this.id, required this.name});
+  const OrderStore({
+    required this.id,
+    required this.name,
+    this.employeeName,
+    this.locationUrl,
+  });
   final int id;
   final String? name;
+  final String? employeeName, locationUrl;
+}
+
+class OrderPaymentSummary {
+  const OrderPaymentSummary({
+    required this.id,
+    required this.amount,
+    required this.status,
+    required this.method,
+    required this.createdAt,
+  });
+  final int id, amount;
+  final String status, method;
+  final DateTime createdAt;
 }
 
 class CustomerOrderOffer {
@@ -50,6 +69,9 @@ class CustomerOrder {
     required this.offers,
     this.canEdit = false,
     this.canDelete = false,
+    this.canCancel = false,
+    this.canConfirmReceived = false,
+    this.payment,
     this.editToken,
     this.componentId,
     this.vehicleIds = const {},
@@ -73,6 +95,8 @@ class CustomerOrder {
   });
   final int id;
   final bool canEdit, canDelete;
+  final bool canCancel, canConfirmReceived;
+  final OrderPaymentSummary? payment;
   final String? editToken;
   final int? componentId;
   final Map<String, int?> vehicleIds;

@@ -6,6 +6,7 @@ import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../domain/entities/customer_order.dart';
 import 'order_photo.dart';
 import 'order_widgets.dart';
+import 'order_lifecycle_panel.dart';
 
 class GeneralOrderDetails extends StatelessWidget {
   const GeneralOrderDetails({required this.order, super.key});
@@ -63,6 +64,7 @@ class GeneralOrderDetails extends StatelessWidget {
             ],
           ),
         ),
+        OrderLifecyclePanel(order: order),
         const SizedBox(height: 24),
         if (order.hasSelectedOffer) ...[
           Text(

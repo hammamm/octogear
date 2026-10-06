@@ -808,3 +808,14 @@ The additive Laravel migration was applied to the local database without resetti
 data. Deploy that migration before installing the updated Flutter build elsewhere.
 Existing participant-only legacy chats remain readable; the mobile inbox requests
 with_messages=true so old empty conversations do not appear.
+
+## Customer order lifecycle and pickup checkout — 2026-10-06
+
+Accepted offers now link to order progress, store pickup details, payment history,
+eligible cancellation and paid-order receipt confirmation. The approved launch
+fulfillment method is store pickup; delivery is marked Coming soon. The user has
+not chosen a payment gateway and approved preparing checkout first, so online
+payment remains disabled rather than invoking the existing payment stub.
+
+See [ORDER_LIFECYCLE_IMPLEMENTATION.md](ORDER_LIFECYCLE_IMPLEMENTATION.md) for the
+additive API contract, transaction safeguards, retry handling and validation.

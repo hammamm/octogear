@@ -4,6 +4,7 @@ import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../domain/entities/customer_order.dart';
 import 'order_widgets.dart';
 import 'order_photo.dart';
+import 'order_lifecycle_panel.dart';
 
 class SpecificOrderDetails extends StatelessWidget {
   const SpecificOrderDetails({required this.order, super.key});
@@ -83,6 +84,7 @@ class SpecificOrderDetails extends StatelessWidget {
           ],
         ),
       ),
+      OrderLifecyclePanel(order: order),
       const SizedBox(height: 16),
       OctoGearSurfaceCard(
         child: Column(
