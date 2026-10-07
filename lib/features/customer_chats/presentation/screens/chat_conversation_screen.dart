@@ -1,11 +1,13 @@
 import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
-import '../../domain/chat.dart';
+import '../../domain/entities/chat.dart';
 import '../controllers/chat_providers.dart';
 import '../widgets/chat_message_bubble.dart';
 

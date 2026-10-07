@@ -1,0 +1,1 @@
+enum OrderLifecycleAction { cancel, received }

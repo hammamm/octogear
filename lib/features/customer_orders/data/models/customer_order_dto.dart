@@ -1,5 +1,22 @@
 import '../../domain/entities/customer_order.dart';
 
+class CustomerOrdersPageDto {
+  const CustomerOrdersPageDto({
+    required this.orders,
+    required this.currentPage,
+    required this.lastPage,
+    required this.total,
+  });
+  final List<CustomerOrderDto> orders;
+  final int currentPage, lastPage, total;
+  CustomerOrdersPage toEntity() => CustomerOrdersPage(
+    orders: List.unmodifiable(orders.map((order) => order.toEntity())),
+    currentPage: currentPage,
+    lastPage: lastPage,
+    total: total,
+  );
+}
+
 class CustomerOrderDto {
   const CustomerOrderDto._(this.value);
   final CustomerOrder value;
@@ -44,15 +61,12 @@ class CustomerOrderDto {
             json['can_confirm_received'] == true && json['status'] == 'paid',
         payment: _payment(json['payment_summary'], id),
         componentId: _nullableInt(json['component_id']),
-        vehicleIds: Map.unmodifiable({
-          for (final key in [
-            'car_name_id',
-            'car_company_id',
-            'color_id',
-            'fuel_type',
-          ])
-            key: _nullableInt(vehicle?[key]),
-        }),
+        vehicleIds: OrderVehicleIds(
+          carNameId: _nullableInt(vehicle?['car_name_id']),
+          companyId: _nullableInt(vehicle?['car_company_id']),
+          colorId: _nullableInt(vehicle?['color_id']),
+          fuelTypeId: _nullableInt(vehicle?['fuel_type']),
+        ),
         quantity: type == CustomerOrderType.specific
             ? _int(json['quantity'], positive: true)
             : null,

@@ -8,6 +8,7 @@ import 'package:octogear/core/localization/app_locale.dart';
 import 'package:octogear/core/localization/app_locale_controller.dart';
 import 'package:octogear/features/customer_orders/data/data_sources/customer_orders_remote_data_source.dart';
 import 'package:octogear/features/customer_orders/data/models/customer_order_dto.dart';
+import 'package:octogear/features/customer_orders/data/repositories/customer_orders_repository_impl.dart';
 import 'package:octogear/features/customer_orders/domain/entities/customer_order.dart';
 import 'package:octogear/features/customer_orders/presentation/controllers/customer_orders_providers.dart';
 import 'order_fixtures.dart';
@@ -139,14 +140,15 @@ void main() {
                 },
               };
       });
+      final repository = CustomerOrdersRepositoryImpl(remote);
       expect(
-        (await remote.list(
-          CustomerOrderFilter.general,
-          2,
+        (await repository.list(
+          filter: CustomerOrderFilter.general,
+          page: 2,
         )).orders.single.isGeneral,
         isTrue,
       );
-      await remote.get(2);
+      await repository.get(2);
       expect(requests.first.uri.path, '/api/customer/orders');
       expect(requests.first.queryParameters, {
         'order_type': 'general',

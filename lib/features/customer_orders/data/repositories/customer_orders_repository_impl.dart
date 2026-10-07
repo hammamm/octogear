@@ -9,7 +9,7 @@ class CustomerOrdersRepositoryImpl implements CustomerOrdersRepository {
   Future<CustomerOrdersPage> list({
     required CustomerOrderFilter filter,
     required int page,
-  }) => remote.list(filter, page);
+  }) async => (await remote.list(filter, page)).toEntity();
   @override
   Future<CustomerOrder> get(int id) async => (await remote.get(id)).toEntity();
 }

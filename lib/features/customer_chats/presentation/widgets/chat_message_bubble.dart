@@ -1,7 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../domain/chat.dart';
+import '../../domain/entities/chat.dart';
 
 String chatDayLabel(BuildContext context, DateTime date, {DateTime? now}) {
   final local = date.toLocal();

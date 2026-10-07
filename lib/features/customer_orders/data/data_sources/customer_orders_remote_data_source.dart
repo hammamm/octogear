@@ -6,7 +6,10 @@ import '../models/customer_order_dto.dart';
 class CustomerOrdersRemoteDataSource {
   const CustomerOrdersRemoteDataSource(this.api);
   final ApiClient api;
-  Future<CustomerOrdersPage> list(CustomerOrderFilter filter, int page) async {
+  Future<CustomerOrdersPageDto> list(
+    CustomerOrderFilter filter,
+    int page,
+  ) async {
     final response = await api.get<List<CustomerOrderDto>>(
       'customer/orders',
       requiresAuthentication: true,
@@ -28,8 +31,8 @@ class CustomerOrdersRemoteDataSource {
             orders.any((order) => order.value.type.name != filter.name))) {
       throw const ApiFailure.unexpected();
     }
-    return CustomerOrdersPage(
-      orders: List.unmodifiable(orders.map((dto) => dto.toEntity())),
+    return CustomerOrdersPageDto(
+      orders: List.unmodifiable(orders),
       currentPage: meta.currentPage,
       lastPage: meta.lastPage,
       total: meta.total,

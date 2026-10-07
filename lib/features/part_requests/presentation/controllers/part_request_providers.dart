@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/api/api_providers.dart';
 import '../../../../core/localization/app_locale_controller.dart';
@@ -7,6 +8,7 @@ import '../../data/data_sources/part_request_remote_data_source.dart';
 import '../../data/repositories/part_request_repository_impl.dart';
 import '../../domain/entities/part_request.dart';
 import '../../domain/repositories/part_request_repository.dart';
+import '../../domain/use_cases/get_request_component_use_case.dart';
 import '../../domain/use_cases/send_part_request.dart';
 
 final partRequestRepositoryProvider = Provider<PartRequestRepository>(
@@ -17,10 +19,14 @@ final partRequestRepositoryProvider = Provider<PartRequestRepository>(
 final sendPartRequestProvider = Provider(
   (ref) => SendPartRequest(ref.watch(partRequestRepositoryProvider)),
 );
+final getRequestComponentProvider = Provider(
+  (ref) => GetRequestComponentUseCase(ref.watch(partRequestRepositoryProvider)),
+);
+
 final requestComponentProvider = FutureProvider.autoDispose
     .family<StorefrontCarComponent, PartRequestKey>((ref, key) {
       ref.watch(appLocaleProvider);
-      return ref.watch(partRequestRepositoryProvider).getComponent(key);
+      return ref.watch(getRequestComponentProvider).call(key);
     }, retry: (_, _) => null);
 
 class PartRequestState {

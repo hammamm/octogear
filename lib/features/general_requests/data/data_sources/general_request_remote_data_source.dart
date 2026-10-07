@@ -1,16 +1,15 @@
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_failure.dart';
-import '../../domain/entities/general_request.dart';
 import '../models/general_request_dto.dart';
 
 class GeneralRequestRemoteDataSource {
   const GeneralRequestRemoteDataSource(this.api);
   final ApiClient api;
-  Future<RequestComponentsPage> components({
+  Future<RequestComponentsPageDto> components({
     required String search,
     required int page,
   }) async {
-    final response = await api.get<List<RequestComponent>>(
+    final response = await api.get<List<RequestComponentDto>>(
       'reference/components',
       queryParameters: {
         'page': page,
@@ -23,19 +22,19 @@ class GeneralRequestRemoteDataSource {
     if (response.data == null || meta == null || meta.currentPage != page) {
       throw const ApiFailure.unexpected();
     }
-    return RequestComponentsPage(
+    return RequestComponentsPageDto(
       items: response.data!,
       page: page,
       lastPage: meta.lastPage,
     );
   }
 
-  Future<int> submit(GeneralRequestCommand command) async {
+  Future<int> submit(GeneralRequestDto dto) async {
     final response = await api.postMultipart<int>(
       'customer/orders',
-      data: GeneralRequestDto(command).toFormData(),
+      data: dto.toFormData(),
       requiresAuthentication: true,
-      headers: {'Idempotency-Key': command.idempotencyKey},
+      headers: {'Idempotency-Key': dto.command.idempotencyKey},
       decode: generalRequestReceipt,
     );
     if (response.data == null) throw const ApiFailure.unexpected();

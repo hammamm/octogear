@@ -10,6 +10,7 @@ import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../authentication/domain/entities/session_outcome.dart';
 import '../../../authentication/presentation/controllers/session_controller.dart';
+import '../../../customer_notifications/presentation/widgets/notification_entry.dart';
 
 class CustomerMoreScreen extends ConsumerWidget {
   const CustomerMoreScreen({super.key});
@@ -53,6 +54,8 @@ class CustomerMoreScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 20),
+        const NotificationsMenuEntry(),
+        const SizedBox(height: 12),
         _MenuEntry(
           icon: Icons.person_outline_rounded,
           title: context.tr('customer_more.profile'),
@@ -167,7 +170,7 @@ class _MorePage extends StatelessWidget {
     children: [
       Row(
         children: [
-            if (showBack)
+          if (showBack)
             IconButton(
               tooltip: MaterialLocalizations.of(context).backButtonTooltip,
               icon: const BackButtonIcon(),

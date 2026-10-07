@@ -1,13 +1,16 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:octogear/core/api/api_client.dart';
 import 'package:octogear/features/authentication/presentation/controllers/session_controller.dart';
-import 'package:octogear/features/customer_chats/data/chat_dto.dart';
-import 'package:octogear/features/customer_chats/data/chat_remote_data_source.dart';
-import 'package:octogear/features/customer_chats/domain/chat.dart';
+import 'package:octogear/features/customer_chats/data/data_sources/chat_remote_data_source.dart';
+import 'package:octogear/features/customer_chats/data/models/chat_dto.dart';
+import 'package:octogear/features/customer_chats/data/repositories/chat_repository_impl.dart';
+import 'package:octogear/features/customer_chats/domain/entities/chat.dart';
 import 'package:octogear/features/customer_chats/presentation/controllers/chat_providers.dart';
+
 import 'chat_fixtures.dart';
 
 void main() {
@@ -235,7 +238,10 @@ void main() {
           },
         ),
       );
-      final result = await ChatRemoteDataSource(api).open(target);
+      final result = await ChatRepositoryImpl(
+        ChatRemoteDataSource(api),
+      ).open(target);
+      expect(result, isA<ChatContext>());
       expect(result.employeeName, 'Ahmed');
       expect(result.conversation, isNull);
       expect(calls.single.method, 'GET');

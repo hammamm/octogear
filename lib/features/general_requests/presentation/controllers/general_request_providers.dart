@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/api/api_providers.dart';
 import '../../../../core/localization/app_locale_controller.dart';
@@ -6,6 +7,7 @@ import '../../data/data_sources/general_request_remote_data_source.dart';
 import '../../data/repositories/general_request_repository_impl.dart';
 import '../../domain/entities/general_request.dart';
 import '../../domain/repositories/general_request_repository.dart';
+import '../../domain/use_cases/get_request_components_use_case.dart';
 import '../../domain/use_cases/send_general_request.dart';
 
 final generalRequestRepositoryProvider = Provider<GeneralRequestRepository>(
@@ -16,12 +18,17 @@ final generalRequestRepositoryProvider = Provider<GeneralRequestRepository>(
 final sendGeneralRequestProvider = Provider(
   (ref) => SendGeneralRequest(ref.watch(generalRequestRepositoryProvider)),
 );
+final getRequestComponentsProvider = Provider(
+  (ref) =>
+      GetRequestComponentsUseCase(ref.watch(generalRequestRepositoryProvider)),
+);
+
 final localizedRequestComponentProvider = FutureProvider.autoDispose
     .family<RequestComponent?, RequestComponent>((ref, selected) async {
       ref.watch(appLocaleProvider);
       final result = await ref
-          .read(generalRequestRepositoryProvider)
-          .components(
+          .read(getRequestComponentsProvider)
+          .call(
             search: String.fromCharCodes(selected.name.runes.take(100)),
             page: 1,
           );

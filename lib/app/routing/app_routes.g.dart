@@ -167,6 +167,11 @@ RouteBase get $customerShellRoute => StatefulShellRouteData.$route(
               hasOverriddenOnExit: false,
               factory: $GeneralPartRequestRoute._fromState,
             ),
+            GoRouteData.$route(
+              path: 'notifications',
+              hasOverriddenOnExit: false,
+              factory: $CustomerNotificationsRoute._fromState,
+            ),
           ],
         ),
       ],
@@ -337,6 +342,27 @@ mixin $GeneralPartRequestRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/customer/request');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CustomerNotificationsRoute on GoRouteData {
+  static CustomerNotificationsRoute _fromState(GoRouterState state) =>
+      const CustomerNotificationsRoute();
+
+  @override
+  String get location => GoRouteData.$location('/customer/notifications');
 
   @override
   void go(BuildContext context) => context.go(location);

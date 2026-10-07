@@ -1,14 +1,18 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:octogear/core/api/api_client.dart';
 import 'package:octogear/core/api/api_failure.dart';
+import 'package:octogear/features/customer_orders/data/data_sources/order_management_remote_data_source.dart';
 import 'package:octogear/features/customer_orders/data/models/customer_order_dto.dart';
 import 'package:octogear/features/customer_orders/data/repositories/api_order_management_repository.dart';
+import 'package:octogear/features/customer_orders/domain/entities/order_changes.dart';
 import 'package:octogear/features/customer_orders/domain/repositories/order_management_repository.dart';
 import 'package:octogear/features/customer_orders/presentation/controllers/customer_orders_providers.dart';
 import 'package:octogear/features/customer_orders/presentation/controllers/order_management_controller.dart';
+
 import 'order_fixtures.dart';
 
 final managementToken = 'a' * 64;
@@ -23,14 +27,10 @@ Map<String, Object?> managementJson({
 
 class FakeOrderManagement implements OrderManagementRepository {
   int updates = 0, deletes = 0;
-  Map<String, Object?>? changes;
+  OrderChanges? changes;
   Future<void> Function()? onWrite;
   @override
-  Future<void> update(
-    int orderId,
-    String token,
-    Map<String, Object?> changes,
-  ) async {
+  Future<void> update(int orderId, String token, OrderChanges changes) async {
     updates++;
     this.changes = changes;
     await onWrite?.call();
@@ -76,8 +76,14 @@ void main() {
           },
         ),
       );
-      final repo = ApiOrderManagementRepository(api);
-      await repo.update(17, managementToken, {'description': 'Left side'});
+      final repo = ApiOrderManagementRepository(
+        OrderManagementRemoteDataSource(api),
+      );
+      await repo.update(
+        17,
+        managementToken,
+        const OrderChanges(description: 'Left side'),
+      );
       await repo.delete(17, managementToken);
       expect(calls.map((call) => call.method), ['PATCH', 'DELETE']);
       expect(calls.first.data, {
@@ -100,7 +106,7 @@ void main() {
         throwsA(isA<ApiFailure>()),
       );
       await expectLater(
-        repo.update(17, managementToken, {}),
+        repo.update(17, managementToken, const OrderChanges()),
         throwsA(isA<ApiFailure>()),
       );
     },
@@ -176,7 +182,10 @@ void main() {
       final controller = container.read(orderManagementProvider(17).notifier);
       final order = CustomerOrderDto.fromJson(managementJson()).value;
       expect(
-        await controller.submit(order, changes: {'description': 'Changed'}),
+        await controller.submit(
+          order,
+          changes: const OrderChanges(description: 'Changed'),
+        ),
         false,
       );
       expect(container.read(orderManagementProvider(17)).needsRefresh, false);
@@ -185,12 +194,18 @@ void main() {
         statusCode: 409,
       );
       expect(
-        await controller.submit(order, changes: {'description': 'Changed'}),
+        await controller.submit(
+          order,
+          changes: const OrderChanges(description: 'Changed'),
+        ),
         false,
       );
       expect(container.read(orderManagementProvider(17)).needsRefresh, true);
       expect(
-        await controller.submit(order, changes: {'description': 'Changed'}),
+        await controller.submit(
+          order,
+          changes: const OrderChanges(description: 'Changed'),
+        ),
         false,
       );
       expect(repo.updates, 2);

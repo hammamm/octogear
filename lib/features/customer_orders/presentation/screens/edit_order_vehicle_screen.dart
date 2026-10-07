@@ -1,15 +1,17 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../customer_garage/presentation/controllers/customer_car_form_references_controller.dart';
 import '../../../customer_garage/presentation/controllers/customer_car_names_controller.dart';
 import '../../../customer_garage/presentation/widgets/customer_car_editor_fields.dart';
 import '../../domain/entities/customer_order.dart';
+import '../../domain/entities/order_changes.dart';
 import '../widgets/order_widgets.dart';
 
 class OrderVehicleEdit {
   const OrderVehicleEdit(this.values, this.label, this.companyId);
-  final Map<String, Object?> values;
+  final OrderVehicleChanges values;
   final String label;
   final int companyId;
 }
@@ -34,17 +36,13 @@ class _EditOrderVehicleState extends ConsumerState<EditOrderVehicleScreen> {
     super.initState();
     final draft = widget.draft?.values;
     final order = widget.order;
-    _company = widget.draft?.companyId ?? order.vehicleIds['car_company_id'];
-    _car = (draft?['car_name_id'] as int?) ?? order.vehicleIds['car_name_id'];
-    _color = (draft?['color_id'] as int?) ?? order.vehicleIds['color_id'];
-    _fuel = (draft?['fuel_type'] as int?) ?? order.vehicleIds['fuel_type'];
-    _transmission =
-        (draft?['transmission_type'] as String?) ?? order.transmissionType;
+    _company = widget.draft?.companyId ?? order.vehicleIds.companyId;
+    _car = draft?.carNameId ?? order.vehicleIds.carNameId;
+    _color = draft?.colorId ?? order.vehicleIds.colorId;
+    _fuel = draft?.fuelTypeId ?? order.vehicleIds.fuelTypeId;
+    _transmission = draft?.transmission ?? order.transmissionType;
     _year = TextEditingController(
-      text:
-          (draft?['manufacturing_year'] ?? order.manufacturingYear)
-              ?.toString() ??
-          '',
+      text: (draft?.year ?? order.manufacturingYear)?.toString() ?? '',
     );
   }
 
@@ -127,13 +125,13 @@ class _EditOrderVehicleState extends ConsumerState<EditOrderVehicleScreen> {
                     Navigator.pop(
                       context,
                       OrderVehicleEdit(
-                        {
-                          'car_name_id': _car,
-                          'manufacturing_year': int.parse(_year.text),
-                          'transmission_type': _transmission,
-                          'color_id': _color,
-                          'fuel_type': _fuel,
-                        },
+                        OrderVehicleChanges(
+                          carNameId: _car!,
+                          year: int.parse(_year.text),
+                          transmission: _transmission!,
+                          colorId: _color!,
+                          fuelTypeId: _fuel!,
+                        ),
                         '${selected.name} · ${_year.text}',
                         _company!,
                       ),

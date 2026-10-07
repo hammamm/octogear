@@ -7,6 +7,7 @@ import 'package:octogear/core/api/api_client.dart';
 import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/features/part_requests/data/data_sources/part_request_remote_data_source.dart';
 import 'package:octogear/features/part_requests/data/models/part_request_dto.dart';
+import 'package:octogear/features/part_requests/data/repositories/part_request_repository_impl.dart';
 import 'package:octogear/features/part_requests/domain/entities/part_request.dart';
 import 'package:octogear/features/part_requests/domain/repositories/part_request_repository.dart';
 import 'package:octogear/features/part_requests/presentation/controllers/part_request_providers.dart';
@@ -126,7 +127,7 @@ void main() {
         ),
       );
       expect((await remote.getComponent(requestKey)).toEntity().id, 1);
-      expect((await remote.submit(const PartRequestDto(command))).id, 42);
+      expect((await PartRequestRepositoryImpl(remote).submit(command)).id, 42);
       expect(requests[0].uri.path, '/api/stores/14/cars/7/components/1');
       expect(requests[1].uri.path, '/api/customer/orders');
       expect(requests[1].headers['Authorization'], 'Bearer test-token');

@@ -1,4 +1,6 @@
+import 'package:octogear/features/customer_orders/domain/entities/order_lifecycle_action.dart';
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,12 +8,14 @@ import 'package:octogear/core/api/api_client.dart';
 import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/core/localization/app_locale.dart';
 import 'package:octogear/core/localization/app_locale_controller.dart';
+import 'package:octogear/features/customer_orders/data/data_sources/order_lifecycle_remote_data_source.dart';
 import 'package:octogear/features/customer_orders/data/models/customer_order_dto.dart';
 import 'package:octogear/features/customer_orders/data/repositories/api_order_lifecycle_repository.dart';
 import 'package:octogear/features/customer_orders/domain/entities/customer_order.dart';
 import 'package:octogear/features/customer_orders/domain/repositories/order_lifecycle_repository.dart';
 import 'package:octogear/features/customer_orders/presentation/controllers/customer_orders_providers.dart';
 import 'package:octogear/features/customer_orders/presentation/controllers/order_lifecycle_controller.dart';
+
 import 'order_fixtures.dart';
 
 Map<String, Object?> lifecycleJson({
@@ -91,7 +95,9 @@ void main() {
           },
         ),
       );
-      final repo = ApiOrderLifecycleRepository(api);
+      final repo = ApiOrderLifecycleRepository(
+        OrderLifecycleRemoteDataSource(api),
+      );
       await repo.submit(17, OrderLifecycleAction.cancel);
       await repo.submit(17, OrderLifecycleAction.received);
       expect(calls.map((r) => r.path), [

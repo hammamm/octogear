@@ -74,7 +74,7 @@ class CustomerOrder {
     this.payment,
     this.editToken,
     this.componentId,
-    this.vehicleIds = const {},
+    this.vehicleIds = const OrderVehicleIds(),
     this.partName,
     this.partNumber,
     this.carName,
@@ -99,7 +99,7 @@ class CustomerOrder {
   final OrderPaymentSummary? payment;
   final String? editToken;
   final int? componentId;
-  final Map<String, int?> vehicleIds;
+  final OrderVehicleIds vehicleIds;
   final CustomerOrderType type;
   final CustomerOrderStatus status;
   final int? quantity;
@@ -147,3 +147,19 @@ class CustomerOrdersPage {
   final int currentPage, lastPage, total;
   bool get hasMore => currentPage < lastPage;
 }
+
+class OrderVehicleIds {
+  const OrderVehicleIds({
+    this.carNameId,
+    this.companyId,
+    this.colorId,
+    this.fuelTypeId,
+  });
+  final int? carNameId, companyId, colorId, fuelTypeId;
+}
+
+bool canRespondToOffer(CustomerOrder order, CustomerOrderOffer offer) =>
+    order.isGeneral &&
+    order.status == CustomerOrderStatus.pending &&
+    !order.hasSelectedOffer &&
+    offer.status == CustomerOfferStatus.pending;

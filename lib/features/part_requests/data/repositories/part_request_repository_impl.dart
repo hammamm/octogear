@@ -11,6 +11,6 @@ class PartRequestRepositoryImpl implements PartRequestRepository {
   Future<StorefrontCarComponent> getComponent(PartRequestKey key) async =>
       (await _remote.getComponent(key)).toEntity();
   @override
-  Future<PartRequestReceipt> submit(PartRequestCommand command) =>
-      _remote.submit(PartRequestDto(command));
+  Future<PartRequestReceipt> submit(PartRequestCommand command) async =>
+      (await _remote.submit(PartRequestDto(command))).toEntity();
 }

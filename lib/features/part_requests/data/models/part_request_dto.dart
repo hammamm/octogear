@@ -37,7 +37,7 @@ class PartRequestDto {
   }
 }
 
-PartRequestReceipt partRequestReceiptFromJson(Object? json) {
+PartRequestReceiptDto partRequestReceiptFromJson(Object? json) {
   if (json is! Map ||
       json['id'] is! int ||
       (json['id'] as int) <= 0 ||
@@ -46,8 +46,15 @@ PartRequestReceipt partRequestReceiptFromJson(Object? json) {
       json['order_type'] != 'specific') {
     throw const FormatException('Invalid request receipt.');
   }
-  return PartRequestReceipt(
+  return PartRequestReceiptDto(
     id: json['id'] as int,
     quantity: json['quantity'] as int,
   );
+}
+
+class PartRequestReceiptDto {
+  const PartRequestReceiptDto({required this.id, required this.quantity});
+  final int id, quantity;
+  PartRequestReceipt toEntity() =>
+      PartRequestReceipt(id: id, quantity: quantity);
 }

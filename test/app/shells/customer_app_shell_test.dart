@@ -1,4 +1,7 @@
 import '../../features/customer_chats/chat_fixtures.dart';
+import '../../features/customer_notifications/notification_fixtures.dart';
+import 'package:octogear/features/customer_notifications/presentation/controllers/notification_providers.dart';
+import 'package:octogear/features/customer_notifications/presentation/screens/customer_notifications_screen.dart';
 import 'package:octogear/features/customer_chats/presentation/controllers/chat_providers.dart';
 import 'package:octogear/features/customer_chats/presentation/screens/chat_conversation_screen.dart';
 import 'package:octogear/features/customer_orders/presentation/screens/customer_offer_details_screen.dart';
@@ -66,6 +69,28 @@ void main() {
         jsonDecode(await rootBundle.loadString('assets/translations/ar.json'))
             as Map<String, dynamic>;
   });
+
+  testWidgets(
+    'notification bell opens inbox and its offer opens the actual detail route',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await _pumpCustomerApp(
+        tester,
+        translations: englishTranslations,
+        locale: AppLocale.english,
+      );
+      await tester.tap(find.byKey(const Key('customer-notification-bell')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CustomerNotificationsScreen), findsOneWidget);
+      await tester.tap(
+        find.byKey(ValueKey('notification-${notification(1).id}')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(CustomerOfferDetailsScreen), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets(
     'Home offer opens the specific offer, refusal page and offer conversation',
@@ -522,7 +547,8 @@ void main() {
       router.go('/customer/account');
       await tester.pumpAndSettle();
       expect(router.routeInformationProvider.value.uri.path, '/customer/more');
-      await tester.ensureVisible(find.text('Settings'));
+      await tester.scrollUntilVisible(find.text('Settings'), 180);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
       expect(find.text('App language'), findsOneWidget);
@@ -551,7 +577,8 @@ void main() {
       );
       await tester.tap(find.text('More'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Settings'));
+      await tester.scrollUntilVisible(find.text('Settings'), 180);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('العربية'));
@@ -582,6 +609,11 @@ void main() {
         tester.element(find.byType(OctoGearApp)),
       );
       await tester.scrollUntilVisible(find.text('Sign out'), 200);
+      await tester.drag(
+        find.byKey(const PageStorageKey('customer-tab-more')),
+        const Offset(0, -160),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Sign out'));
       await tester.pumpAndSettle();
       expect(
@@ -623,7 +655,10 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('المحادثات').last);
     await tester.pumpAndSettle();
-    expect(find.text('لا توجد محادثات بعد. افتح عرضًا وراسل المتجر للبدء.'), findsOneWidget);
+    expect(
+      find.text('لا توجد محادثات بعد. افتح عرضًا وراسل المتجر للبدء.'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -741,6 +776,9 @@ Future<void> _pumpCustomerApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        customerNotificationsRepositoryProvider.overrideWithValue(
+          FakeNotificationsRepository(),
+        ),
         chatRepositoryProvider.overrideWithValue(FakeChatRepository()),
         customerGarageRepositoryProvider.overrideWithValue(
           RequestGarageRepository(),

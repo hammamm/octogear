@@ -1,13 +1,34 @@
+import 'package:octogear/features/customer_orders/domain/entities/order_lifecycle_action.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/api/api_providers.dart';
+import '../../data/data_sources/order_lifecycle_remote_data_source.dart';
 import '../../data/repositories/api_order_lifecycle_repository.dart';
 import '../../domain/entities/customer_order.dart';
 import '../../domain/repositories/order_lifecycle_repository.dart';
+import '../../domain/use_cases/submit_order_lifecycle_use_case.dart';
+import '../../domain/use_cases/verify_order_lifecycle_use_case.dart';
 import 'customer_orders_providers.dart';
 
+final orderLifecycleRemoteDataSourceProvider = Provider(
+  (ref) => OrderLifecycleRemoteDataSource(ref.watch(apiClientProvider)),
+);
+
 final orderLifecycleRepositoryProvider = Provider<OrderLifecycleRepository>(
-  (ref) => ApiOrderLifecycleRepository(ref.watch(apiClientProvider)),
+  (ref) => ApiOrderLifecycleRepository(
+    ref.watch(orderLifecycleRemoteDataSourceProvider),
+  ),
+);
+
+final submitOrderLifecycleProvider = Provider(
+  (ref) =>
+      SubmitOrderLifecycleUseCase(ref.watch(orderLifecycleRepositoryProvider)),
+);
+
+final verifyOrderLifecycleProvider = Provider(
+  (ref) =>
+      VerifyOrderLifecycleUseCase(ref.watch(customerOrdersRepositoryProvider)),
 );
 
 class OrderLifecycleState {
@@ -46,21 +67,9 @@ class OrderLifecycleController extends Notifier<OrderLifecycleState> {
     final link = ref.keepAlive();
     state = const OrderLifecycleState(busy: true);
     try {
-      final latest = await ref
-          .read(customerOrdersRepositoryProvider)
-          .get(orderId);
+      await ref.read(verifyOrderLifecycleProvider)(displayed, action);
       if (!ref.mounted) return false;
-      if (latest.status != displayed.status ||
-          latest.acceptedOfferId != displayed.acceptedOfferId ||
-          !(action == OrderLifecycleAction.cancel
-              ? latest.canCancel
-              : latest.canConfirmReceived)) {
-        throw const ApiFailure(
-          type: ApiFailureType.badRequest,
-          statusCode: 409,
-        );
-      }
-      await ref.read(orderLifecycleRepositoryProvider).submit(orderId, action);
+      await ref.read(submitOrderLifecycleProvider).call(orderId, action);
       if (!ref.mounted) return false;
       state = OrderLifecycleState(result: action);
       _invalidate();

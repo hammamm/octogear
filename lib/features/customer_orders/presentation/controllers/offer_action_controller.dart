@@ -1,20 +1,40 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/api/api_providers.dart';
+import '../../data/data_sources/offer_actions_remote_data_source.dart';
 import '../../data/repositories/api_offer_actions_repository.dart';
 import '../../domain/entities/customer_order.dart';
 import '../../domain/repositories/offer_actions_repository.dart';
+import '../../domain/use_cases/accept_customer_offer_use_case.dart';
+import '../../domain/use_cases/reject_customer_offer_use_case.dart';
+import '../../domain/use_cases/verify_customer_offer_use_case.dart';
 import 'customer_orders_providers.dart';
 
-final offerActionsRepositoryProvider = Provider<OfferActionsRepository>(
-  (ref) => ApiOfferActionsRepository(ref.watch(apiClientProvider)),
+final offerActionsRemoteDataSourceProvider = Provider(
+  (ref) => OfferActionsRemoteDataSource(ref.watch(apiClientProvider)),
 );
 
-bool canRespondToOffer(CustomerOrder order, CustomerOrderOffer offer) =>
-    order.isGeneral &&
-    order.status == CustomerOrderStatus.pending &&
-    !order.hasSelectedOffer &&
-    offer.status == CustomerOfferStatus.pending;
+final offerActionsRepositoryProvider = Provider<OfferActionsRepository>(
+  (ref) => ApiOfferActionsRepository(
+    ref.watch(offerActionsRemoteDataSourceProvider),
+  ),
+);
+
+final acceptCustomerOfferProvider = Provider(
+  (ref) =>
+      AcceptCustomerOfferUseCase(ref.watch(offerActionsRepositoryProvider)),
+);
+
+final rejectCustomerOfferProvider = Provider(
+  (ref) =>
+      RejectCustomerOfferUseCase(ref.watch(offerActionsRepositoryProvider)),
+);
+
+final verifyCustomerOfferProvider = Provider(
+  (ref) =>
+      VerifyCustomerOfferUseCase(ref.watch(customerOrdersRepositoryProvider)),
+);
 
 enum OfferActionResult { accepted, rejected }
 
@@ -53,28 +73,16 @@ class OfferActionController extends Notifier<OfferActionState> {
     state = const OfferActionState(busy: true);
     var writeStarted = false;
     try {
-      // Check membership, current eligibility and the price the customer saw.
-      final order = await ref
-          .read(customerOrdersRepositoryProvider)
-          .get(orderId);
+      await ref.read(verifyCustomerOfferProvider)(orderId, offer);
       if (!ref.mounted) return false;
-      final current = order.offers
-          .where((item) => item.id == offer.id)
-          .firstOrNull;
-      if (current == null ||
-          !canRespondToOffer(order, current) ||
-          current.totalPrice != offer.totalPrice) {
-        throw const ApiFailure(
-          type: ApiFailureType.badRequest,
-          statusCode: 409,
-        );
-      }
-      final repository = ref.read(offerActionsRepositoryProvider);
       writeStarted = true;
       if (accept) {
-        await repository.accept(orderId: orderId, offerId: offer.id);
+        await ref.read(acceptCustomerOfferProvider)(
+          orderId: orderId,
+          offerId: offer.id,
+        );
       } else {
-        await repository.reject(
+        await ref.read(rejectCustomerOfferProvider)(
           orderId: orderId,
           offerId: offer.id,
           reason: reason,

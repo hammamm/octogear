@@ -15,14 +15,14 @@ class PartRequestRemoteDataSource {
       decode: StorefrontCarComponentDto.fromJson,
     );
     final component = response.data;
-    if (component == null || component.toEntity().id != key.componentId) {
+    if (component == null || component.id != key.componentId) {
       throw const ApiFailure.unexpected();
     }
     return component;
   }
 
-  Future<PartRequestReceipt> submit(PartRequestDto dto) async {
-    final response = await _api.postMultipart<PartRequestReceipt>(
+  Future<PartRequestReceiptDto> submit(PartRequestDto dto) async {
+    final response = await _api.postMultipart<PartRequestReceiptDto>(
       'customer/orders',
       data: dto.toFormData(),
       requiresAuthentication: true,

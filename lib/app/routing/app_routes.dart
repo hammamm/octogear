@@ -1,4 +1,5 @@
-import '../../features/customer_chats/domain/chat.dart';
+import '../../features/customer_chats/domain/entities/chat.dart';
+import '../../features/customer_notifications/presentation/screens/customer_notifications_screen.dart';
 import '../../features/customer_chats/presentation/screens/chat_conversation_screen.dart';
 import '../../features/customer_orders/presentation/screens/edit_customer_order_screen.dart';
 import '../../features/customer_orders/presentation/screens/customer_offer_details_screen.dart';
@@ -97,6 +98,7 @@ class SessionUnavailableRoute extends GoRouteData
             TypedGoRoute<GeneralPartRequestRoute>(
               path: AppRoutePath.customerGeneralRequestSegment,
             ),
+            TypedGoRoute<CustomerNotificationsRoute>(path: 'notifications'),
           ],
         ),
       ],
@@ -199,6 +201,14 @@ class CustomerShellRoute extends StatefulShellRouteData {
   ) {
     return CustomerAppShell(navigationShell: navigationShell);
   }
+}
+
+class CustomerNotificationsRoute extends GoRouteData
+    with $CustomerNotificationsRoute {
+  const CustomerNotificationsRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const CustomerNotificationsScreen();
 }
 
 class CustomerHomeBranch extends StatefulShellBranchData {

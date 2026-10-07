@@ -160,10 +160,43 @@ feature/
 Keep the dependency direction:
 
 ```text
-presentation -> domain -> data -> core
+presentation -> domain
+data -> domain + core
 ```
 
 A simple static legal screen does not need artificial repository/use-case layers. Do not create a generic `users` feature or a controller-style mega-feature. A feature is organized by a coherent user capability and its API/use cases.
+
+### Feature architecture consistency (2026-10-07)
+
+The approved refactor covers notification inbox operations, conversations, order
+queries/management/lifecycle/offer actions, and request submission/catalog queries.
+Preserve existing endpoints, permissions, payloads, navigation, localization, retry rules and UI
+states. No backend or product behavior changes are required.
+
+API features expose repository contracts in `domain/repositories` and application
+actions in `domain/use_cases`. Controllers invoke use cases; dependency providers
+may import data implementations to construct the graph. Only remote data sources
+depend on the HTTP client. Repositories map transport results to domain entities;
+JSON serialization stays in data models. Static presentation features need no
+artificial data or domain layers.
+
+Verification includes existing transport/controller/widget regressions, tests for
+new DTO and application boundaries, architecture checks, Flutter analysis and the
+full Flutter test suite. In-flight response guards and explicit retry semantics
+must survive the refactor.
+
+Implemented typed notification/chat/catalog/order-page/receipt DTO boundaries and
+typed order-edit commands. Repository contracts and use cases are independent of
+Riverpod; provider factories assemble data implementations. Order preflight rules
+live in use cases, while controller lifetime guards, loading and retry state stay
+in presentation. Catalog search pagination now has its own controller.
+
+Verification on 2026-10-07: `flutter analyze --no-pub` and `dart run custom_lint`
+are clean, and the full
+`flutter test --no-pub --concurrency=1` suite passes all 297 tests, including five
+architecture checks. Temporary compiler files used a task-specific D: directory
+because C: lacked space. Transport and UI behavior were exercised with test
+fixtures; no live-backend or device smoke test was performed.
 
 ### Routing contract
 
@@ -819,3 +852,17 @@ payment remains disabled rather than invoking the existing payment stub.
 
 See [ORDER_LIFECYCLE_IMPLEMENTATION.md](ORDER_LIFECYCLE_IMPLEMENTATION.md) for the
 additive API contract, transaction safeguards, retry handling and validation.
+
+## Customer notification inbox — 2026-10-06
+
+The customer Home bell and More entry open `/customer/notifications`, with shared
+unread badges, All/Unread filters, calendar grouping, local timestamps, read-on-tap,
+mark-all and cursor pagination. Existing offer and message events link to their
+specific details and conversations. Unknown payloads remain generic readable
+updates. The inbox supports Arabic/English, large text and recoverable failures.
+
+See [NOTIFICATIONS_IMPLEMENTATION.md](NOTIFICATIONS_IMPLEMENTATION.md) for the
+additive API endpoints, deployment order, account guards and validation. This
+approved slice uses existing database notifications and foreground count polling;
+Firebase push, permissions and token registration remain deferred. Older notes
+describing customer notifications as entirely deferred are superseded by this slice.

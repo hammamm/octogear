@@ -7,6 +7,7 @@ import 'package:octogear/core/api/api_client.dart';
 import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/features/general_requests/data/data_sources/general_request_remote_data_source.dart';
 import 'package:octogear/features/general_requests/data/models/general_request_dto.dart';
+import 'package:octogear/features/general_requests/data/repositories/general_request_repository_impl.dart';
 import 'package:octogear/features/general_requests/domain/entities/general_request.dart';
 import 'package:octogear/features/general_requests/domain/use_cases/send_general_request.dart';
 import 'package:octogear/features/general_requests/presentation/controllers/general_request_providers.dart';
@@ -121,8 +122,12 @@ void main() {
           },
         ),
       );
+      final repository = GeneralRequestRepositoryImpl(remote);
       expect(
-        (await remote.components(search: 'مصباح', page: 2)).items.single.name,
+        (await repository.components(
+          search: 'مصباح',
+          page: 2,
+        )).items.single.name,
         'مصباح',
       );
       expect(requests.first.uri.path, '/api/reference/components');
@@ -131,7 +136,7 @@ void main() {
         'per_page': 20,
         'search': 'مصباح',
       });
-      expect(await remote.submit(command()), 42);
+      expect(await repository.submit(command()), 42);
       expect(requests.last.uri.path, '/api/customer/orders');
       expect(requests.last.headers['Authorization'], 'Bearer test-token');
       expect(requests.last.headers['Accept-Language'], 'ar');

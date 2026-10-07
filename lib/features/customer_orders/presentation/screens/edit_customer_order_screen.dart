@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../general_requests/domain/entities/general_request.dart';
 import '../../../general_requests/presentation/widgets/request_component_picker.dart';
 import '../../domain/entities/customer_order.dart';
+import '../../domain/entities/order_changes.dart';
 import '../controllers/customer_orders_providers.dart';
 import '../controllers/order_management_controller.dart';
 import '../widgets/order_management_actions.dart';
@@ -125,16 +127,14 @@ class _OrderEditFormState extends ConsumerState<_OrderEditForm> {
   Future<void> _save() async {
     if (!(_form.currentState?.validate() ?? false)) return;
     final order = widget.order;
-    final changes = <String, Object?>{
-      if (order.isGeneral)
-        'description': _notes.text.trim()
-      else
-        'notes': _notes.text.trim(),
-      if (!order.isGeneral) 'quantity': int.parse(_quantity.text),
-      if (_vehicle != null) 'vehicle': _vehicle!.values,
-      if (_partChanged && _custom) 'component_name': _name.text.trim(),
-      if (_partChanged && !_custom) 'component_id': _component!.id,
-    };
+    final changes = OrderChanges(
+      description: order.isGeneral ? _notes.text.trim() : null,
+      notes: order.isGeneral ? null : _notes.text.trim(),
+      quantity: order.isGeneral ? null : int.parse(_quantity.text),
+      vehicle: _vehicle?.values,
+      componentName: _partChanged && _custom ? _name.text.trim() : null,
+      componentId: _partChanged && !_custom ? _component!.id : null,
+    );
     final success = await ref
         .read(orderManagementProvider(order.id).notifier)
         .submit(order, changes: changes);

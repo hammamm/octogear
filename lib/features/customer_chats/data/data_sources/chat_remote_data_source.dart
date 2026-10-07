@@ -1,7 +1,7 @@
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_failure.dart';
-import '../domain/chat.dart';
-import 'chat_dto.dart';
+import '../../domain/entities/chat.dart';
+import '../models/chat_dto.dart';
 
 class ChatRemoteDataSource {
   const ChatRemoteDataSource(this.api);
@@ -9,7 +9,7 @@ class ChatRemoteDataSource {
   String _offer(ChatTarget target) =>
       'customer/orders/${target.orderId}/offers/${target.offerId}/conversation';
 
-  Future<ChatContext> open(ChatTarget target) async {
+  Future<ChatContextDto> open(ChatTarget target) async {
     final result = await api.get(
       target.conversationId != null
           ? 'conversations/${target.conversationId}'
@@ -21,7 +21,7 @@ class ChatRemoteDataSource {
           if (chat.id != target.conversationId) {
             throw const FormatException('Wrong conversation');
           }
-          return ChatContext(
+          return ChatContextDto(
             conversation: chat,
             storeName: chat.storeName,
             employeeName: chat.employeeName,
@@ -46,7 +46,7 @@ class ChatRemoteDataSource {
                 conversation.orderId != target.orderId)) {
           throw const FormatException('Wrong offer conversation');
         }
-        return ChatContext(
+        return ChatContextDto(
           conversation: conversation,
           canStart: json['can_send'] as bool,
           storeName: chatText(store?['name']),
@@ -59,7 +59,7 @@ class ChatRemoteDataSource {
     return result.data ?? (throw const ApiFailure.unexpected());
   }
 
-  Future<ChatInbox> inbox(int page) async {
+  Future<ChatInboxDto> inbox(int page) async {
     final result = await api.get(
       'conversations',
       requiresAuthentication: true,
@@ -70,17 +70,17 @@ class ChatRemoteDataSource {
     if (meta == null || result.data == null || meta.currentPage != page) {
       throw const ApiFailure.unexpected();
     }
-    return ChatInbox(result.data!, meta.currentPage, meta.lastPage);
+    return ChatInboxDto(result.data!, meta.currentPage, meta.lastPage);
   }
 
-  Future<ChatMessages> messages(int id, {int? before, int? after}) async {
+  Future<ChatMessagesDto> messages(int id, {int? before, int? after}) async {
     final result = await api.get(
       'conversations/$id/timeline',
       requiresAuthentication: true,
       queryParameters: {'before_id': ?before, 'after_id': ?after},
       decode: (value) {
         final json = chatMap(value);
-        return ChatMessages(
+        return ChatMessagesDto(
           (json['messages'] as List).map(chatMessage).toList(),
           json['has_more'] as bool,
         );
@@ -89,7 +89,7 @@ class ChatRemoteDataSource {
     return result.data ?? (throw const ApiFailure.unexpected());
   }
 
-  Future<ChatReceipt> send(
+  Future<ChatReceiptDto> send(
     ChatTarget target,
     String text,
     String clientId,
@@ -115,7 +115,7 @@ class ChatRemoteDataSource {
                 chat.orderId != target.orderId)) {
           throw const FormatException('Wrong conversation receipt');
         }
-        return ChatReceipt(message, chat);
+        return ChatReceiptDto(message, chat);
       },
     );
     return result.data ?? (throw const ApiFailure.unexpected());

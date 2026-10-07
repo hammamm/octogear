@@ -59,7 +59,7 @@ int generalRequestReceipt(Object? json) {
   return json['id'] as int;
 }
 
-List<RequestComponent> requestComponents(Object? json) {
+List<RequestComponentDto> requestComponents(Object? json) {
   if (json is! List) throw const FormatException('Invalid components.');
   return List.unmodifiable(
     json.map((item) {
@@ -70,10 +70,32 @@ List<RequestComponent> requestComponents(Object? json) {
           (item['name'] as String).trim().isEmpty) {
         throw const FormatException('Invalid component.');
       }
-      return RequestComponent(
+      return RequestComponentDto(
         id: item['id'] as int,
         name: item['name'] as String,
       );
     }),
+  );
+}
+
+class RequestComponentDto {
+  const RequestComponentDto({required this.id, required this.name});
+  final int id;
+  final String name;
+  RequestComponent toEntity() => RequestComponent(id: id, name: name);
+}
+
+class RequestComponentsPageDto {
+  const RequestComponentsPageDto({
+    required this.items,
+    required this.page,
+    required this.lastPage,
+  });
+  final List<RequestComponentDto> items;
+  final int page, lastPage;
+  RequestComponentsPage toEntity() => RequestComponentsPage(
+    items: List.unmodifiable(items.map((item) => item.toEntity())),
+    page: page,
+    lastPage: lastPage,
   );
 }

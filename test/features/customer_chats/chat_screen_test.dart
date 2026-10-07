@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,7 @@ import 'package:octogear/core/design_system/octogear_theme.dart';
 import 'package:octogear/core/localization/app_locale.dart';
 import 'package:octogear/core/localization/app_locale_controller.dart';
 import 'package:octogear/features/authentication/presentation/controllers/session_controller.dart';
-import 'package:octogear/features/customer_chats/domain/chat.dart';
+import 'package:octogear/features/customer_chats/domain/entities/chat.dart';
 import 'package:octogear/features/customer_chats/presentation/controllers/chat_providers.dart';
 import 'package:octogear/features/customer_chats/presentation/screens/chat_conversation_screen.dart';
 import 'package:octogear/features/customer_chats/presentation/widgets/chat_message_bubble.dart';

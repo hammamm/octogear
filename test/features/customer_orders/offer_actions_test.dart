@@ -1,17 +1,20 @@
-import 'package:octogear/core/localization/app_locale.dart';
-import 'package:octogear/core/localization/app_locale_controller.dart';
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:octogear/core/api/api_client.dart';
 import 'package:octogear/core/api/api_failure.dart';
+import 'package:octogear/core/localization/app_locale.dart';
+import 'package:octogear/core/localization/app_locale_controller.dart';
+import 'package:octogear/features/customer_orders/data/data_sources/offer_actions_remote_data_source.dart';
+import 'package:octogear/features/customer_orders/data/models/customer_order_dto.dart';
 import 'package:octogear/features/customer_orders/data/repositories/api_offer_actions_repository.dart';
 import 'package:octogear/features/customer_orders/domain/entities/customer_order.dart';
-import 'package:octogear/features/customer_orders/data/models/customer_order_dto.dart';
 import 'package:octogear/features/customer_orders/domain/repositories/offer_actions_repository.dart';
 import 'package:octogear/features/customer_orders/presentation/controllers/customer_orders_providers.dart';
 import 'package:octogear/features/customer_orders/presentation/controllers/offer_action_controller.dart';
+
 import 'order_fixtures.dart';
 
 CustomerOrder actionOrder({
@@ -95,7 +98,7 @@ void main() {
           },
         ),
       );
-      final repo = ApiOfferActionsRepository(api);
+      final repo = ApiOfferActionsRepository(OfferActionsRemoteDataSource(api));
       await repo.accept(orderId: 17, offerId: 42);
       await repo.reject(orderId: 17, offerId: 42);
       await repo.reject(orderId: 17, offerId: 42, reason: '  Price  ');

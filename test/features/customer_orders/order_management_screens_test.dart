@@ -1,24 +1,28 @@
-import 'package:octogear/features/customer_garage/domain/entities/customer_car.dart';
-import 'package:octogear/features/customer_garage/domain/entities/customer_car_form_references.dart';
-import 'package:octogear/features/customer_garage/presentation/controllers/customer_car_form_references_controller.dart';
-import 'package:octogear/features/customer_garage/presentation/controllers/customer_car_names_controller.dart';
 import 'dart:convert';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:octogear/core/design_system/octogear_theme.dart';
 import 'package:octogear/core/localization/app_locale.dart';
 import 'package:octogear/core/localization/app_locale_controller.dart';
-import 'package:octogear/core/design_system/octogear_theme.dart';
+import 'package:octogear/features/customer_garage/domain/entities/customer_car.dart';
+import 'package:octogear/features/customer_garage/domain/entities/customer_car_form_references.dart';
+import 'package:octogear/features/customer_garage/presentation/controllers/customer_car_form_references_controller.dart';
+import 'package:octogear/features/customer_garage/presentation/controllers/customer_car_names_controller.dart';
 import 'package:octogear/features/customer_orders/data/models/customer_order_dto.dart';
+import 'package:octogear/features/customer_orders/data/models/order_changes_dto.dart';
 import 'package:octogear/features/customer_orders/presentation/controllers/customer_orders_providers.dart';
 import 'package:octogear/features/customer_orders/presentation/controllers/order_management_controller.dart';
 import 'package:octogear/features/customer_orders/presentation/screens/customer_order_details_screen.dart';
 import 'package:octogear/features/customer_orders/presentation/screens/edit_customer_order_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'order_fixtures.dart';
+
 import 'order_management_test.dart' show FakeOrderManagement, managementJson;
 
 void main() {
@@ -59,13 +63,12 @@ void main() {
       ..onGet = (_) async => CustomerOrderDto.fromJson(json).value;
     actions.onWrite = () async {
       if (actions.changes != null) {
-        json['notes'] =
-            actions.changes!['description'] ?? actions.changes!['notes'];
-        if (actions.changes!.containsKey('component_name')) {
-          json['part_name'] = actions.changes!['component_name'];
+        json['notes'] = actions.changes!.description ?? actions.changes!.notes;
+        if (actions.changes!.componentName != null) {
+          json['part_name'] = actions.changes!.componentName;
         }
-        if (actions.changes!.containsKey('quantity')) {
-          json['quantity'] = actions.changes!['quantity'];
+        if (actions.changes!.quantity != null) {
+          json['quantity'] = actions.changes!.quantity;
         }
         json['edit_token'] = 'b' * 64;
       }
@@ -164,7 +167,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(actions.updates, 1);
         expect(
-          actions.changes,
+          OrderChangesDto(actions.changes!).toJson(),
           general
               ? {
                   'component_name': 'Left mirror',
@@ -204,7 +207,7 @@ void main() {
       await tester.tap(find.byKey(const Key('order-save')));
       await tester.pumpAndSettle();
       expect(actions.updates, 1);
-      expect(actions.changes!['vehicle'], {
+      expect(OrderChangesDto(actions.changes!).toJson()['vehicle'], {
         'car_name_id': 2,
         'manufacturing_year': 2023,
         'color_id': 3,

@@ -1,6 +1,7 @@
 import 'package:octogear/features/authentication/domain/entities/session_outcome.dart';
 import 'package:octogear/features/authentication/presentation/controllers/session_controller.dart';
-import 'package:octogear/features/customer_chats/domain/chat.dart';
+import 'package:octogear/features/customer_chats/domain/entities/chat.dart';
+import 'package:octogear/features/customer_chats/domain/repositories/chat_repository.dart';
 
 const sampleChat = ChatSummary(
   id: 7,

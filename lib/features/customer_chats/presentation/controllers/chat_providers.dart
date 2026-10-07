@@ -1,15 +1,45 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:octogear/features/customer_chats/domain/repositories/chat_repository.dart';
 import 'package:uuid/uuid.dart';
+
 import '../../../../core/api/api_providers.dart';
 import '../../../../core/localization/app_locale_controller.dart';
 import '../../../authentication/presentation/controllers/session_controller.dart';
-import '../../data/api_chat_repository.dart';
-import '../../data/chat_remote_data_source.dart';
-import '../../domain/chat.dart';
+import '../../data/data_sources/chat_remote_data_source.dart';
+import '../../data/repositories/chat_repository_impl.dart';
+import '../../domain/entities/chat.dart';
+import '../../domain/use_cases/get_chat_inbox_use_case.dart';
+import '../../domain/use_cases/get_chat_messages_use_case.dart';
+import '../../domain/use_cases/mark_chat_read_use_case.dart';
+import '../../domain/use_cases/open_chat_use_case.dart';
+import '../../domain/use_cases/send_chat_message_use_case.dart';
+
+final chatRemoteDataSourceProvider = Provider(
+  (ref) => ChatRemoteDataSource(ref.watch(apiClientProvider)),
+);
 
 final chatRepositoryProvider = Provider<ChatRepository>(
-  (ref) =>
-      ApiChatRepository(ChatRemoteDataSource(ref.watch(apiClientProvider))),
+  (ref) => ChatRepositoryImpl(ref.watch(chatRemoteDataSourceProvider)),
+);
+
+final openChatProvider = Provider(
+  (ref) => OpenChatUseCase(ref.watch(chatRepositoryProvider)),
+);
+
+final getChatInboxProvider = Provider(
+  (ref) => GetChatInboxUseCase(ref.watch(chatRepositoryProvider)),
+);
+
+final getChatMessagesProvider = Provider(
+  (ref) => GetChatMessagesUseCase(ref.watch(chatRepositoryProvider)),
+);
+
+final sendChatMessageProvider = Provider(
+  (ref) => SendChatMessageUseCase(ref.watch(chatRepositoryProvider)),
+);
+
+final markChatReadProvider = Provider(
+  (ref) => MarkChatReadUseCase(ref.watch(chatRepositoryProvider)),
 );
 
 final chatInboxProvider =
@@ -27,7 +57,7 @@ class ChatInboxController extends AsyncNotifier<ChatInbox> {
     ref.onDispose(() => ++_generation);
     ref.watch(appLocaleProvider);
     ref.watch(sessionControllerProvider);
-    return ref.watch(chatRepositoryProvider).inbox(1);
+    return ref.watch(getChatInboxProvider).call(1);
   }
 
   Future<void> loadMore() async {
@@ -36,9 +66,7 @@ class ChatInboxController extends AsyncNotifier<ChatInbox> {
     busy = true;
     final generation = _generation;
     try {
-      final next = await ref
-          .read(chatRepositoryProvider)
-          .inbox(current.page + 1);
+      final next = await ref.read(getChatInboxProvider).call(current.page + 1);
       if (ref.mounted && generation == _generation) {
         state = AsyncData(
           ChatInbox(
@@ -115,12 +143,13 @@ class ChatController extends AsyncNotifier<ChatState> {
     _readThrough = 0;
     final generation = ++_generation;
     ref.onDispose(() => ++_generation);
-    final repo = ref.watch(chatRepositoryProvider);
-    final context = await repo.open(target);
+    final open = ref.watch(openChatProvider);
+    final messages = ref.watch(getChatMessagesProvider);
+    final context = await open(target);
     final id = context.conversation?.id;
     final page = id == null
         ? const ChatMessages([], false)
-        : await repo.messages(id);
+        : await messages(id);
     if (ref.mounted && generation == _generation) {
       _syncAfter = page.messages.isEmpty ? 0 : page.messages.first.id;
     }
@@ -157,8 +186,8 @@ class ChatController extends AsyncNotifier<ChatState> {
     try {
       final id = current.context.conversation?.id;
       final receipt = await ref
-          .read(chatRepositoryProvider)
-          .send(
+          .read(sendChatMessageProvider)
+          .call(
             id == null ? target : ChatTarget.conversation(id),
             content,
             key,
@@ -203,8 +232,9 @@ class ChatController extends AsyncNotifier<ChatState> {
     _refreshing = true;
     final generation = _generation;
     try {
-      final repo = ref.read(chatRepositoryProvider);
-      final context = await repo.open(
+      final open = ref.read(openChatProvider);
+      final messages = ref.read(getChatMessagesProvider);
+      final context = await open(
         current.context.conversation == null
             ? target
             : ChatTarget.conversation(current.context.conversation!.id),
@@ -222,7 +252,7 @@ class ChatController extends AsyncNotifier<ChatState> {
         }
         return;
       }
-      final newer = await repo.messages(id, after: _syncAfter);
+      final newer = await messages(id, after: _syncAfter);
       if (!ref.mounted || generation != _generation) return;
       // A send receipt may jump ahead of incoming messages not fetched yet.
       for (final message in newer.messages) {
@@ -258,8 +288,8 @@ class ChatController extends AsyncNotifier<ChatState> {
     state = AsyncData(current.copy(loadingOlder: true));
     try {
       final page = await ref
-          .read(chatRepositoryProvider)
-          .messages(
+          .read(getChatMessagesProvider)
+          .call(
             current.context.conversation!.id,
             before: current.messages.last.id,
           );
@@ -302,8 +332,8 @@ class ChatController extends AsyncNotifier<ChatState> {
     final generation = _generation;
     try {
       await ref
-          .read(chatRepositoryProvider)
-          .markRead(current.context.conversation!.id, through);
+          .read(markChatReadProvider)
+          .call(current.context.conversation!.id, through);
       if (ref.mounted && generation == _generation) {
         _readThrough = through;
         ref.invalidate(chatInboxProvider);

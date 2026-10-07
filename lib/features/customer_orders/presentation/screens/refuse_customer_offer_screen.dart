@@ -2,9 +2,11 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
+import '../../domain/entities/customer_order.dart';
 import '../controllers/customer_orders_providers.dart';
 import '../controllers/offer_action_controller.dart';
 import '../widgets/offer_action_feedback.dart';

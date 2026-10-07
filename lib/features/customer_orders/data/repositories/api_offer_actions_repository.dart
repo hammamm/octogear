@@ -1,42 +1,16 @@
-import '../../../../core/api/api_client.dart';
-import '../../../../core/api/api_failure.dart';
 import '../../domain/repositories/offer_actions_repository.dart';
+import '../data_sources/offer_actions_remote_data_source.dart';
 
 class ApiOfferActionsRepository implements OfferActionsRepository {
-  const ApiOfferActionsRepository(this.api);
-  final ApiClient api;
-
+  const ApiOfferActionsRepository(this._remote);
+  final OfferActionsRemoteDataSource _remote;
   @override
-  Future<void> accept({required int orderId, required int offerId}) async {
-    final result = await api.post<bool>(
-      'customer/orders/$orderId/accept-offer',
-      requiresAuthentication: true,
-      data: {'offer_id': offerId},
-      decode: (data) =>
-          data is Map &&
-          data['id'] == orderId &&
-          data['accepted_offer_id'] == offerId &&
-          data['status'] == 'awaiting_payment',
-    );
-    if (result.data != true) throw const ApiFailure.unexpected();
-  }
-
+  Future<void> accept({required int orderId, required int offerId}) =>
+      _remote.accept(orderId: orderId, offerId: offerId);
   @override
   Future<void> reject({
     required int orderId,
     required int offerId,
     String? reason,
-  }) async {
-    final trimmed = reason?.trim();
-    final result = await api.post<bool>(
-      'customer/orders/$orderId/offers/$offerId/reject',
-      requiresAuthentication: true,
-      data: {
-        if (trimmed != null && trimmed.isNotEmpty) 'rejection_reason': trimmed,
-      },
-      decode: (data) =>
-          data is Map && data['id'] == offerId && data['status'] == 'rejected',
-    );
-    if (result.data != true) throw const ApiFailure.unexpected();
-  }
+  }) => _remote.reject(orderId: orderId, offerId: offerId, reason: reason);
 }

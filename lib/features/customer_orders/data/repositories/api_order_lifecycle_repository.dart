@@ -1,24 +1,11 @@
-import '../../../../core/api/api_client.dart';
-import '../../../../core/api/api_failure.dart';
+import 'package:octogear/features/customer_orders/domain/entities/order_lifecycle_action.dart';
 import '../../domain/repositories/order_lifecycle_repository.dart';
+import '../data_sources/order_lifecycle_remote_data_source.dart';
 
 class ApiOrderLifecycleRepository implements OrderLifecycleRepository {
-  const ApiOrderLifecycleRepository(this.api);
-  final ApiClient api;
-
+  const ApiOrderLifecycleRepository(this._remote);
+  final OrderLifecycleRemoteDataSource _remote;
   @override
-  Future<void> submit(int orderId, OrderLifecycleAction action) async {
-    final result = await api.post<bool>(
-      'customer/orders/$orderId/${action.name}',
-      requiresAuthentication: true,
-      decode: (data) =>
-          data is Map &&
-          data['id'] == orderId &&
-          data['status'] ==
-              (action == OrderLifecycleAction.cancel
-                  ? 'cancelled'
-                  : 'completed'),
-    );
-    if (result.data != true) throw const ApiFailure.unexpected();
-  }
+  Future<void> submit(int orderId, OrderLifecycleAction action) =>
+      _remote.submit(orderId, action);
 }
