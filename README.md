@@ -112,6 +112,26 @@ If Flutter reports that plugins require symlink support on Windows, enable
 Windows Developer Mode and rerun `flutter pub get`. Rebuild the app after adding
 the native Remote Config plugin; hot reload cannot register it.
 
+## Android build memory failures
+
+If Gradle reports `daemon disappeared`, inspect the `hs_err_pid*.log` path
+printed in the error. `Native memory allocation` failures or Windows error
+1455 (`The paging file is too small`) indicate exhausted system committed
+memory. Close unused IDEs/apps and keep free disk space on the Windows
+page-file drive; if needed, increase Windows virtual memory on a drive with
+enough space before retrying.
+
+`android/gradle.properties` limits the Gradle heap to 2 GB, metaspace to 1 GB,
+workers to two, and the Kotlin daemon heap to 1 GB to leave room for Flutter
+and the emulator. These limits cannot compensate for an already exhausted
+Windows memory budget. Avoid running multiple Android builds at once.
+
+Retry from this directory after freeing resources:
+
+```powershell
+flutter run --dart-define=OCTOGEAR_ENV=dev
+```
+
 ## Verify a change
 
 ```powershell

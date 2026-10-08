@@ -1,3 +1,4 @@
+import '../../features/customer_profile/presentation/screens/customer_profile_screen.dart';
 import '../../features/customer_chats/domain/entities/chat.dart';
 import '../../features/customer_notifications/presentation/screens/customer_notifications_screen.dart';
 import '../../features/customer_chats/presentation/screens/chat_conversation_screen.dart';

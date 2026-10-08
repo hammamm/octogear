@@ -699,5 +699,17 @@
   "more": "Load more",
   "message_hint": "Write a message",
   "send_error": "Message not confirmed. Retry safely."
-}
+},
+  "customer_profile": {
+    "description": "Keep your name and city up to date.",
+    "name_required": "Enter your full name.",
+    "name_too_long": "Use no more than 100 characters.",
+    "mobile_read_only": "Your mobile number cannot be changed here.",
+    "save": "Save changes",
+    "saved": "Your profile has been updated.",
+    "discard_title": "Discard your changes?",
+    "discard_message": "Your unsaved name and city changes will be lost.",
+    "keep_editing": "Keep editing",
+    "discard": "Discard changes"
+  }
 }

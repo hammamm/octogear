@@ -83,44 +83,6 @@ class CustomerMoreScreen extends ConsumerWidget {
   }
 }
 
-class CustomerProfileScreen extends ConsumerWidget {
-  const CustomerProfileScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(sessionControllerProvider).asData?.value;
-    final user = session is AuthenticatedSession ? session.user : null;
-    return _MorePage(
-      pageKey: 'customer-profile',
-      title: context.tr('customer_more.profile'),
-      showBack: true,
-      children: [
-        if (user != null) ...[
-          CustomerAccountProfileCard(user: user),
-          const SizedBox(height: 16),
-          OctoGearSurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  context.tr('auth.phone_label'),
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  user.mobile,
-                  textDirection: TextDirection.ltr,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
 class CustomerSettingsScreen extends StatelessWidget {
   const CustomerSettingsScreen({super.key});
 

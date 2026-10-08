@@ -211,6 +211,37 @@ Use one app-level `GoRouter` with generated typed route helpers. Do not scatter 
 
 ## Feature boundaries and planned order
 
+### Customer profile editing (2026-10-07)
+
+Approved scope: customers edit only `full_name` (nonblank, at most 100 characters)
+and `city_id` (an existing city). Mobile remains read-only. Use the existing
+authenticated `PATCH /customer/profile`; the returned standard user resource is
+the authoritative saved profile. The existing paginated, localized city picker
+uses `GET /reference/cities`. No API or phone-verification changes are required.
+
+The profile route hosts a customer-profile feature with typed command/DTO,
+repository contract/implementation, remote source, use case and Riverpod controller.
+Save disables concurrent edits/submissions. Failures preserve the draft and field
+errors; retry is explicit. Back confirms discarding unsaved edits. Success replaces
+the in-memory authenticated user without putting the session into a loading state.
+A response may update only the exact session that initiated it, so logout or an
+account change cannot be undone by a late save. Startup still fetches authoritative
+profile data through the existing session flow; its nonauthoritative cache is not
+used to confirm a save.
+
+Preserve Arabic/English, RTL, keyboard scrolling and large-text support. Reuse the
+existing city picker rather than downloading all cities. Test exact request fields,
+malformed or mismatched profiles, validation, duplicate taps, failed-save draft retention,
+session replacement guards, navigation/discard, and both locale layouts. Run
+Flutter analysis, custom lint, the full Flutter suite, and focused backend profile
+contract tests without changing live accounts.
+
+Verified on 2026-10-07: all 311 Flutter tests pass (including 14 profile tests),
+Flutter analysis and custom lint are clean, and the seven backend customer/shared
+profile tests pass with 39 assertions using an isolated SQLite in-memory database.
+English/Arabic widget renders were inspected; both layouts also pass at 2x text
+scale. This verification does not include a physical-device or live-account test.
+
 Build one bounded slice at a time. A phase is complete only when its screen behavior, loading/error states, tests, documentation, and verified API contract are complete.
 
 1. **Foundation and application shell**
@@ -515,7 +546,7 @@ verify that an in-flight send keeps the number read-only.
 
 **Visibility:** `customerStoresEnabledProvider` reads `OCTOGEAR_STORES_ENABLED`, default false. The same setting controls the Stores navigation destination, global redirects for every Stores descendant (including specific-request deep links), and the empty-orders browse action. Build with `--dart-define=OCTOGEAR_STORES_ENABLED=true` to restore the retained destination and journey. This is release visibility, not API authorization. Retained branches are not eagerly loaded.
 
-**More:** A profile summary and working typed links to Profile, My cars and Settings, plus the existing session logout action. Profile displays the authenticated session's name, city and phone; profile editing is outside this batch. Settings uses the existing persisted app-language controller. No invented preferences or inactive menu buttons. My cars keeps its existing API-backed list/create/detail/edit flows under `/customer/more/cars`. Old account URLs redirect with their child suffix and query preserved. Tab switching preserves child navigation and form state; reselecting a tab does not discard a form.
+**More:** A profile summary and working typed links to Profile, My cars and Settings, plus the existing session logout action. Profile now edits the authenticated customer's name and city while displaying phone as read-only (see Customer profile editing above). Settings uses the existing persisted app-language controller. No invented preferences or inactive menu buttons. My cars keeps its existing API-backed list/create/detail/edit flows under `/customer/more/cars`. Old account URLs redirect with their child suffix and query preserved. Tab switching preserves child navigation and form state; reselecting a tab does not discard a form.
 
 **Chats:** Translated Coming soon screen with language action and existing brand styling. No messaging API, notification subscription, fake conversations or message composer.
 

@@ -494,7 +494,9 @@ void main() {
     );
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
-    expect(find.text('Account details'), findsOneWidget);
+    expect(find.byKey(const Key('profile-full-name')), findsOneWidget);
+    expect(find.byKey(const Key('profile-city')), findsOneWidget);
+    expect(find.byKey(const Key('profile-save')), findsOneWidget);
     expect(find.text('500000000'), findsOneWidget);
     await tester.tap(find.byType(BackButtonIcon).last);
     await tester.pumpAndSettle();

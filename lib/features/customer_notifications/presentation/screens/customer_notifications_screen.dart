@@ -6,7 +6,7 @@ import '../../../../app/routing/app_routes.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../customer_orders/presentation/widgets/order_widgets.dart';
-import '../../domain/customer_notification.dart';
+import '../../domain/entities/customer_notification.dart';
 import '../controllers/notification_providers.dart';
 import '../widgets/notification_tile.dart';
 
