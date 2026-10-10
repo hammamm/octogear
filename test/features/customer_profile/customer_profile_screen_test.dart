@@ -32,19 +32,11 @@ class _Locale extends AppLocaleController {
 }
 
 class _Cities extends RegistrationCitiesController {
-  _Cities() : super('');
   @override
-  Future<RegistrationCitiesState> build() async =>
-      const RegistrationCitiesState(
-        page: AppCityPage(
-          items: [
-            AppCity(id: 1, name: 'Riyadh'),
-            AppCity(id: 2, name: 'Jeddah'),
-          ],
-          page: 1,
-          lastPage: 1,
-        ),
-      );
+  Future<List<AppCity>> build() async => const [
+    AppCity(id: 1, name: 'Riyadh'),
+    AppCity(id: 2, name: 'Jeddah'),
+  ];
 }
 
 class _Loader extends AssetLoader {
@@ -150,7 +142,7 @@ void main() {
         overrides: [
           sessionControllerProvider.overrideWith(ProfileSession.new),
           customerProfileRepositoryProvider.overrideWithValue(repo),
-          registrationCitiesProvider('').overrideWith(_Cities.new),
+          registrationCitiesProvider.overrideWith(_Cities.new),
           appLocaleProvider.overrideWith(
             () => _Locale(arabic ? AppLocale.arabic : AppLocale.english),
           ),

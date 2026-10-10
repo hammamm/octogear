@@ -12,7 +12,7 @@ import 'package:octogear/features/authentication/presentation/controllers/sessio
 void main() {
   late ProviderContainer container;
   late _UseCase useCase;
-  final provider = registrationCitiesProvider('');
+  final provider = registrationCitiesProvider;
   setUp(() {
     useCase = _UseCase();
     container = ProviderContainer(
@@ -21,98 +21,71 @@ void main() {
         appLocaleProvider.overrideWith(_Locale.new),
       ],
     );
-    container.listen(provider, (_, _) {});
   });
   tearDown(() => container.dispose());
 
   test(
-    'loads one page, requests more explicitly, merges IDs and stops at last page',
+    'loads every page once, merges IDs and retains the complete catalog',
     () async {
+      final subscription = container.listen(provider, (_, _) {});
+      final loaded = container.read(provider.future);
       useCase.pending.single.complete(_page([1], 1, 2));
-      await container.read(provider.future);
-      expect(useCase.calls, [('', 1)]);
-      final controller = container.read(provider.notifier);
-      final more = controller.loadMore();
-      await controller
-          .loadMore(); // Duplicate taps cannot start another request.
+      await Future<void>.delayed(Duration.zero);
       expect(useCase.calls, [('', 1), ('', 2)]);
-      expect(container.read(provider).requireValue.page.items.single.id, 1);
+      expect(container.read(provider).isLoading, isTrue);
       useCase.pending.last.complete(_page([1, 2], 2, 2));
-      await more;
-      expect(
-        container.read(provider).requireValue.page.items.map((c) => c.id),
-        [1, 2],
-      );
-      await controller.loadMore();
+      final cities = await loaded;
+      expect(cities.map((city) => city.id), [1, 2]);
+      subscription.close();
+      await container.pump();
+      final reopened = container.listen(provider, (_, _) {});
+      expect(await container.read(provider.future), same(cities));
       expect(useCase.calls, hasLength(2));
+      reopened.close();
     },
   );
 
-  test(
-    'page failure preserves cities and retry requests only the failed page',
-    () async {
-      useCase.pending.single.complete(_page([1], 1, 92));
-      await container.read(provider.future);
-      final controller = container.read(provider.notifier);
-      final more = controller.loadMore();
-      useCase.pending.last.completeError(Exception('offline'));
-      await more;
-      expect(container.read(provider).requireValue.page.items.single.id, 1);
-      expect(container.read(provider).requireValue.nextPageError, isNotNull);
-      final retry = controller.loadMore();
-      expect(useCase.calls, [('', 1), ('', 2), ('', 2)]);
-      useCase.pending.last.complete(_page([2], 2, 92));
-      await retry;
-      expect(container.read(provider).requireValue.nextPageError, isNull);
-    },
-  );
-
-  test('first page failure waits for explicit retry', () async {
-    final failure = expectLater(
-      container.read(provider.future),
-      throwsException,
+  for (final failedPage in [1, 2]) {
+    test(
+      'page $failedPage failure waits for explicit retry of the catalog',
+      () async {
+        final failure = expectLater(
+          container.read(provider.future),
+          throwsException,
+        );
+        if (failedPage == 2) {
+          useCase.pending.single.complete(_page([1], 1, 2));
+          await Future<void>.delayed(Duration.zero);
+        }
+        useCase.pending.last.completeError(Exception('offline'));
+        await failure;
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+        expect(useCase.calls, hasLength(failedPage));
+        expect(container.read(provider).hasError, isTrue);
+        container.read(provider.notifier).retry();
+        final retried = container.read(provider.future);
+        expect(useCase.calls.last, ('', 1));
+        useCase.pending.last.complete(_page([3], 1, 1));
+        expect((await retried).single.id, 3);
+      },
     );
-    useCase.pending.single.completeError(Exception('offline'));
-    await failure;
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-    expect(useCase.calls, hasLength(1));
-    container.read(provider.notifier).retry();
-    final retried = container.read(provider.future);
-    useCase.pending.last.complete(_page([1], 1, 1));
-    expect((await retried).page.items.single.id, 1);
-  });
+  }
 
   test(
-    'a late next page cannot overwrite cities after a language change',
+    'language change ignores a late page and stops the obsolete load',
     () async {
-      useCase.pending.single.complete(_page([1], 1, 2));
-      await container.read(provider.future);
-      final more = container.read(provider.notifier).loadMore();
+      container.listen(provider, (_, _) {});
+      useCase.pending.single.complete(_page([1], 1, 3));
+      await Future<void>.delayed(Duration.zero);
       final oldRequest = useCase.pending.last;
       (container.read(appLocaleProvider.notifier) as _Locale).change();
       final localized = container.read(provider.future);
       useCase.pending.last.complete(_page([3], 1, 1));
-      await localized;
-      oldRequest.complete(_page([2], 2, 2));
-      await more;
-      expect(container.read(provider).requireValue.page.items.single.id, 3);
-    },
-  );
-
-  test(
-    'different searches cannot replace each other with late responses',
-    () async {
-      final searchProvider = registrationCitiesProvider('Aden');
-      container.listen(searchProvider, (_, _) {});
-      useCase.pending.last.complete(_page([7], 1, 1));
-      await container.read(searchProvider.future);
-      useCase.pending.first.complete(_page([1], 1, 92));
-      await container.read(provider.future);
-      expect(
-        container.read(searchProvider).requireValue.page.items.single.id,
-        7,
-      );
-      expect(useCase.calls, [('', 1), ('Aden', 1)]);
+      expect((await localized).single.id, 3);
+      oldRequest.complete(_page([2], 2, 3));
+      await container.pump();
+      expect(container.read(provider).requireValue.single.id, 3);
+      expect(useCase.calls, [('', 1), ('', 2), ('', 1)]);
     },
   );
 }

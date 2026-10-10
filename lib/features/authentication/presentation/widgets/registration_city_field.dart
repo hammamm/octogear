@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +7,7 @@ import '../../domain/entities/app_user.dart';
 import '../controllers/registration_cities_controller.dart';
 import 'authentication_failure_text.dart';
 
-/// Selection is independent of the current result page, so changing a search
+/// Selection is independent of the filtered results, so changing a search
 /// or dismissing the picker cannot silently change the registration payload.
 class RegistrationCityField extends FormField<AppCity> {
   RegistrationCityField({
@@ -92,39 +90,30 @@ class RegistrationCityPicker extends ConsumerStatefulWidget {
 class _RegistrationCityPickerState
     extends ConsumerState<RegistrationCityPicker> {
   final _search = TextEditingController();
-  Timer? _debounce;
   String _query = '';
-  bool _waitingForSearch = false;
+
+  // Match company search: ignore case, Arabic vowel marks and alef variants.
+  String _normalize(String value) => value
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp('[\u064B-\u065F\u0670\u0640]'), '')
+      .replaceAll(RegExp('[أإآٱ]'), 'ا')
+      .replaceAll('ى', 'ي');
 
   void _queryChanged(String value) {
-    _debounce?.cancel();
-    final query = value.trim();
-    if (query == _query) {
-      setState(() => _waitingForSearch = false);
-      return;
-    }
-    setState(() => _waitingForSearch = true);
-    _debounce = Timer(const Duration(milliseconds: 350), () {
-      setState(() {
-        _query = query;
-        _waitingForSearch = false;
-      });
-    });
+    setState(() => _query = _normalize(value));
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
     _search.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = registrationCitiesProvider(_query);
-    final cities = _waitingForSearch
-        ? const AsyncLoading<RegistrationCitiesState>()
-        : ref.watch(provider);
+    final provider = registrationCitiesProvider;
+    final cities = ref.watch(provider);
     return FractionallySizedBox(
       heightFactor: .9,
       child: Padding(
@@ -192,13 +181,26 @@ class _RegistrationCityPickerState
                     ],
                   ),
                 ),
-                data: (data) => ListView.builder(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  itemCount: data.page.items.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index < data.page.items.length) {
-                      final city = data.page.items[index];
+                data: (data) {
+                  final matches = data
+                      .where((city) => _normalize(city.name).contains(_query))
+                      .toList();
+                  if (matches.isEmpty) {
+                    return Text(
+                      context.tr(
+                        _query.isEmpty
+                            ? 'auth.cities_empty'
+                            : 'auth.cities_no_results',
+                      ),
+                      textAlign: TextAlign.center,
+                    );
+                  }
+                  return ListView.builder(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    itemCount: matches.length,
+                    itemBuilder: (context, index) {
+                      final city = matches[index];
                       return ListTile(
                         key: ValueKey('registration-city-${city.id}'),
                         title: Text(city.name),
@@ -208,49 +210,9 @@ class _RegistrationCityPickerState
                             : null,
                         onTap: () => Navigator.pop(context, city),
                       );
-                    }
-                    if (data.isLoadingMore) {
-                      return const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    if (data.nextPageError != null) {
-                      return Column(
-                        children: [
-                          Text(
-                            authenticationFailureText(
-                              context,
-                              data.nextPageError,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () =>
-                                ref.read(provider.notifier).loadMore(),
-                            child: Text(context.tr('common.retry')),
-                          ),
-                        ],
-                      );
-                    }
-                    if (data.page.items.isEmpty) {
-                      return Text(
-                        context.tr(
-                          _query.isEmpty
-                              ? 'auth.cities_empty'
-                              : 'auth.cities_no_results',
-                        ),
-                        textAlign: TextAlign.center,
-                      );
-                    }
-                    return data.page.hasMore
-                        ? TextButton(
-                            onPressed: () =>
-                                ref.read(provider.notifier).loadMore(),
-                            child: Text(context.tr('auth.more_cities')),
-                          )
-                        : const SizedBox.shrink();
-                  },
-                ),
+                    },
+                  );
+                },
               ),
             ),
           ],

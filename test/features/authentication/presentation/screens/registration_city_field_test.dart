@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -30,57 +29,72 @@ void main() {
     });
   });
 
-  testWidgets(
-    'opens on demand, pages, selects and retains a city after dismissal',
-    (tester) async {
-      final useCase = _UseCase();
-      await _pump(tester, useCase, translations);
-      expect(useCase.calls, isEmpty);
-      await tester.tap(find.byKey(const Key('registration-city-field')));
-      await tester.pumpAndSettle();
-      expect(useCase.calls, [('', 1)]);
-      expect(find.text('City 1'), findsOneWidget);
-      await tester.tap(find.text('Load more cities'));
-      await tester.pumpAndSettle();
-      expect(useCase.calls, [('', 1), ('', 2)]);
-      await tester.tap(find.text('City 2'));
-      await tester.pumpAndSettle();
-      expect(find.text('City 2'), findsOneWidget);
-      await tester.tap(find.byKey(const Key('registration-city-field')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.close));
-      await tester.pumpAndSettle();
-      expect(find.text('City 2'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets('debounces server search and ignores a late previous result', (
+  testWidgets('loads all pages on demand and reuses cities after dismissal', (
     tester,
   ) async {
     final useCase = _UseCase();
-    final stale = Completer<AppCityPage>();
-    useCase.handler = (query, page) => query == 'old'
-        ? stale.future
-        : Future.value(_page(query == 'Aden' ? 4581 : 1, page));
     await _pump(tester, useCase, translations);
+    expect(useCase.calls, isEmpty);
     await tester.tap(find.byKey(const Key('registration-city-field')));
     await tester.pumpAndSettle();
-    final search = find.byKey(const Key('registration-city-search'));
-    await tester.enterText(search, 'old');
-    await tester.pump(const Duration(milliseconds: 350));
-    await tester.pump();
-    await tester.enterText(search, 'Ad');
-    await tester.pump(const Duration(milliseconds: 100));
-    await tester.enterText(search, 'Aden');
-    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('City 1'), findsOneWidget);
+    expect(find.text('Load more cities'), findsNothing);
+    expect(useCase.calls, [('', 1), ('', 2)]);
+    await tester.tap(find.text('City 2'));
     await tester.pumpAndSettle();
-    stale.complete(_page(99, 1));
+    expect(find.text('City 2'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('registration-city-field')));
     await tester.pumpAndSettle();
-    expect(useCase.calls, [('', 1), ('old', 1), ('Aden', 1)]);
-    expect(find.text('City 4581'), findsOneWidget);
-    expect(find.text('City 99'), findsNothing);
+    expect(useCase.calls, [('', 1), ('', 2)]);
+    expect(
+      tester
+          .widget<ListTile>(find.byKey(const ValueKey('registration-city-2')))
+          .selected,
+      isTrue,
+    );
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+    expect(find.text('City 2'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'filters every typed letter locally and clears without requests',
+    (tester) async {
+      final useCase = _UseCase();
+      useCase.handler = (_, page) async => AppCityPage(
+        items: page == 1
+            ? [const AppCity(id: 1, name: 'Riyadh')]
+            : [
+                const AppCity(id: 2, name: 'Aden'),
+                const AppCity(id: 3, name: 'أَبْهَا'),
+              ],
+        page: page,
+        lastPage: 2,
+      );
+      await _pump(tester, useCase, translations);
+      await tester.tap(find.byKey(const Key('registration-city-field')));
+      await tester.pumpAndSettle();
+      final search = find.byKey(const Key('registration-city-search'));
+      for (final query in ['A', 'AD', 'aDe', ' aden ']) {
+        await tester.enterText(search, query);
+        await tester.pump();
+        expect(find.text('Aden'), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(useCase.calls, [('', 1), ('', 2)]);
+      }
+      expect(find.text('Riyadh'), findsNothing);
+      await tester.enterText(search, 'ابها');
+      await tester.pump();
+      expect(find.text('أَبْهَا'), findsOneWidget);
+      expect(find.text('Aden'), findsNothing);
+      await tester.tap(find.byIcon(Icons.clear));
+      await tester.pump();
+      expect(find.text('Riyadh'), findsOneWidget);
+      expect(find.text('Aden'), findsOneWidget);
+      expect(useCase.calls, [('', 1), ('', 2)]);
+    },
+  );
 
   testWidgets(
     'initial failure has retry and an empty search has clear feedback',
@@ -92,19 +106,18 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Retry'), findsOneWidget);
       expect(useCase.calls, hasLength(1));
-      useCase.handler = (_, _) => Future.value(_page(1, 1));
+      useCase.handler = (_, page) => Future.value(_page(page, page));
       await tester.tap(find.text('Retry'));
       await tester.pumpAndSettle();
       expect(find.text('City 1'), findsOneWidget);
-      useCase.handler = (_, _) async =>
-          const AppCityPage(items: [], page: 1, lastPage: 1);
+
       await tester.enterText(
         find.byKey(const Key('registration-city-search')),
         'unknown',
       );
-      await tester.pump(const Duration(milliseconds: 350));
       await tester.pumpAndSettle();
       expect(find.text('No cities match your search.'), findsOneWidget);
+      expect(useCase.calls, [('', 1), ('', 1), ('', 2)]);
     },
   );
 
@@ -208,7 +221,7 @@ class _Locale extends AppLocaleController {
 AppCityPage _page(int id, int page) => AppCityPage(
   items: [AppCity(id: id, name: 'City $id')],
   page: page,
-  lastPage: 92,
+  lastPage: 2,
 );
 
 class _UseCase implements GetRegistrationCitiesUseCase {
