@@ -356,7 +356,7 @@
     "switch_to_arabic": "العربية"
   },
   "auth": {
-    "testing_otp": "Testing code · local development",
+    "testing_otp": "Testing code",
     "welcome": "Welcome to OctoGear",
     "description": "Enter your mobile number to get started.",
     "next_step": "Secure phone sign-in is the next authentication step.",

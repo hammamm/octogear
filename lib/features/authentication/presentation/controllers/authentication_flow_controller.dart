@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../../../core/api/api_providers.dart';
-import '../../../../core/configuration/app_configuration.dart';
 
 import '../../domain/entities/saudi_mobile_number.dart';
 
@@ -53,9 +51,7 @@ class AuthenticationFlowController extends Notifier<AuthenticationFlowState> {
   }
 
   String? _visibleTestCode(String? code) {
-    return kDebugMode &&
-            ref.read(appConfigurationProvider).environment ==
-                AppEnvironment.development &&
+    return ref.read(appConfigurationProvider).allowsTestingOtp &&
             code != null &&
             RegExp(r'^[0-9]{4}$').hasMatch(code)
         ? code

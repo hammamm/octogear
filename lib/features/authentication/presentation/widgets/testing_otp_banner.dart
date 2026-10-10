@@ -1,14 +1,12 @@
 import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/api/api_providers.dart';
-import '../../../../core/configuration/app_configuration.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../controllers/authentication_flow_controller.dart';
 
-/// Local debug convenience only. The real verification field stays unchanged.
+/// Development/staging convenience. The real verification field stays unchanged.
 class TestingOtpBanner extends ConsumerWidget {
   const TestingOtpBanner({super.key});
   @override
@@ -16,10 +14,10 @@ class TestingOtpBanner extends ConsumerWidget {
     final code = ref.watch(
       authenticationFlowProvider.select((state) => state.testOtp),
     );
-    final environment = ref.watch(appConfigurationProvider).environment;
-    if (!kDebugMode ||
-        environment != AppEnvironment.development ||
-        code == null) {
+    final allowsTestingOtp = ref
+        .watch(appConfigurationProvider)
+        .allowsTestingOtp;
+    if (!allowsTestingOtp || code == null) {
       return const SizedBox.shrink();
     }
     return Padding(

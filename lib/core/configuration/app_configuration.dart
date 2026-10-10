@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// The selected deployment target for OctoGear.
 enum AppEnvironment {
   development,
@@ -38,6 +40,12 @@ class AppConfiguration {
 
   final AppEnvironment environment;
   final String apiBaseUrl;
+
+  /// Staging testers can see codes in distributed builds as well as debug.
+  /// Production must never retain or display a testing code.
+  bool get allowsTestingOtp =>
+      environment == AppEnvironment.staging ||
+      (kDebugMode && environment == AppEnvironment.development);
 
   /// Require the full Laravel API base, including /api. No credentials,
   /// query strings, or fragments may become part of a request destination.

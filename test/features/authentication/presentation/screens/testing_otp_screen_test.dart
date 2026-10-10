@@ -29,9 +29,10 @@ void main() {
     }
   });
   for (final language in ['ar', 'en']) {
-    for (final development in [true, false]) {
+    for (final environment in AppEnvironment.values) {
+      final showsCode = environment != AppEnvironment.production;
       testWidgets(
-        'OTP screen testing banner language=$language development=$development',
+        'OTP screen testing banner language=$language environment=$environment',
         (tester) async {
           await tester.binding.setSurfaceSize(const Size(320, 844));
           addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -40,9 +41,7 @@ void main() {
               appLocaleProvider.overrideWith(() => _Locale(language)),
               appConfigurationProvider.overrideWithValue(
                 AppConfiguration(
-                  environment: development
-                      ? AppEnvironment.development
-                      : AppEnvironment.production,
+                  environment: environment,
                   apiBaseUrl: 'https://example.test/api',
                 ),
               ),
@@ -85,12 +84,9 @@ void main() {
           await tester.pumpAndSettle();
           expect(
             find.byKey(const Key('testing-otp-banner')),
-            development ? findsOneWidget : findsNothing,
+            showsCode ? findsOneWidget : findsNothing,
           );
-          expect(
-            find.text('0042'),
-            development ? findsOneWidget : findsNothing,
-          );
+          expect(find.text('0042'), showsCode ? findsOneWidget : findsNothing);
           expect(
             tester
                 .widget<TextFormField>(find.byType(TextFormField))

@@ -36,53 +36,57 @@ class TestingAuthRepository implements AuthenticationRepository {
 
 void main() {
   final mobile = SaudiMobileNumber.tryParse('500000001')!;
-  test(
-    'initial send, resend, failure and registration manage only ephemeral code',
-    () async {
-      final repo = TestingAuthRepository();
-      final container = ProviderContainer(
-        overrides: [
-          authenticationRepositoryProvider.overrideWithValue(repo),
-          appConfigurationProvider.overrideWithValue(
-            const AppConfiguration(
-              environment: AppEnvironment.development,
-              apiBaseUrl: 'https://example.test/api',
-            ),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-      container.listen(otpResendControllerProvider, (_, _) {});
-      await container
-          .read(phoneSignInControllerProvider.notifier)
-          .sendOtp(mobile);
-      expect(container.read(authenticationFlowProvider).testOtp, '0042');
-      final gate = Completer<String?>();
-      repo.onSend = () => gate.future;
-      final resend = container
-          .read(otpResendControllerProvider.notifier)
-          .resend(mobile);
-      expect(container.read(authenticationFlowProvider).testOtp, isNull);
-      gate.complete('0071');
-      await resend;
-      expect(container.read(authenticationFlowProvider).testOtp, '0071');
-      repo.onSend = () async => throw Exception('connection failure');
-      await container.read(otpResendControllerProvider.notifier).resend(mobile);
-      expect(container.read(authenticationFlowProvider).testOtp, isNull);
-      final flow = container.read(authenticationFlowProvider.notifier);
-      flow.setTestOtp(mobile, '0010');
-      flow.requireRegistration('temporary');
-      expect(container.read(authenticationFlowProvider).testOtp, isNull);
-      flow.setTestOtp(mobile, '0042');
-      expect(container.read(authenticationFlowProvider).testOtp, isNull);
-      flow.clear();
-      expect(container.read(authenticationFlowProvider).hasPhone, false);
-    },
-  );
   for (final environment in [
-    AppEnvironment.production,
+    AppEnvironment.development,
     AppEnvironment.staging,
   ]) {
+    test(
+      'initial send, resend, failure and registration manage ephemeral code in $environment',
+      () async {
+        final repo = TestingAuthRepository();
+        final container = ProviderContainer(
+          overrides: [
+            authenticationRepositoryProvider.overrideWithValue(repo),
+            appConfigurationProvider.overrideWithValue(
+              AppConfiguration(
+                environment: environment,
+                apiBaseUrl: 'https://example.test/api',
+              ),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        container.listen(otpResendControllerProvider, (_, _) {});
+        await container
+            .read(phoneSignInControllerProvider.notifier)
+            .sendOtp(mobile);
+        expect(container.read(authenticationFlowProvider).testOtp, '0042');
+        final gate = Completer<String?>();
+        repo.onSend = () => gate.future;
+        final resend = container
+            .read(otpResendControllerProvider.notifier)
+            .resend(mobile);
+        expect(container.read(authenticationFlowProvider).testOtp, isNull);
+        gate.complete('0071');
+        await resend;
+        expect(container.read(authenticationFlowProvider).testOtp, '0071');
+        repo.onSend = () async => throw Exception('connection failure');
+        await container
+            .read(otpResendControllerProvider.notifier)
+            .resend(mobile);
+        expect(container.read(authenticationFlowProvider).testOtp, isNull);
+        final flow = container.read(authenticationFlowProvider.notifier);
+        flow.setTestOtp(mobile, '0010');
+        flow.requireRegistration('temporary');
+        expect(container.read(authenticationFlowProvider).testOtp, isNull);
+        flow.setTestOtp(mobile, '0042');
+        expect(container.read(authenticationFlowProvider).testOtp, isNull);
+        flow.clear();
+        expect(container.read(authenticationFlowProvider).hasPhone, false);
+      },
+    );
+  }
+  for (final environment in [AppEnvironment.production]) {
     test('codes are discarded in $environment', () {
       final container = ProviderContainer(
         overrides: [
