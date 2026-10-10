@@ -25,10 +25,12 @@ class FakeChatRepository implements ChatRepository {
     offerId: 42,
   );
   ChatMessages page = const ChatMessages([], false);
-  int opens = 0, sends = 0, reads = 0;
+  int opens = 0, sends = 0, reads = 0, inboxCalls = 0;
   bool failSend = false, failRead = false;
   final keys = <String>[];
   final contents = <String>[];
+  final readBoundaries = <int>[];
+  Future<void> Function(int through)? onRead;
   Future<ChatReceipt> Function(ChatTarget, String, String)? onSend;
   Future<ChatMessages> Function(int?, int?)? onMessages;
   @override
@@ -38,7 +40,11 @@ class FakeChatRepository implements ChatRepository {
   }
 
   @override
-  Future<ChatInbox> inbox(int page) async => const ChatInbox([], 1, 1);
+  Future<ChatInbox> inbox(int page) async {
+    inboxCalls++;
+    return const ChatInbox([], 1, 1);
+  }
+
   @override
   Future<ChatMessages> messages(int id, {int? before, int? after}) async =>
       onMessages != null ? onMessages!(before, after) : page;
@@ -76,6 +82,8 @@ class FakeChatRepository implements ChatRepository {
   @override
   Future<void> markRead(int id, int through) async {
     reads++;
+    readBoundaries.add(through);
+    if (onRead != null) await onRead!(through);
     if (failRead) throw Exception('offline');
   }
 }

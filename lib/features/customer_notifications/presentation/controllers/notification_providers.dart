@@ -56,10 +56,43 @@ final notificationCustomerIdProvider = Provider<int?>((ref) {
       : null;
 });
 
-final notificationCountProvider = FutureProvider.autoDispose<int>((ref) {
-  if (ref.watch(notificationCustomerIdProvider) == null) return 0;
-  return ref.watch(getUnreadNotificationCountProvider).call();
-}, retry: (_, _) => null);
+// Local badge only. Watching this provider must never issue an HTTP request.
+final notificationCountProvider =
+    AsyncNotifierProvider<NotificationCountController, int>(
+      NotificationCountController.new,
+    );
+
+class NotificationCountController extends AsyncNotifier<int> {
+  final Set<String> _seen = {};
+  final Set<String> _read = {};
+  @override
+  int build() {
+    ref.watch(notificationCustomerIdProvider);
+    _seen.clear();
+    _read.clear();
+    return 0;
+  }
+
+  void reconcile(NotificationPage page) {
+    _seen.addAll(page.items.map((item) => item.id));
+    _read.addAll(
+      page.items.where((item) => item.isRead).map((item) => item.id),
+    );
+    state = AsyncData(page.unreadCount);
+  }
+
+  void received(String id) {
+    if (!_seen.add(id)) return;
+    if (_seen.length > 1000) _seen.remove(_seen.first);
+    state = AsyncData((state.value ?? 0) + 1);
+  }
+
+  void read({required bool all, String? id}) {
+    if (id != null && !_read.add(id)) return;
+    if (all) _read.addAll(_seen);
+    state = AsyncData(all ? 0 : ((state.value ?? 0) - 1).clamp(0, 1 << 31));
+  }
+}
 
 class NotificationInboxState {
   const NotificationInboxState({
@@ -100,11 +133,14 @@ class NotificationInboxController
         page: NotificationPage(items: [], unreadCount: 0),
       );
     }
-    return NotificationInboxState(
-      page: await ref
-          .watch(getNotificationsProvider)
-          .call(unreadOnly: unreadOnly),
-    );
+    final generation = _generation;
+    final page = await ref
+        .watch(getNotificationsProvider)
+        .call(unreadOnly: unreadOnly);
+    if (_current(generation)) {
+      ref.read(notificationCountProvider.notifier).reconcile(page);
+    }
+    return NotificationInboxState(page: page);
   }
 
   bool _current(int generation) => ref.mounted && generation == _generation;
@@ -131,7 +167,7 @@ class NotificationInboxController
           .call(unreadOnly: unreadOnly);
       if (!_current(generation)) return;
       state = AsyncData(NotificationInboxState(page: page));
-      ref.invalidate(notificationCountProvider);
+      ref.read(notificationCountProvider.notifier).reconcile(page);
     } catch (error, trace) {
       if (!_current(generation)) return;
       state = previous == null
@@ -238,7 +274,9 @@ class NotificationInboxController
           ),
         ),
       );
-      ref.invalidate(notificationCountProvider);
+      ref
+          .read(notificationCountProvider.notifier)
+          .read(all: item == null, id: item?.id);
       return true;
     } catch (error) {
       if (_current(generation)) {
@@ -251,7 +289,6 @@ class NotificationInboxController
         );
         // Idempotent read actions may be retried explicitly; don't claim success
         // locally when the response is missing or malformed.
-        ref.invalidate(notificationCountProvider);
       }
       return false;
     } finally {

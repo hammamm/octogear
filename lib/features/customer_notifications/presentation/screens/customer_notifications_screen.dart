@@ -8,6 +8,7 @@ import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../customer_orders/presentation/widgets/order_widgets.dart';
 import '../../domain/entities/customer_notification.dart';
 import '../controllers/notification_providers.dart';
+import '../controllers/push_providers.dart';
 import '../widgets/notification_tile.dart';
 
 class CustomerNotificationsScreen extends ConsumerStatefulWidget {
@@ -49,9 +50,9 @@ class _CustomerNotificationsScreenState
             offerId: item.offerId!,
           ).push<void>(context);
         case CustomerNotificationKind.message:
-          await CustomerConversationRoute(
+          CustomerConversationRoute(
             conversationId: item.conversationId!,
-          ).push<void>(context);
+          ).go(context);
         case CustomerNotificationKind.orderPaid:
         case CustomerNotificationKind.orderCompleted:
         case CustomerNotificationKind.order:
@@ -61,7 +62,6 @@ class _CustomerNotificationsScreenState
         case CustomerNotificationKind.unknown:
           break;
       }
-      if (mounted) ref.invalidate(notificationCountProvider);
     } finally {
       _opening = false;
     }
@@ -74,22 +74,9 @@ class _CustomerNotificationsScreenState
     final controller = ref.read(provider.notifier);
     final current = inbox.asData?.value;
     final count = ref.watch(notificationCountProvider);
-    ref.listen(notificationCountProvider, (previous, next) {
-      final value = ref.read(provider).asData?.value;
-      if (previous?.value != null &&
-          next.asData != null &&
-          previous?.value != next.value &&
-          value != null &&
-          value.pagesLoaded == 1 &&
-          !value.busy &&
-          (ModalRoute.of(context)?.isCurrent ?? false)) {
-        controller.refresh();
-      }
-    });
     return RefreshIndicator(
       onRefresh: () async {
         await controller.refresh();
-        if (mounted) ref.invalidate(notificationCountProvider);
       },
       child: ListView(
         key: PageStorageKey('notifications-$_unreadOnly'),
@@ -116,6 +103,29 @@ class _CustomerNotificationsScreenState
             ],
           ),
           const SizedBox(height: 16),
+          if (ref.watch(pushRepositoryProvider) != null)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                icon: const Icon(Icons.notifications_active_outlined),
+                label: Text(context.tr('notifications.push_settings')),
+                onPressed: () async {
+                  try {
+                    await ref.read(pushRepositoryProvider)?.openSettings();
+                  } catch (_) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            context.tr('notifications.settings_error'),
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+            ),
           Wrap(
             spacing: 8,
             runSpacing: 8,

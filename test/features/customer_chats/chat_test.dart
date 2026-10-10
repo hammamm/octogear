@@ -98,8 +98,9 @@ void main() {
           expect(before, 9);
           return ChatMessages([msg(9), msg(8)], false);
         }
-        expect(after, 10);
-        return ChatMessages([msg(12), msg(11)], true);
+        if (after == 10) return ChatMessages([msg(12), msg(11)], true);
+        expect(after, 12);
+        return const ChatMessages([], false);
       };
       await controller.older();
       await controller.refresh();

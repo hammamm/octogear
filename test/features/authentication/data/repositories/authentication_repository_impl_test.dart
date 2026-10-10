@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:octogear/core/service/device_token_reader.dart';
+import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/features/authentication/data/data_sources/authentication_remote_data_source.dart';
 import 'package:octogear/features/authentication/data/models/authentication_dtos.dart';
 
@@ -7,64 +7,57 @@ import 'package:octogear/features/authentication/data/repositories/authenticatio
 
 void main() {
   group('AuthenticationRepositoryImpl.register', () {
-    test('passes the captured device token to registration', () async {
-      final dataSource = _CapturingDataSource();
+    test(
+      'registers with a trimmed name without Firebase dependencies',
+      () async {
+        final dataSource = _CapturingDataSource();
+        final repository = AuthenticationRepositoryImpl(
+          remoteDataSource: dataSource,
+        );
+
+        final accessToken = await repository.register(
+          temporaryRegistrationToken: 'temporary-token',
+          fullName: '  Amina  ',
+          cityId: 3,
+        );
+
+        expect(accessToken, 'access-token');
+        expect(dataSource.registration, ('temporary-token', 'Amina', 3));
+      },
+    );
+
+    test('maps malformed registration responses to an API failure', () async {
+      final dataSource = _CapturingDataSource(malformedResponse: true);
       final repository = AuthenticationRepositoryImpl(
         remoteDataSource: dataSource,
-        deviceTokenReader: _FakeDeviceTokenReader(() async => 'fcm-token'),
       );
 
-      final accessToken = await repository.register(
-        temporaryRegistrationToken: 'temporary-token',
-        fullName: 'Amina',
-        cityId: 3,
-      );
-
-      expect(accessToken, 'access-token');
-      expect(dataSource.deviceToken, 'fcm-token');
-    });
-
-    test('does not block registration when the token reader fails', () async {
-      final dataSource = _CapturingDataSource();
-      final repository = AuthenticationRepositoryImpl(
-        remoteDataSource: dataSource,
-        deviceTokenReader: _FakeDeviceTokenReader(
-          () async => throw StateError('Firebase unavailable'),
+      await expectLater(
+        repository.register(
+          temporaryRegistrationToken: 'temporary-token',
+          fullName: 'Amina',
+          cityId: 3,
         ),
+        throwsA(isA<ApiFailure>()),
       );
-
-      final accessToken = await repository.register(
-        temporaryRegistrationToken: 'temporary-token',
-        fullName: 'Amina',
-        cityId: 3,
-      );
-
-      expect(accessToken, 'access-token');
-      expect(dataSource.deviceToken, isNull);
     });
   });
 }
 
-class _FakeDeviceTokenReader implements DeviceTokenReader {
-  const _FakeDeviceTokenReader(this._read);
-
-  final Future<String?> Function() _read;
-
-  @override
-  Future<String?> read() => _read();
-}
-
 class _CapturingDataSource implements AuthenticationRemoteDataSource {
-  String? deviceToken;
+  _CapturingDataSource({this.malformedResponse = false});
+
+  final bool malformedResponse;
+  (String, String, int)? registration;
 
   @override
   Future<AccessTokenDto> register({
     required String temporaryRegistrationToken,
     required String fullName,
     required int cityId,
-    required String? deviceToken,
   }) async {
-    this.deviceToken = deviceToken;
+    registration = (temporaryRegistrationToken, fullName, cityId);
+    if (malformedResponse) throw const FormatException('Invalid response');
     return const AccessTokenDto('access-token');
   }
 

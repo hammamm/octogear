@@ -1,5 +1,49 @@
 # OctoGear - Mobile Application Development Contract
 
+## Chat navigation and alerts — 2026-10-09
+
+Order Chat actions select the Chats branch at
+`/customer/chats/orders/:orderId/offers/:offerId`; old order chat URLs redirect
+there. Message alerts also select Chats. A shared WebSocket stays active across
+customer tabs. Incoming messages outside Chats show a banner and activity dot;
+entering Chats clears both without marking all messages read. FCM and WebSocket
+alerts deduplicate by message ID. Database notifications and background push remain.
+
+Socket events include conversation previews, eligibility and unread counts. The
+inbox merges these directly and ignores older snapshots. Message/read delivery
+does not invalidate the inbox or fetch conversation/timeline data. GETs serve
+entry, user refresh/history, reconnect recovery and older-server compatibility.
+Read acknowledgements use a 1.5-second trailing debounce while the conversation
+is visible at the latest messages. Another unread arrival restarts the delay;
+rebuilds and own-message echoes do not. One PATCH acknowledges the batch through
+the current message boundary. Scrolling into history, backgrounding or leaving
+the conversation cancels a pending timer. Arrivals during a request form a later
+batch without overlapping read requests. Sending messages remains immediate.
+This supersedes the earlier event-triggered inbox GETs below.
+
+Read-debounce verification: all 341 Flutter tests pass, full Flutter analysis and
+custom lint report no issues, and the Firebase-configured staging debug APK builds.
+Widget coverage includes burst/duplicate delivery, arrivals during an in-flight
+receipt, background/resume, covered routes, scrolling into history and disposal.
+
+## Chat WebSockets — 2026-10-09
+
+The conversation's 10-second and inbox's 15-second polling timers are removed.
+Sending remains HTTP POST with client_message_id retries. One shared, private
+session WebSocket receives messages and read receipts through Laravel Reverb.
+Transport and parsing live in the chat data layer; typed events feed Riverpod
+controllers. The conversation merges messages by ID; inbox changes trigger a
+coalesced first-page GET. Initial entry, history, manual refresh and reconnect
+catch-up still use HTTP. Reconnect drains all missed forward pages and restores
+read_through_id without losing updates received before a POST response.
+
+The connection pauses in the background and is disposed on session change/logout.
+Failed connection retries and WebSocket heartbeats are not chat API polling.
+An Arabic/English offline indicator is available. Staging/production require WSS.
+Run Reverb and its realtime queue worker, and forward emulator port 8080 alongside
+8000. The backend's CHAT_REALTIME.md contains the full deployment contract.
+Historical polling descriptions below are superseded by this section.
+
 ## Purpose
 
 OctoGear is a production mobile marketplace for automotive spare parts. It serves people who need parts and store owners/providers who publish inventory and respond to requests. The mobile application must support Android and iOS, Arabic and English, right-to-left and left-to-right layouts, secure authentication, observable production behavior, and maintainable future changes.
@@ -32,7 +76,7 @@ Flutter and Laravel are separate repositories. The Flutter Git history and GitHu
 - Android Firebase is configured and verified for project `octogear-1d72b` and Android package `com.octogear.app`.
 - Firebase Core, Messaging, Crashlytics, and Analytics initialize on Android; an FCM token was retrieved on an emulator.
 - The official Android FlutterFire configuration has been generated.
-- iOS work and Firebase work other than Android first-time device-token capture and the approved staging Remote Config API URL bootstrap are deferred. Leave the existing Android Firebase project configuration intact; do not add notification delivery, permission, token-refresh, or iOS Firebase behavior. The selected environment resolves its API destination before the existing session flow starts.
+- Android customer push is approved and implemented (2026-10-08): permissions, session-scoped token registration, refresh, queued FCM delivery and logout cleanup. Preserve the existing Firebase project identity. iOS remains deferred. See NOTIFICATIONS_IMPLEMENTATION.md for the latest behavior and required server configuration. The selected environment resolves its API destination before the session flow starts.
 - The old iOS bundle identifier, display name, and `GoogleService-Info.plist` are intentionally untouched while iOS is deferred. They must be replaced together with the confirmed iOS bundle identifier and new Firebase configuration before any iOS build or release; never copy the old Sahala Firebase identity into OctoGear.
 - The legacy Sahala Flutter scaffold has been removed: its GetIt wiring, old routes, sample features, old login/OTP code, widgets, extensions, legacy storage/messaging wrappers, old Poppins assets, and obsolete tests are not part of OctoGear. The root Dart package and project lint package are named `octogear` and `octogear_lints`.
 - The external YARDY wireframes remain unchanged as a functional product reference. They must never be deleted as part of Flutter source cleanup.

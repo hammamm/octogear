@@ -81,7 +81,7 @@ void main() {
           ),
         ),
         GoRoute(
-          path: '/customer/orders/17/offers/42/chat',
+          path: '/customer/chats/orders/17/offers/42',
           builder: (_, _) => const Scaffold(body: Text('Selected store chat')),
         ),
       ],

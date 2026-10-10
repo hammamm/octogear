@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/api/api_providers.dart';
-import '../../../../core/service/device_token_reader.dart';
 import '../../../../core/storage/storage_providers.dart';
+import '../../../customer_notifications/presentation/controllers/push_providers.dart';
 import '../../data/data_sources/authentication_remote_data_source.dart';
 import '../../data/data_sources/profile_remote_data_source.dart';
 import '../../data/repositories/authentication_repository_impl.dart';
@@ -28,7 +28,6 @@ final authenticationRepositoryProvider = Provider<AuthenticationRepository>((
 ) {
   return AuthenticationRepositoryImpl(
     remoteDataSource: ref.watch(authenticationRemoteDataSourceProvider),
-    deviceTokenReader: ref.watch(deviceTokenReaderProvider),
   );
 });
 
@@ -78,5 +77,23 @@ final restoreSessionUseCaseProvider = Provider<RestoreSessionUseCase>((ref) {
 });
 
 final signOutUseCaseProvider = Provider<SignOutUseCase>((ref) {
-  return SignOutUseCase(ref.watch(sessionStorageProvider));
+  final storage = ref.watch(sessionStorageProvider);
+  return SignOutUseCase(
+    storage,
+    beforeClear: () async {
+      await ref.read(pushDeliveryProvider)?.prepareSignOut();
+      if (storage.cachedAccessToken == null) return;
+      try {
+        await ref
+            .read(apiClientProvider)
+            .post<void>(
+              'auth/logout',
+              requiresAuthentication: true,
+              decode: (_) {},
+            );
+      } catch (_) {
+        // Local sign-out must still work without connectivity.
+      }
+    },
+  );
 });

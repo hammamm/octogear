@@ -15,7 +15,6 @@ abstract interface class AuthenticationRemoteDataSource {
     required String temporaryRegistrationToken,
     required String fullName,
     required int cityId,
-    required String? deviceToken,
   });
   Future<CityPageDto> fetchCities({String search = '', int page = 1});
 }
@@ -62,13 +61,11 @@ class AuthenticationRemoteDataSourceImpl
     required String temporaryRegistrationToken,
     required String fullName,
     required int cityId,
-    required String? deviceToken,
   }) async {
     final data = <String, Object?>{
       'temp_token': temporaryRegistrationToken,
       'full_name': fullName,
       'city_id': cityId,
-      'device_token': ?deviceToken,
     };
     final response = await _apiClient.post<AccessTokenDto>(
       'auth/register',

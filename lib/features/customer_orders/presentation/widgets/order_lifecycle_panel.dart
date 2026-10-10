@@ -173,7 +173,7 @@ class OrderLifecyclePanel extends ConsumerWidget {
                     : () => CustomerOfferChatRoute(
                         orderId: order.id,
                         offerId: order.acceptedOfferId!,
-                      ).push<void>(context),
+                      ).go(context),
                 icon: const Icon(Icons.chat_bubble_outline),
                 label: Text(context.tr('order_flow.message_store')),
               ),

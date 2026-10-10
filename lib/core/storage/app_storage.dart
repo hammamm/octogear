@@ -58,6 +58,14 @@ class AppStorage
 
   AppLocale get cachedLocale => _cachedLocale;
 
+  bool get pushPermissionRequested =>
+      _preferences?.getBool('octogear.push.permission_requested') ?? false;
+
+  Future<void> markPushPermissionRequested() async {
+    await initialize();
+    await _preferences!.setBool('octogear.push.permission_requested', true);
+  }
+
   @override
   String? readApiBaseUrl(String environment) =>
       _preferences?.getString('$_apiBaseUrlKey.$environment');

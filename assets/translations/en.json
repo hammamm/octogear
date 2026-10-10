@@ -1,5 +1,10 @@
 {
   "notifications": {
+    "push_offer": "You have a new offer.",
+    "push_message": "You have a new message.",
+    "open": "Open",
+    "push_settings": "Notification settings",
+    "settings_error": "Open your phone settings to manage OctoGear notifications.",
     "title": "Notifications",
     "all": "All",
     "unread": "Unread",
@@ -695,6 +700,7 @@
   "load_error": "Could not load chat. Try again.",
   "request": "Request #{}",
   "read_only": "This conversation is now read-only.",
+  "reconnecting": "Reconnecting…",
   "loading": "Loading…",
   "more": "Load more",
   "message_hint": "Write a message",

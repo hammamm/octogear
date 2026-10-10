@@ -143,7 +143,7 @@ class SessionUnavailableRoute extends GoRouteData
                     TypedGoRoute<RefuseCustomerOfferRoute>(
                       path: AppRoutePath.customerOfferRefuseSegment,
                     ),
-                    TypedGoRoute<CustomerOfferChatRoute>(path: 'chat'),
+                    TypedGoRoute<LegacyCustomerOfferChatRoute>(path: 'chat'),
                   ],
                 ),
               ],
@@ -157,6 +157,9 @@ class SessionUnavailableRoute extends GoRouteData
         TypedGoRoute<CustomerChatsRoute>(
           path: AppRoutePath.customerChats,
           routes: [
+            TypedGoRoute<CustomerOfferChatRoute>(
+              path: 'orders/:orderId/offers/:offerId',
+            ),
             TypedGoRoute<CustomerConversationRoute>(path: ':conversationId'),
           ],
         ),
@@ -501,6 +504,18 @@ class EditCustomerOrderRoute extends GoRouteData with $EditCustomerOrderRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       EditCustomerOrderScreen(orderId: orderId);
+}
+
+class LegacyCustomerOfferChatRoute extends GoRouteData
+    with $LegacyCustomerOfferChatRoute {
+  const LegacyCustomerOfferChatRoute({
+    required this.orderId,
+    required this.offerId,
+  });
+  final int orderId, offerId;
+  @override
+  String redirect(BuildContext context, GoRouterState state) =>
+      CustomerOfferChatRoute(orderId: orderId, offerId: offerId).location;
 }
 
 class CustomerOfferChatRoute extends GoRouteData with $CustomerOfferChatRoute {

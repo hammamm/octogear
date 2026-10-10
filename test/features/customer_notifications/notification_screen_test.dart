@@ -16,7 +16,6 @@ import 'package:octogear/core/localization/app_locale_controller.dart';
 import 'package:octogear/features/customer_notifications/domain/entities/customer_notification.dart';
 import 'package:octogear/features/customer_notifications/presentation/controllers/notification_providers.dart';
 import 'package:octogear/features/customer_notifications/presentation/screens/customer_notifications_screen.dart';
-import 'package:octogear/features/customer_notifications/presentation/widgets/notification_entry.dart';
 import '../customer_chats/chat_screen_test.dart'
     show App, Translations, English, Arabic;
 import 'notification_fixtures.dart';
@@ -141,7 +140,12 @@ void main() {
         };
         expect(find.text(label), findsOneWidget);
         expect(repo.readCalls, 1);
-        router.pop();
+        if (kind == CustomerNotificationKind.message) {
+          expect(router.canPop(), isFalse);
+          router.go('/');
+        } else {
+          router.pop();
+        }
         await tester.pumpAndSettle();
         expect(repo.items.single.isRead, false);
         await tester.pumpWidget(const SizedBox());
@@ -230,41 +234,59 @@ void main() {
     },
   );
   testWidgets(
-    'foreground polling pauses in background and after errors; resume retries',
+    'inbox loads on entry and explicit refresh, never on badge changes',
     (tester) async {
       final repo = FakeNotificationsRepository();
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            notificationCustomerIdProvider.overrideWithValue(1),
-            customerNotificationsRepositoryProvider.overrideWithValue(repo),
-          ],
-          child: const NotificationRefreshScope(child: SizedBox()),
-        ),
+      await pump(tester, repo);
+      expect(repo.pageCalls, 1);
+      expect(repo.countCalls, 0);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(CustomerNotificationsScreen)),
       );
-      await tester.pumpAndSettle();
-      expect(repo.countCalls, 1);
-      await tester.pump(const Duration(seconds: 31));
-      await tester.pumpAndSettle();
-      expect(repo.countCalls, 2);
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      await tester.pump(const Duration(seconds: 61));
-      expect(repo.countCalls, 2);
-      repo.failCount = true;
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await tester.pumpAndSettle();
-      expect(repo.countCalls, 3);
-      await tester.pump(const Duration(seconds: 61));
-      expect(repo.countCalls, 3);
-      repo.failCount = false;
+      container
+          .read(notificationCountProvider.notifier)
+          .received('12345678-1234-1234-1234-123456789abc');
+      await tester.pump(const Duration(minutes: 2));
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
-      expect(repo.countCalls, 4);
+      expect(repo.pageCalls, 1);
+      expect(repo.countCalls, 0);
+      await container.read(notificationInboxProvider(false).notifier).refresh();
+      await tester.pumpAndSettle();
+      expect(repo.pageCalls, 2);
+      expect(repo.countCalls, 0);
       await tester.pumpWidget(const SizedBox());
     },
   );
+
+  testWidgets('badges never poll or fetch on app resume', (tester) async {
+    final repo = FakeNotificationsRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notificationCustomerIdProvider.overrideWithValue(1),
+          customerNotificationsRepositoryProvider.overrideWithValue(repo),
+        ],
+        child: Consumer(
+          builder: (_, ref, _) {
+            ref.watch(notificationCountProvider);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(repo.countCalls, 0);
+    expect(repo.pageCalls, 0);
+    await tester.pump(const Duration(minutes: 2));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(repo.countCalls, 0);
+    expect(repo.pageCalls, 0);
+    await tester.pumpWidget(const SizedBox());
+  });
   for (final arabic in [false, true]) {
     for (final scale in [1.0, 2.0]) {
       testWidgets(

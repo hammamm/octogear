@@ -10,6 +10,7 @@ import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../../domain/entities/chat.dart';
 import '../controllers/chat_providers.dart';
 import '../widgets/chat_message_bubble.dart';
+import '../widgets/chat_connection_status.dart';
 
 class ChatConversationScreen extends ConsumerStatefulWidget {
   const ChatConversationScreen({
@@ -28,7 +29,10 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
     with WidgetsBindingObserver {
   final _text = TextEditingController();
   final _scroll = ScrollController();
-  Timer? _timer;
+  Timer? _readDebounce;
+  int? _pendingReadThrough;
+  int _readGeneration = 0;
+  bool _markingRead = false;
   bool _resumed = true;
   bool get _visible =>
       mounted &&
@@ -41,34 +45,106 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
   @override
   void initState() {
     super.initState();
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _resumed = lifecycle == null || lifecycle == AppLifecycleState.resumed;
     WidgetsBinding.instance.addObserver(this);
     _scroll.addListener(_onScroll);
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (!_visible || !_atBottom) return;
-      final value = ref.read(chatProvider(widget.target)).asData?.value;
-      if (value != null && value.error == null) {
-        unawaited(_controller.refresh());
-      }
-    });
   }
 
   void _onScroll() {
-    if (_visible && _atBottom) unawaited(_controller.markRead());
+    _scheduleReadReceipt();
+  }
+
+  void _cancelReadReceipt() {
+    _readDebounce?.cancel();
+    _readDebounce = null;
+    _pendingReadThrough = null;
+  }
+
+  void _scheduleReadReceipt() {
+    if (!_visible || !_atBottom) {
+      _cancelReadReceipt();
+      return;
+    }
+    final state = ref.read(chatProvider(widget.target)).asData?.value;
+    final unread = state?.messages.where((m) => !m.mine && !m.read);
+    if (state == null ||
+        state.error != null ||
+        state.context.conversation == null ||
+        unread == null ||
+        unread.isEmpty) {
+      _cancelReadReceipt();
+      return;
+    }
+    if (_markingRead) return;
+    final through = unread.first.id;
+    // Rebuilds, own messages and scroll events must not reset the quiet period.
+    if (_readDebounce?.isActive == true && _pendingReadThrough == through) {
+      return;
+    }
+    _cancelReadReceipt();
+    _pendingReadThrough = through;
+    _readDebounce = Timer(
+      const Duration(milliseconds: 1500),
+      () => unawaited(_flushReadReceipt()),
+    );
+  }
+
+  Future<void> _flushReadReceipt() async {
+    _cancelReadReceipt();
+    if (!_visible || !_atBottom) return;
+    final generation = _readGeneration;
+    _markingRead = true;
+    try {
+      await _controller.markRead();
+    } finally {
+      if (mounted && generation == _readGeneration) {
+        _markingRead = false;
+        // Messages received during the request need their own trailing batch.
+        _scheduleReadReceipt();
+      }
+    }
+  }
+
+  void _checkReadAfterFrame() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _scheduleReadReceipt();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_visible) _cancelReadReceipt();
+    _checkReadAfterFrame();
+  }
+
+  @override
+  void didUpdateWidget(ChatConversationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.target != widget.target) {
+      ++_readGeneration;
+      _markingRead = false;
+      _cancelReadReceipt();
+      _checkReadAfterFrame();
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _resumed = state == AppLifecycleState.resumed;
-    if (_visible &&
-        ref.read(chatProvider(widget.target)).asData?.value.error == null) {
-      unawaited(_controller.refresh());
+    if (_resumed) {
+      _checkReadAfterFrame();
+    } else {
+      _cancelReadReceipt();
     }
   }
 
   @override
   void dispose() {
+    ++_readGeneration;
+    _cancelReadReceipt();
     WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel();
     _text.dispose();
     _scroll.dispose();
     super.dispose();
@@ -91,11 +167,7 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
   Widget build(BuildContext context) {
     final async = ref.watch(chatProvider(widget.target));
     ref.listen(chatProvider(widget.target), (previous, next) {
-      if (next.hasValue && next.value?.error == null && _visible && _atBottom) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_visible && _atBottom) unawaited(_controller.markRead());
-        });
-      }
+      _checkReadAfterFrame();
     });
     final info = async.asData?.value.context;
     final title = widget.provider
@@ -320,6 +392,7 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
                     ],
                   ),
                 ),
+              const ChatConnectionStatus(),
               if (!state.context.canSend)
                 Padding(
                   padding: const EdgeInsets.all(16),

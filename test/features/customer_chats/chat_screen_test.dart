@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -15,8 +16,11 @@ import 'package:octogear/core/localization/app_locale.dart';
 import 'package:octogear/core/localization/app_locale_controller.dart';
 import 'package:octogear/features/authentication/presentation/controllers/session_controller.dart';
 import 'package:octogear/features/customer_chats/domain/entities/chat.dart';
+import 'package:octogear/features/customer_chats/domain/entities/chat_update.dart';
+import 'package:octogear/features/customer_chats/presentation/controllers/chat_realtime_providers.dart';
 import 'package:octogear/features/customer_chats/presentation/controllers/chat_providers.dart';
 import 'package:octogear/features/customer_chats/presentation/screens/chat_conversation_screen.dart';
+import 'package:octogear/features/customer_chats/presentation/screens/customer_chats_screen.dart';
 import 'package:octogear/features/customer_chats/presentation/widgets/chat_message_bubble.dart';
 import 'chat_fixtures.dart';
 
@@ -47,7 +51,9 @@ void main() {
     WidgetTester tester,
     FakeChatRepository repo, {
     bool arabic = false,
+    bool inbox = false,
     double scale = 1,
+    Stream<ChatUpdate>? updates,
   }) async {
     await tester.binding.setSurfaceSize(Size(scale == 1 ? 390 : 320, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -55,8 +61,9 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, _) =>
-              const ChatConversationScreen(target: ChatTarget.offer(17, 42)),
+          builder: (_, _) => inbox
+              ? const CustomerChatsScreen()
+              : const ChatConversationScreen(target: ChatTarget.offer(17, 42)),
         ),
       ],
     );
@@ -67,6 +74,8 @@ void main() {
           chatRepositoryProvider.overrideWithValue(repo),
           sessionControllerProvider.overrideWith(ChatTestSession.new),
           appLocaleProvider.overrideWith(arabic ? Arabic.new : English.new),
+          if (updates != null)
+            chatRealtimeUpdatesProvider.overrideWith((_) => updates),
         ],
         child: EasyLocalization(
           supportedLocales: const [Locale('en'), Locale('ar')],
@@ -80,6 +89,202 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  ChatMessage incoming(int id) => ChatMessage(
+    id: id,
+    text: 'Incoming $id',
+    mine: false,
+    read: false,
+    createdAt: DateTime(2026),
+  );
+
+  FakeChatRepository unreadChat() => FakeChatRepository()
+    ..context = const ChatContext(conversation: sampleChat)
+    ..page = ChatMessages([incoming(1)], false);
+
+  testWidgets('read receipts debounce a burst for 1.5 seconds', (tester) async {
+    final events = StreamController<ChatUpdate>.broadcast();
+    addTearDown(events.close);
+    final repo = unreadChat();
+    await pump(tester, repo, updates: events.stream);
+    expect(repo.reads, 0);
+    events.add(
+      ChatUpdate(
+        ChatUpdateKind.message,
+        conversationId: 7,
+        message: incoming(2),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Incoming 2'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    expect(repo.reads, 0);
+    events.add(
+      ChatUpdate(
+        ChatUpdateKind.message,
+        conversationId: 7,
+        message: incoming(3),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Incoming 3'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    // A duplicate event should not postpone the acknowledgement.
+    events.add(
+      ChatUpdate(
+        ChatUpdateKind.message,
+        conversationId: 7,
+        message: incoming(3),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 499));
+    expect(repo.reads, 0);
+    await tester.pump(const Duration(milliseconds: 1));
+    expect(repo.readBoundaries, [3]);
+    await tester.pump(const Duration(seconds: 5));
+    expect(repo.reads, 1);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('messages arriving during a read request form a trailing batch', (
+    tester,
+  ) async {
+    final events = StreamController<ChatUpdate>.broadcast();
+    addTearDown(events.close);
+    final firstRead = Completer<void>();
+    final repo = unreadChat()
+      ..onRead = (through) async {
+        if (through == 1) await firstRead.future;
+      };
+    await pump(tester, repo, updates: events.stream);
+    await tester.pump(const Duration(milliseconds: 1500));
+    expect(repo.readBoundaries, [1]);
+    events.add(
+      ChatUpdate(
+        ChatUpdateKind.message,
+        conversationId: 7,
+        message: incoming(2),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(repo.readBoundaries, [1]);
+    firstRead.complete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1499));
+    expect(repo.readBoundaries, [1]);
+    await tester.pump(const Duration(milliseconds: 1));
+    expect(repo.readBoundaries, [1, 2]);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets(
+    'backgrounding cancels a pending read and resuming schedules it again',
+    (tester) async {
+      final repo = unreadChat();
+      await pump(tester, repo);
+      await tester.pump(const Duration(milliseconds: 500));
+      for (final state in [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+      await tester.pump(const Duration(seconds: 2));
+      expect(repo.reads, 0);
+      for (final state in [
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1499));
+      expect(repo.reads, 0);
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(repo.readBoundaries, [1]);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
+    'covering a chat cancels reads and returning starts a new delay',
+    (tester) async {
+      final repo = unreadChat();
+      await pump(tester, repo);
+      final navigator = Navigator.of(
+        tester.element(find.byType(ChatConversationScreen)),
+      );
+      unawaited(
+        navigator.push<void>(
+          MaterialPageRoute(
+            builder: (_) => const Scaffold(body: Text('Another page')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
+      expect(repo.reads, 0);
+      navigator.pop();
+      await tester.pumpAndSettle();
+      expect(repo.reads, 0);
+      await tester.pump(const Duration(milliseconds: 1500));
+      expect(repo.readBoundaries, [1]);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets('scrolling away and leaving the chat cancel pending reads', (
+    tester,
+  ) async {
+    final repo = unreadChat()
+      ..page = ChatMessages([
+        for (var id = 40; id > 0; id--) incoming(id),
+      ], false);
+    await pump(tester, repo);
+    final scrollable = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    scrollable.position.jumpTo(500);
+    await tester.pump(const Duration(seconds: 2));
+    expect(repo.reads, 0);
+    scrollable.position.jumpTo(0);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+    expect(repo.reads, 0);
+  });
+
+  testWidgets(
+    'idle conversation and inbox do not periodically fetch HTTP data',
+    (tester) async {
+      final repo = FakeChatRepository();
+      await pump(tester, repo);
+      final opens = repo.opens;
+      await tester.pump(const Duration(seconds: 45));
+      await tester.pumpAndSettle();
+      expect(repo.opens, opens);
+      await tester.pumpWidget(const SizedBox());
+      await pump(tester, repo, inbox: true);
+      final inboxCalls = repo.inboxCalls;
+      await tester.pump(const Duration(seconds: 45));
+      await tester.pumpAndSettle();
+      expect(repo.inboxCalls, inboxCalls);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets(
     'open has no writes; first send creates a message and shows employee',

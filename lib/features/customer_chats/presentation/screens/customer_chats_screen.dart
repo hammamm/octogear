@@ -6,6 +6,7 @@ import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../controllers/chat_providers.dart';
+import '../widgets/chat_connection_status.dart';
 
 class CustomerChatsScreen extends ConsumerStatefulWidget {
   const CustomerChatsScreen({super.key, this.provider = false});
@@ -15,41 +16,9 @@ class CustomerChatsScreen extends ConsumerStatefulWidget {
       _CustomerChatsScreenState();
 }
 
-class _CustomerChatsScreenState extends ConsumerState<CustomerChatsScreen>
-    with WidgetsBindingObserver {
+class _CustomerChatsScreenState extends ConsumerState<CustomerChatsScreen> {
   bool _loadingMore = false;
   Object? _pageError;
-  Timer? _timer;
-  bool _resumed = true;
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (mounted &&
-          _resumed &&
-          TickerMode.valuesOf(context).enabled &&
-          (ModalRoute.of(context)?.isCurrent ?? false) &&
-          !_loadingMore &&
-          !ref.read(chatInboxProvider).isLoading &&
-          (ref.read(chatInboxProvider).asData?.value.page ?? 1) == 1 &&
-          !ref.read(chatInboxProvider).hasError) {
-        ref.invalidate(chatInboxProvider);
-      }
-    });
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    _resumed = state == AppLifecycleState.resumed;
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
 
   Future<void> _open(int id) async {
     if (widget.provider) {
@@ -89,6 +58,7 @@ class _CustomerChatsScreenState extends ConsumerState<CustomerChatsScreen>
             ],
           ),
           const SizedBox(height: 20),
+          const ChatConnectionStatus(),
           ...data.when(
             loading: () => [const Center(child: CircularProgressIndicator())],
             error: (_, _) => [

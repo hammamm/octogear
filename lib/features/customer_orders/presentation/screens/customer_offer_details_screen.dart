@@ -244,7 +244,7 @@ class CustomerOfferDetailsScreen extends ConsumerWidget {
                             : () => CustomerOfferChatRoute(
                                 orderId: orderId,
                                 offerId: offerId,
-                              ).push<void>(context),
+                              ).go(context),
                         icon: const Icon(
                           Icons.chat_bubble_outline_rounded,
                           size: 20,

@@ -11,10 +11,10 @@ import '../../core/widgets/app_language_toggle_button.dart';
 import '../../core/widgets/octogear_brand_header.dart';
 import '../../core/widgets/octogear_surface_card.dart';
 import '../routing/app_routes.dart';
+import '../../features/customer_chats/presentation/controllers/chat_activity_controller.dart';
 import '../../features/authentication/domain/entities/app_user.dart';
 import '../../features/authentication/domain/entities/session_outcome.dart';
 import '../../features/authentication/presentation/controllers/session_controller.dart';
-import '../../features/customer_notifications/presentation/widgets/notification_entry.dart';
 
 /// The persistent customer-only application shell.
 ///
@@ -29,21 +29,19 @@ class CustomerAppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NotificationRefreshScope(
-      child: Scaffold(
-        body: DecoratedBox(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: AlignmentDirectional.topCenter,
-              end: AlignmentDirectional.bottomCenter,
-              colors: [Color(0xFFF9FAFC), OctoGearColors.canvas],
-            ),
+    return Scaffold(
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
+            colors: [Color(0xFFF9FAFC), OctoGearColors.canvas],
           ),
-          child: SafeArea(bottom: false, child: navigationShell),
         ),
-        bottomNavigationBar: _CustomerBottomNavigation(
-          navigationShell: navigationShell,
-        ),
+        child: SafeArea(bottom: false, child: navigationShell),
+      ),
+      bottomNavigationBar: _CustomerBottomNavigation(
+        navigationShell: navigationShell,
       ),
     );
   }
@@ -118,7 +116,12 @@ class _CustomerBottomNavigation extends ConsumerWidget {
               label: context.tr('customer_shell.orders.tab'),
             ),
             NavigationDestination(
-              icon: const Icon(Icons.chat_bubble_outline_rounded),
+              icon: Badge(
+                isLabelVisible:
+                    navigationShell.currentIndex != 3 &&
+                    ref.watch(chatActivityProvider),
+                child: const Icon(Icons.chat_bubble_outline_rounded),
+              ),
               selectedIcon: const Icon(Icons.chat_bubble_rounded),
               label: context.tr('customer_chats.tab'),
             ),

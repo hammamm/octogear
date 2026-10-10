@@ -1,3 +1,47 @@
+# Android customer push update — 2026-10-08
+
+The customer app includes FCM registration, token rotation, locale updates,
+permission handling, logout cleanup and validated notification-tap navigation.
+Android displays background alerts; foreground messages show localized banners.
+Server credentials and a queue worker are required to enable real delivery.
+
+**The 30-second polling mechanism has been removed.** Notification lists load
+when the inbox opens or the user explicitly refreshes, changes filter or loads
+another page. Home, More, elapsed time, app resume and incoming pushes do not
+fetch notification lists or unread counts. Read actions update state locally.
+The badge uses the most recent loaded count plus locally received pushes; it
+resynchronizes on inbox entry/refresh and starts at zero before that session has
+data. No polling timer replaces the removed timer.
+
+Signup sends only account details and no longer reads an FCM token. The
+push feature registers it after authentication; Laravel stores it exclusively in
+`device_tokens`, linked to the account and the current login session. The legacy
+`users.device_token` field and the signup-only token reader have been removed.
+
+Device registration uses POST /api/push/device; removal uses DELETE on the same
+route. These lifecycle requests are independent of inbox reads. An unchanged
+successful registration does not issue repeat requests on resume. The inbox has
+an Android notification-settings button. Logout attempts to unregister the
+device, clear displayed alerts, disable FCM auto-init, invalidate the installation
+token and revoke the Laravel session before clearing local storage.
+
+Deploy the Laravel migrations and Composer dependency before this Flutter build.
+See [backend setup](../OctoGear-api/PUSH_NOTIFICATIONS.md) for credentials, queue
+commands, test coverage and offline limitations. Sending is disabled until those
+credentials are configured. Only existing customer offer/message events are sent;
+this does not introduce customer order-status events or change iOS/payment work.
+
+The historical section below describes the original inbox implementation; its
+polling/deferred-FCM statements are superseded by this update.
+
+Verification: all 320 tests in the full Flutter regression run passed. Final
+notification tests also verify explicit refresh, no fetch on badge changes or
+resume, session-safe token rotation, logout and actual foreground-banner
+navigation. Flutter analysis, custom lint and the Android debug build passed.
+The Laravel push/inbox/chat/logout checks passed 48 tests (265 assertions).
+Live Firebase delivery has not been verified because server credentials are not
+configured; code tests use fake messaging and HTTP.
+
 # Customer notification inbox — 2026-10-06
 
 The customer Home header has a notification bell with an unread badge. More has

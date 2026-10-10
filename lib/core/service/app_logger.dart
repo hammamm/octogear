@@ -118,6 +118,7 @@ class AppLogger {
         final keyText = key.toString().toLowerCase();
         final isSecret = [
           'authorization',
+          'auth',
           'token',
           'otp',
           'password',

@@ -115,37 +115,7 @@ void main() {
     },
   );
   group('AuthenticationRemoteDataSourceImpl.register', () {
-    test(
-      'sends the optional device token with a new-user registration',
-      () async {
-        late RequestOptions request;
-        final dataSource = AuthenticationRemoteDataSourceImpl(
-          apiClient: _clientThatReturns({
-            'success': true,
-            'message': 'Registered',
-            'data': {'token': 'abc'},
-          }, onRequest: (value) => request = value),
-        );
-
-        final result = await dataSource.register(
-          temporaryRegistrationToken: 'temporary-token',
-          fullName: 'Amina',
-          cityId: 3,
-          deviceToken: 'fcm-device-token',
-        );
-
-        expect(result.value, 'abc');
-        expect(request.uri.path, '/api/auth/register');
-        expect(request.data, {
-          'temp_token': 'temporary-token',
-          'full_name': 'Amina',
-          'city_id': 3,
-          'device_token': 'fcm-device-token',
-        });
-      },
-    );
-
-    test('omits device_token when Firebase has no token', () async {
+    test('sends only account details with a new-user registration', () async {
       late RequestOptions request;
       final dataSource = AuthenticationRemoteDataSourceImpl(
         apiClient: _clientThatReturns({
@@ -155,11 +125,38 @@ void main() {
         }, onRequest: (value) => request = value),
       );
 
-      await dataSource.register(
+      final result = await dataSource.register(
         temporaryRegistrationToken: 'temporary-token',
         fullName: 'Amina',
         cityId: 3,
-        deviceToken: null,
+      );
+
+      expect(result.value, 'abc');
+      expect(request.uri.path, '/api/auth/register');
+      expect(request.data, {
+        'temp_token': 'temporary-token',
+        'full_name': 'Amina',
+        'city_id': 3,
+      });
+    });
+
+    test('rejects registration responses without an access token', () async {
+      late RequestOptions request;
+      final dataSource = AuthenticationRemoteDataSourceImpl(
+        apiClient: _clientThatReturns({
+          'success': true,
+          'message': 'Registered',
+          'data': null,
+        }, onRequest: (value) => request = value),
+      );
+
+      await expectLater(
+        dataSource.register(
+          temporaryRegistrationToken: 'temporary-token',
+          fullName: 'Amina',
+          cityId: 3,
+        ),
+        throwsFormatException,
       );
 
       expect(request.data, {

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'routing/app_router.dart';
+import '../features/customer_notifications/presentation/widgets/push_delivery_scope.dart';
 import '../core/design_system/octogear_theme.dart';
 import '../core/localization/app_locale.dart' as octogear_locale;
 import '../core/localization/app_locale_controller.dart';
@@ -32,6 +33,8 @@ class OctoGearApp extends ConsumerWidget {
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       routerConfig: ref.watch(appRouterProvider),
+      builder: (context, child) =>
+          PushDeliveryScope(child: child ?? const SizedBox.shrink()),
     );
   }
 }

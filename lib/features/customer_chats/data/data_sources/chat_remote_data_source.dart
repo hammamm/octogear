@@ -83,6 +83,11 @@ class ChatRemoteDataSource {
         return ChatMessagesDto(
           (json['messages'] as List).map(chatMessage).toList(),
           json['has_more'] as bool,
+          readThroughId: switch (json['read_through_id']) {
+            null => 0,
+            int value when value >= 0 => value,
+            _ => throw const FormatException('Invalid read boundary'),
+          },
         );
       },
     );

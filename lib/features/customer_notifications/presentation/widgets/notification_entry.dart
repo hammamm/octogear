@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,63 +6,6 @@ import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../controllers/notification_providers.dart';
-
-/// One inexpensive count refresh for the foreground customer shell. Network
-/// failures stop polling until an explicit refresh or an app-resume event.
-class NotificationRefreshScope extends ConsumerStatefulWidget {
-  const NotificationRefreshScope({required this.child, super.key});
-  final Widget child;
-  @override
-  ConsumerState<NotificationRefreshScope> createState() =>
-      _NotificationRefreshScopeState();
-}
-
-class _NotificationRefreshScopeState
-    extends ConsumerState<NotificationRefreshScope>
-    with WidgetsBindingObserver {
-  Timer? _timer;
-  bool _resumed = true;
-  @override
-  void initState() {
-    super.initState();
-    _resumed =
-        WidgetsBinding.instance.lifecycleState == null ||
-        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
-    WidgetsBinding.instance.addObserver(this);
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _refresh());
-  }
-
-  void _refresh({bool resumed = false}) {
-    if (!mounted ||
-        !_resumed ||
-        ref.read(notificationCustomerIdProvider) == null) {
-      return;
-    }
-    final count = ref.read(notificationCountProvider);
-    if (!count.isLoading && (resumed || !count.hasError)) {
-      ref.invalidate(notificationCountProvider);
-    }
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    _resumed = state == AppLifecycleState.resumed;
-    if (_resumed) _refresh(resumed: true);
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.watch(notificationCountProvider);
-    return widget.child;
-  }
-}
 
 class NotificationBell extends ConsumerWidget {
   const NotificationBell({super.key});

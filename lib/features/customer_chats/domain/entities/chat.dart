@@ -23,6 +23,7 @@ class ChatSummary {
     this.orderId,
     this.offerId,
     this.latestText,
+    this.latestMessageId = 0,
     this.updatedAt,
     this.unread = 0,
     this.canSend = true,
@@ -33,6 +34,7 @@ class ChatSummary {
   final int? orderId, offerId;
   final DateTime? updatedAt;
   final int unread;
+  final int latestMessageId;
   final bool canSend;
 }
 
@@ -69,9 +71,10 @@ class ChatMessage {
 }
 
 class ChatMessages {
-  const ChatMessages(this.messages, this.hasMore);
+  const ChatMessages(this.messages, this.hasMore, {this.readThroughId = 0});
   final List<ChatMessage> messages;
   final bool hasMore;
+  final int readThroughId;
 }
 
 class ChatInbox {

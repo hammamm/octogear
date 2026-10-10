@@ -1,4 +1,5 @@
 import '../../features/customer_chats/chat_fixtures.dart';
+import 'package:octogear/features/customer_chats/presentation/controllers/chat_realtime_providers.dart';
 import '../../features/customer_notifications/notification_fixtures.dart';
 import 'package:octogear/features/customer_notifications/presentation/controllers/notification_providers.dart';
 import 'package:octogear/features/customer_notifications/presentation/screens/customer_notifications_screen.dart';
@@ -147,9 +148,22 @@ void main() {
       await tester.tap(find.byType(BackButtonIcon).last);
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.byKey(const ValueKey('offer-chat')));
+      // Enter the Orders branch explicitly before checking its preserved stack.
+      ProviderScope.containerOf(
+        tester.element(find.byType(CustomerOfferDetailsScreen)),
+      ).read(appRouterProvider).go('/customer/orders/17/offers/42');
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const ValueKey('offer-chat')));
       await tester.tap(find.byKey(const ValueKey('offer-chat')));
       await tester.pumpAndSettle();
       expect(find.byType(ChatConversationScreen), findsOneWidget);
+      expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        2,
+      );
+      await tester.tap(find.text('Orders').last);
+      await tester.pumpAndSettle();
+      expect(find.byType(CustomerOfferDetailsScreen), findsOneWidget);
     },
   );
   testWidgets(
@@ -782,6 +796,7 @@ Future<void> _pumpCustomerApp(
           FakeNotificationsRepository(),
         ),
         chatRepositoryProvider.overrideWithValue(FakeChatRepository()),
+        chatRealtimeUpdatesProvider.overrideWith((_) => const Stream.empty()),
         customerGarageRepositoryProvider.overrideWithValue(
           RequestGarageRepository(),
         ),

@@ -42,6 +42,7 @@ ChatSummaryDto chatSummary(Object? value) {
     orderId: json['order_id'] == null ? null : chatId(json['order_id']),
     offerId: json['offer_id'] == null ? null : chatId(json['offer_id']),
     latestText: chatText(latest?['content']),
+    latestMessageId: latest == null ? 0 : chatId(latest['id']),
     updatedAt: chatDate(json['updated_at']),
     unread: unread,
     canSend: json['can_send'] as bool,
@@ -74,6 +75,7 @@ class ChatSummaryDto {
     this.orderId,
     this.offerId,
     this.latestText,
+    this.latestMessageId = 0,
     this.updatedAt,
     this.unread = 0,
     this.canSend = true,
@@ -84,6 +86,7 @@ class ChatSummaryDto {
   final int? orderId, offerId;
   final DateTime? updatedAt;
   final int unread;
+  final int latestMessageId;
   final bool canSend;
   ChatSummary toEntity() => ChatSummary(
     id: id,
@@ -93,6 +96,7 @@ class ChatSummaryDto {
     orderId: orderId,
     offerId: offerId,
     latestText: latestText,
+    latestMessageId: latestMessageId,
     updatedAt: updatedAt,
     unread: unread,
     canSend: canSend,
@@ -159,12 +163,14 @@ class ChatInboxDto {
 }
 
 class ChatMessagesDto {
-  const ChatMessagesDto(this.messages, this.hasMore);
+  const ChatMessagesDto(this.messages, this.hasMore, {this.readThroughId = 0});
   final List<ChatMessageDto> messages;
   final bool hasMore;
+  final int readThroughId;
   ChatMessages toEntity() => ChatMessages(
     List.unmodifiable(messages.map((message) => message.toEntity())),
     hasMore,
+    readThroughId: readThroughId,
   );
 }
 

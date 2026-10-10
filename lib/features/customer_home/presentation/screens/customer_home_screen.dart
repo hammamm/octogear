@@ -13,7 +13,6 @@ import '../widgets/home_promotions.dart';
 import '../widgets/home_offers.dart';
 import '../widgets/home_recent_requests.dart';
 import '../../../customer_notifications/presentation/widgets/notification_entry.dart';
-import '../../../customer_notifications/presentation/controllers/notification_providers.dart';
 
 /// Entry point for requests and a compact summary of their latest status.
 class CustomerHomeScreen extends ConsumerWidget {
@@ -33,7 +32,6 @@ class CustomerHomeScreen extends ConsumerWidget {
         constraints: const BoxConstraints(maxWidth: 720),
         child: RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(notificationCountProvider);
             final provider = customerOrdersProvider(CustomerOrderFilter.all);
             try {
               ref.invalidate(provider);
