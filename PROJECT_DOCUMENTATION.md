@@ -1,5 +1,46 @@
 # OctoGear - Mobile Application Development Contract
 
+## Seller registration — 2026-10-10
+
+Approved product rule: applicants remain customers after submission and rejection.
+Only admin approval promotes the account to provider, atomically with store creation.
+App startup and foreground resume read GET /profile and route to the existing provider area.
+Checking an accepted application's status also refreshes the authoritative profile. Foreground checks preserve the current session identity when its role is unchanged, including when returning from the document picker.
+This supersedes older immediate-promotion behavior; the provider inventory/dashboard
+is still a separate phase, and no existing provider accounts are demoted.
+
+More > Register as a seller opens a four-step Arabic/English flow: business contact
+and private registration photo, store/city/map/manufacturers, separate business
+mobile verification, and review. It reuses the app theme, paginated city selector,
+localized validation and typed routing. Manufacturer selection supports search and
+pagination. PNG/JPEG/WebP uploads are validated before submission; documents and
+verification tokens remain in memory. Staging exposes the testing OTP when the API
+returns it; production never displays it.
+
+GET /seller-application supplies pending/accepted/rejected status. Rejected
+applications show the review reason and allow correction through POST
+/customer/seller-application/:id/resubmit, retaining the verified mobile and document
+unless replaced. Pending/accepted applications cannot be edited. First applications
+use the existing OTP endpoints and multipart POST /provider/store-requests. Optional
+company_ids are validated, stored, and copied to the approved store. Apply the API's
+2026_10_10_120000_add_companies_to_store_requests migration (applied locally).
+
+Controllers invoke domain use cases; HTTP stays in data sources and repositories.
+Duplicate taps are blocked, stale session responses are ignored, and uncertain writes
+require a status read before another attempt. No write is automatically retried.
+A consumed first-submission token requires fresh mobile verification before retry.
+Back navigation warns about unsaved changes; small screens, RTL, keyboard scrolling
+and enlarged text are supported. See the API repository's SELLER_ONBOARDING.md.
+
+Verification: all 361 Flutter tests pass; all 19 focused onboarding tests also pass
+after the final multipart-array check. Flutter analysis and custom lint report no
+issues. Arabic/English previews were inspected and flows tested at 2x text scale.
+The staging debug APK builds. The API's 49 focused tests pass (262 assertions);
+its full suite has 457 passing tests and eight failures outside onboarding, documented
+in SELLER_ONBOARDING.md. The existing push-banner widget test now loads translation
+assets through runAsync so the complete suite does not hang in Flutter's fake clock.
+No staging server deployment or physical-device acceptance test was performed.
+
 ## Chat navigation and alerts — 2026-10-09
 
 Order Chat actions select the Chats branch at

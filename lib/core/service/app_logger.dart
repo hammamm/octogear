@@ -137,6 +137,8 @@ class AppLogger {
           'description',
           'content',
           'client_message_id',
+          'commercial_registration',
+          'url_location',
         ].any(keyText.contains);
         return MapEntry(key, isSecret ? '***' : _redact(item));
       });

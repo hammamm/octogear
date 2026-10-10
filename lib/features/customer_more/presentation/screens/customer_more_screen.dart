@@ -54,6 +54,13 @@ class CustomerMoreScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 20),
+        _MenuEntry(
+          icon: Icons.storefront_outlined,
+          title: context.tr('seller.menu_title'),
+          subtitle: context.tr('seller.menu_description'),
+          onTap: () => const SellerRegistrationRoute().push<void>(context),
+        ),
+        const SizedBox(height: 12),
         const NotificationsMenuEntry(),
         const SizedBox(height: 12),
         _MenuEntry(

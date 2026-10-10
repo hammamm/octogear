@@ -1,4 +1,5 @@
 import '../../features/customer_profile/presentation/screens/customer_profile_screen.dart';
+import '../../features/seller_registration/presentation/screens/seller_registration_screen.dart';
 import '../../features/customer_chats/domain/entities/chat.dart';
 import '../../features/customer_notifications/presentation/screens/customer_notifications_screen.dart';
 import '../../features/customer_chats/presentation/screens/chat_conversation_screen.dart';
@@ -171,6 +172,7 @@ class SessionUnavailableRoute extends GoRouteData
           path: AppRoutePath.customerMore,
           routes: <TypedRoute<RouteData>>[
             TypedGoRoute<CustomerProfileRoute>(path: 'profile'),
+            TypedGoRoute<SellerRegistrationRoute>(path: 'seller-registration'),
             TypedGoRoute<CustomerSettingsRoute>(path: 'settings'),
             TypedGoRoute<CustomerCarsRoute>(
               path: 'cars',
@@ -333,6 +335,14 @@ class CustomerProfileRoute extends GoRouteData with $CustomerProfileRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const CustomerProfileScreen();
+}
+
+class SellerRegistrationRoute extends GoRouteData
+    with $SellerRegistrationRoute {
+  const SellerRegistrationRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const SellerRegistrationScreen();
 }
 
 class CustomerSettingsRoute extends GoRouteData with $CustomerSettingsRoute {

@@ -74,15 +74,17 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       await EasyLocalization.ensureInitialized();
       final translations = <String, Map<String, dynamic>>{};
-      for (final language in ['en', 'ar']) {
-        translations[language] =
-            jsonDecode(
-                  await rootBundle.loadString(
-                    'assets/translations/$language.json',
-                  ),
-                )
-                as Map<String, dynamic>;
-      }
+      await tester.runAsync(() async {
+        for (final language in ['en', 'ar']) {
+          translations[language] =
+              jsonDecode(
+                    await rootBundle.loadString(
+                      'assets/translations/$language.json',
+                    ),
+                  )
+                  as Map<String, dynamic>;
+        }
+      });
       final push = FakePushRepository();
       final inbox = FakeNotificationsRepository();
       final router = GoRouter(

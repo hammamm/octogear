@@ -280,6 +280,11 @@ RouteBase get $customerShellRoute => StatefulShellRouteData.$route(
               factory: $CustomerProfileRoute._fromState,
             ),
             GoRouteData.$route(
+              path: 'seller-registration',
+              hasOverriddenOnExit: false,
+              factory: $SellerRegistrationRoute._fromState,
+            ),
+            GoRouteData.$route(
               path: 'settings',
               hasOverriddenOnExit: false,
               factory: $CustomerSettingsRoute._fromState,
@@ -751,6 +756,28 @@ mixin $CustomerProfileRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/customer/more/profile');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $SellerRegistrationRoute on GoRouteData {
+  static SellerRegistrationRoute _fromState(GoRouterState state) =>
+      const SellerRegistrationRoute();
+
+  @override
+  String get location =>
+      GoRouteData.$location('/customer/more/seller-registration');
 
   @override
   void go(BuildContext context) => context.go(location);
