@@ -1,3 +1,7 @@
+import '../../features/provider_portal/presentation/screens/provider_dashboard_screen.dart';
+import '../../features/provider_portal/presentation/screens/provider_orders_screen.dart';
+import '../../features/provider_portal/presentation/screens/provider_more_screen.dart';
+import '../../features/provider_stores/presentation/screens/provider_stores_screen.dart';
 import '../../features/customer_profile/presentation/screens/customer_profile_screen.dart';
 import '../../features/seller_registration/presentation/screens/seller_registration_screen.dart';
 import '../../features/customer_chats/domain/entities/chat.dart';
@@ -410,24 +414,109 @@ class CustomerCarEditRoute extends GoRouteData with $CustomerCarEditRoute {
   }
 }
 
-@TypedGoRoute<ProviderHomeRoute>(
-  path: AppRoutePath.providerHome,
-  routes: [
-    TypedGoRoute<ProviderChatsRoute>(
-      path: 'chats',
+@TypedStatefulShellRoute<ProviderShellRoute>(
+  branches: <TypedStatefulShellBranch<StatefulShellBranchData>>[
+    TypedStatefulShellBranch<ProviderDashboardBranch>(
       routes: [
-        TypedGoRoute<ProviderConversationRoute>(path: ':conversationId'),
+        TypedGoRoute<ProviderHomeRoute>(path: AppRoutePath.providerHome),
+      ],
+    ),
+    TypedStatefulShellBranch<ProviderOrdersBranch>(
+      routes: [
+        TypedGoRoute<ProviderOrdersRoute>(path: AppRoutePath.providerOrders),
+      ],
+    ),
+    TypedStatefulShellBranch<ProviderChatsBranch>(
+      routes: [
+        TypedGoRoute<ProviderChatsRoute>(
+          path: AppRoutePath.providerChats,
+          routes: [
+            TypedGoRoute<ProviderConversationRoute>(path: ':conversationId'),
+          ],
+        ),
+      ],
+    ),
+    TypedStatefulShellBranch<ProviderMoreBranch>(
+      routes: [
+        TypedGoRoute<ProviderMoreRoute>(
+          path: AppRoutePath.providerMore,
+          routes: [
+            TypedGoRoute<ProviderStoresRoute>(path: 'stores'),
+            TypedGoRoute<ProviderProfileRoute>(path: 'profile'),
+            TypedGoRoute<ProviderSettingsRoute>(path: 'settings'),
+          ],
+        ),
       ],
     ),
   ],
 )
-class ProviderHomeRoute extends GoRouteData with $ProviderHomeRoute {
-  const ProviderHomeRoute();
+class ProviderShellRoute extends StatefulShellRouteData {
+  const ProviderShellRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const ProviderAppShell();
-  }
+  Widget builder(
+    BuildContext context,
+    GoRouterState state,
+    StatefulNavigationShell navigationShell,
+  ) => ProviderAppShell(navigationShell: navigationShell);
+}
+
+class ProviderDashboardBranch extends StatefulShellBranchData {
+  const ProviderDashboardBranch();
+}
+
+class ProviderOrdersBranch extends StatefulShellBranchData {
+  const ProviderOrdersBranch();
+}
+
+class ProviderChatsBranch extends StatefulShellBranchData {
+  const ProviderChatsBranch();
+}
+
+class ProviderMoreBranch extends StatefulShellBranchData {
+  const ProviderMoreBranch();
+}
+
+class ProviderHomeRoute extends GoRouteData with $ProviderHomeRoute {
+  const ProviderHomeRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const ProviderDashboardScreen();
+}
+
+class ProviderOrdersRoute extends GoRouteData with $ProviderOrdersRoute {
+  const ProviderOrdersRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const ProviderOrdersScreen();
+}
+
+class ProviderMoreRoute extends GoRouteData with $ProviderMoreRoute {
+  const ProviderMoreRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const ProviderMoreScreen();
+}
+
+class ProviderStoresRoute extends GoRouteData with $ProviderStoresRoute {
+  const ProviderStoresRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const ProviderStoresScreen();
+}
+
+class ProviderProfileRoute extends GoRouteData with $ProviderProfileRoute {
+  const ProviderProfileRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const ProviderProfileScreen();
+}
+
+class ProviderSettingsRoute extends GoRouteData with $ProviderSettingsRoute {
+  const ProviderSettingsRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const ProviderSettingsScreen();
 }
 
 class UnknownRouteScreen extends StatelessWidget {
@@ -549,7 +638,7 @@ class ProviderChatsRoute extends GoRouteData with $ProviderChatsRoute {
   const ProviderChatsRoute();
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      const CustomerChatsScreen(provider: true);
+      const CustomerChatsScreen(provider: true, embeddedInShell: true);
 }
 
 class ProviderConversationRoute extends GoRouteData

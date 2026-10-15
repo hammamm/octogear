@@ -1,5 +1,30 @@
 # OctoGear - Mobile Application Development Contract
 
+## Provider navigation — 2026-10-15
+
+Provider login opens Dashboard at `/provider`, inside a separate typed stateful
+shell with Dashboard, Orders, Chats and More branches. Customer routes and role
+guards remain separate. Each provider branch preserves its child navigation stack.
+Orders contains General Requests, Direct Requests, My Offers and Paid Orders tabs.
+More contains My Stores, Profile, Settings, language selection and sign out.
+The Dashboard shortcut also opens My Stores under More.
+
+This slice is navigation only. Dashboard reporting, order lists, profile management
+and additional settings are localized Coming soon screens; they fetch no new data
+and show no invented metrics. Existing owned-store fetching/refresh and provider
+conversations remain functional. Typed routes are generated with build_runner.
+
+## Provider store overview — 2026-10-14
+
+Provider More > My Stores displays owned stores from authenticated `GET /provider/stores`.
+A single store opens with its details visible; multiple stores use expandable
+cards. The overview shows server status, phone, localized city, selectable location
+link, and supported brands, with loading, empty, refresh and retry states in Arabic
+and English. Locale/session changes invalidate the data; no polling or automatic
+retry is introduced. Existing chat, language and sign-out actions remain available.
+The provider endpoint now eager-loads companies. This read-only step changes no
+customer permissions, account roles, inventory, or store-editing behavior.
+
 ## Seller registration — 2026-10-10
 
 Approved product rule: applicants remain customers after submission and rejection.

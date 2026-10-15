@@ -9,8 +9,13 @@ import '../controllers/chat_providers.dart';
 import '../widgets/chat_connection_status.dart';
 
 class CustomerChatsScreen extends ConsumerStatefulWidget {
-  const CustomerChatsScreen({super.key, this.provider = false});
+  const CustomerChatsScreen({
+    super.key,
+    this.provider = false,
+    this.embeddedInShell = false,
+  });
   final bool provider;
+  final bool embeddedInShell;
   @override
   ConsumerState<CustomerChatsScreen> createState() =>
       _CustomerChatsScreenState();
@@ -169,7 +174,7 @@ class _CustomerChatsScreenState extends ConsumerState<CustomerChatsScreen> {
         ],
       ),
     );
-    return widget.provider
+    return widget.provider && !widget.embeddedInShell
         ? Scaffold(
             appBar: AppBar(),
             body: SafeArea(child: body),

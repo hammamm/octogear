@@ -29,4 +29,7 @@ abstract final class AppRoutePath {
   static const customerCarsDetailsSegment = ':carId';
   static const customerCarsEditSegment = 'edit';
   static const providerHome = '/provider';
+  static const providerOrders = '/provider/orders';
+  static const providerChats = '/provider/chats';
+  static const providerMore = '/provider/more';
 }
