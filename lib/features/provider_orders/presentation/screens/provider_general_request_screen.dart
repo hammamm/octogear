@@ -1,3 +1,4 @@
+import '../../../../app/routing/app_routes.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,6 +62,24 @@ class ProviderGeneralRequestScreen extends ConsumerWidget {
               ),
             ],
             data: (item) => [
+              for (final offer in item.ownOffers)
+                OutlinedButton(
+                  onPressed: () =>
+                      ProviderOfferRoute(offerId: offer.id).push<void>(context),
+                  child: Text(
+                    '${context.tr('provider_offers.view')} — ${offer.storeName ?? '#${offer.storeId}'}',
+                  ),
+                ),
+              if (item.status == 'pending')
+                FilledButton.icon(
+                  key: const Key('provider-create-offer'),
+                  onPressed: () => ProviderOfferFormRoute(
+                    orderId: item.id,
+                  ).push<void>(context),
+                  icon: const Icon(Icons.local_offer_outlined),
+                  label: Text(context.tr('provider_offers.create')),
+                ),
+              const SizedBox(height: 16),
               if (item.status != 'pending') ...[
                 Text(context.tr('provider_requests.no_longer_open')),
                 const SizedBox(height: 16),
@@ -73,7 +92,7 @@ class ProviderGeneralRequestScreen extends ConsumerWidget {
                       item.partName ?? context.tr('provider_requests.unnamed'),
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
-                    const SizedBox(height: 16),
+                    const Divider(height: 32),
                     _Field(
                       label: 'city_filter',
                       value:

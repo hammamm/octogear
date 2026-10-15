@@ -1,4 +1,19 @@
 {
+  "provider_offers": {
+  "create": "Create offer", "edit": "Edit offer", "view": "View my offer", "number": "Offer #{}",
+  "intro": "Track the offers submitted by your stores.", "empty": "No offers yet. Open a general request to create your first offer.",
+  "refresh": "Refresh offers", "pending": "Awaiting customer decision", "accepted": "Accepted", "rejected": "Rejected", "not_selected": "Another offer was selected", "unknown": "Status unavailable",
+  "store": "Offering store", "choose_store": "Choose a store", "price": "Total price (SAR)", "price_invalid": "Enter a positive amount with up to two decimal places (maximum 21,474,836.47 SAR).",
+  "notes": "Notes (optional)", "form_intro": "Quote the total price for the requested part. Fulfillment currently uses store pickup.",
+  "photos_hint": "Optional: up to 5 JPG, PNG or WebP photos, 5 MB each.", "photo": "Offer photo", "add_photo": "Add photo", "replace_photos": "Replace existing photos", "clear_photos": "Remove all existing photos",
+  "keep_photos": "{} existing photos will be kept unless you replace or remove them.", "photo_invalid": "Couldn't use this photo. Choose a JPG, PNG or WebP image under 5 MB.",
+  "submit": "Review offer", "save": "Review changes", "review": "Review total price and store", "confirm": "Confirm and submit",
+  "withdraw": "Withdraw offer", "withdraw_confirm": "Withdraw this offer? The customer will no longer be able to select it.", "withdrawn": "Offer withdrawn.",
+  "locked": "This offer can no longer be edited or withdrawn.", "unavailable": "This offer is no longer available to your account.", "changed": "The request or offer has changed. Refresh it before trying again.", "invalid": "Check the highlighted information.", "failed": "Couldn't complete this action. Please try again.",
+  "uncertain": "The server may have received your action. Check the latest status before submitting again. If it is not confirmed yet, check again shortly.", "check": "Check latest status",
+  "discard": "Leave this form?", "discard_body": "Unsaved changes will be lost. An action already sent to the server may still complete.", "leave": "Leave form",
+  "no_store": "No eligible store is available. The request must be open, and you need an active store that has not already submitted an offer.", "rejection_reason": "Customer's rejection reason"
+},
   "provider_requests": {
   "all_cities": "All cities", "choose_city": "Choose city", "city_filter": "Customer city",
   "city_number": "City #{}", "store_city": "My store city", "no_store_city": "No store city is available. Choose a city or browse all cities.",

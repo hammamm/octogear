@@ -1,3 +1,4 @@
+import '../../../provider_orders/presentation/screens/provider_offers_panel.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -53,6 +54,8 @@ class ProviderOrdersScreen extends StatelessWidget {
                 for (final section in sections)
                   if (section == 'general')
                     const ProviderGeneralRequestsPanel()
+                  else if (section == 'offers')
+                    const ProviderOffersPanel()
                   else
                     ListView(
                       key: PageStorageKey('provider-orders-$section'),

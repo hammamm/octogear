@@ -14,6 +14,7 @@ class ProviderGeneralRequest {
     this.color,
     this.fuel,
     this.imagePaths = const [],
+    this.ownOffers = const [],
   });
   final int id;
   final DateTime createdAt;
@@ -28,6 +29,7 @@ class ProviderGeneralRequest {
       color,
       fuel;
   final List<String> imagePaths;
+  final List<({int id, int storeId, String? storeName})> ownOffers;
 }
 
 class ProviderGeneralRequestsPage {

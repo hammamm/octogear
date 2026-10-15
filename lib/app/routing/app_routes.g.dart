@@ -957,6 +957,16 @@ RouteBase get $providerShellRoute => StatefulShellRouteData.$route(
               hasOverriddenOnExit: false,
               factory: $ProviderGeneralRequestRoute._fromState,
             ),
+            GoRouteData.$route(
+              path: 'general/:orderId/offer',
+              hasOverriddenOnExit: false,
+              factory: $ProviderOfferFormRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'offers/:offerId',
+              hasOverriddenOnExit: false,
+              factory: $ProviderOfferRoute._fromState,
+            ),
           ],
         ),
       ],
@@ -1064,6 +1074,66 @@ mixin $ProviderGeneralRequestRoute on GoRouteData {
   @override
   String get location => GoRouteData.$location(
     '/provider/orders/general/${Uri.encodeComponent(_self.orderId.toString())}',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderOfferFormRoute on GoRouteData {
+  static ProviderOfferFormRoute _fromState(GoRouterState state) =>
+      ProviderOfferFormRoute(
+        orderId: int.parse(state.pathParameters['orderId']!),
+        offerId: _$convertMapValue(
+          'offer-id',
+          state.uri.queryParameters,
+          int.tryParse,
+        ),
+      );
+
+  ProviderOfferFormRoute get _self => this as ProviderOfferFormRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/orders/general/${Uri.encodeComponent(_self.orderId.toString())}/offer',
+    queryParams: {
+      if (_self.offerId != null) 'offer-id': _self.offerId!.toString(),
+    },
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderOfferRoute on GoRouteData {
+  static ProviderOfferRoute _fromState(GoRouterState state) =>
+      ProviderOfferRoute(offerId: int.parse(state.pathParameters['offerId']!));
+
+  ProviderOfferRoute get _self => this as ProviderOfferRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/orders/offers/${Uri.encodeComponent(_self.offerId.toString())}',
   );
 
   @override
@@ -1210,4 +1280,13 @@ mixin $ProviderSettingsRoute on GoRouteData {
 
   @override
   void replace(BuildContext context) => context.replace(location);
+}
+
+T? _$convertMapValue<T>(
+  String key,
+  Map<String, String> map,
+  T? Function(String) converter,
+) {
+  final value = map[key];
+  return value == null ? null : converter(value);
 }

@@ -1,3 +1,7 @@
+import 'package:octogear/features/provider_stores/domain/entities/provider_store.dart';
+import 'package:octogear/features/provider_orders/presentation/controllers/provider_offers_providers.dart';
+import 'package:octogear/features/provider_orders/presentation/screens/provider_offer_screen.dart';
+import '../../features/provider_orders/provider_offers_fixtures.dart';
 import 'package:octogear/features/provider_orders/presentation/screens/provider_general_request_screen.dart';
 import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/features/authentication/domain/entities/app_user.dart';
@@ -91,6 +95,7 @@ void main() {
     WidgetTester tester,
     FakeStores stores, {
     FakeGeneralRequests? requests,
+    FakeOffers? offers,
     bool arabic = false,
     double scale = 1,
   }) async {
@@ -110,6 +115,9 @@ void main() {
           providerStoresRepositoryProvider.overrideWithValue(stores),
           providerGeneralRequestsRepositoryProvider.overrideWithValue(
             requests ?? FakeGeneralRequests(),
+          ),
+          providerOffersRepositoryProvider.overrideWithValue(
+            offers ?? FakeOffers(),
           ),
           providerOrderFilterStorageProvider.overrideWithValue(
             MemoryOrderFilterStorage(),
@@ -174,7 +182,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('provider-orders-offers')));
       await tester.pumpAndSettle();
       expect(
-        find.text(translations['en']!['provider_portal']['offers_placeholder']),
+        find.text(translations['en']!['provider_offers']['empty']),
         findsOneWidget,
       );
       await _preview(tester, 'provider-orders-en');
@@ -392,6 +400,170 @@ void main() {
       );
       expect(find.byKey(const ValueKey('provider-request-2')), findsOneWidget);
       expect(find.byKey(const Key('provider-requests-more')), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('Provider creates, reviews, edits and withdraws an offer', (
+    tester,
+  ) async {
+    final offers = FakeOffers();
+    final container = await pump(tester, FakeStores(), offers: offers);
+    container.read(appRouterProvider).go('/provider/orders/general/1');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('provider-create-offer')));
+    await tester.pumpAndSettle();
+    await _preview(tester, 'provider-offer-form-en');
+    await tester.enterText(
+      find.byKey(const Key('provider-offer-price')),
+      '123.45',
+    );
+    await tester.enterText(
+      find.byKey(const Key('provider-offer-notes')),
+      'Available today',
+    );
+    await tester.ensureVisible(find.byKey(const Key('provider-offer-submit')));
+    await tester.tap(find.byKey(const Key('provider-offer-submit')));
+    await tester.pumpAndSettle();
+    expect(offers.saves, isEmpty);
+    await tester.tap(find.text('Confirm and submit'));
+    await tester.pumpAndSettle();
+    expect(offers.saves.single.price, 12345);
+    expect(offers.saves.single.storeId, 1);
+    expect(find.byType(ProviderOfferScreen), findsOneWidget);
+    expect(find.text('Available today'), findsOneWidget);
+    await _preview(tester, 'provider-offer-detail-en');
+    await tester.ensureVisible(find.byKey(const Key('provider-offer-edit')));
+    await tester.tap(find.byKey(const Key('provider-offer-edit')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('provider-offer-price')),
+      '200',
+    );
+    await tester.ensureVisible(find.byKey(const Key('provider-offer-submit')));
+    await tester.tap(find.byKey(const Key('provider-offer-submit')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm and submit'));
+    await tester.pumpAndSettle();
+    expect(offers.saves.last.offerId, 11);
+    expect(offers.saves.last.price, 20000);
+    expect(offers.saves.last.photos, isNull);
+    await tester.ensureVisible(
+      find.byKey(const Key('provider-offer-withdraw')),
+    );
+    await tester.tap(find.byKey(const Key('provider-offer-withdraw')));
+    await tester.pumpAndSettle();
+    expect(offers.withdrawals, 0);
+    await tester.tap(find.widgetWithText(FilledButton, 'Withdraw offer'));
+    await tester.pumpAndSettle();
+    expect(offers.withdrawals, 1);
+    expect(offers.items, isEmpty);
+    expect(find.byType(ProviderGeneralRequestScreen), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'Arabic offer form fits narrow screens and accepted offers hide mutations',
+    (tester) async {
+      final offers = FakeOffers()
+        ..items = [
+          testOffer(status: 'accepted', orderStatus: 'awaiting_payment'),
+        ];
+      final container = await pump(
+        tester,
+        FakeStores(),
+        offers: offers,
+        arabic: true,
+        scale: 2,
+      );
+      container.read(appRouterProvider).go('/provider/orders/offers/11');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('provider-offer-edit')), findsNothing);
+      expect(find.byKey(const Key('provider-offer-withdraw')), findsNothing);
+      expect(tester.takeException(), isNull);
+      container.read(appRouterProvider).go('/provider/orders/general/1/offer');
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('provider-offer-price')),
+        '١٢٫٥٠',
+      );
+      await tester.ensureVisible(
+        find.byKey(const Key('provider-offer-submit')),
+      );
+      await tester.pumpAndSettle();
+      await _preview(tester, 'provider-offer-form-ar-large');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Multiple stores require a choice and My Offers opens the correct offer',
+    (tester) async {
+      final stores = FakeStores()
+        ..response = () async => [
+          store,
+          const ProviderStore(
+            id: 2,
+            name: 'Second store',
+            status: ProviderStoreStatus.active,
+            brands: [],
+          ),
+          const ProviderStore(
+            id: 3,
+            name: 'Inactive store',
+            status: ProviderStoreStatus.inactive,
+            brands: [],
+          ),
+        ];
+      final offers = FakeOffers()..items = [testOffer()];
+      final container = await pump(tester, stores, offers: offers);
+      await tab(tester, 'orders');
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('provider-orders-offers')),
+      );
+      await tester.tap(find.byKey(const ValueKey('provider-orders-offers')));
+      await tester.pumpAndSettle();
+      await _preview(tester, 'provider-my-offers-en');
+      await tester.tap(find.text('View my offer'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<ProviderOfferScreen>(find.byType(ProviderOfferScreen))
+            .offerId,
+        11,
+      );
+      container.read(appRouterProvider).go('/provider/orders/general/1/offer');
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('provider-offer-price')),
+        '1.001',
+      );
+      await tester.ensureVisible(
+        find.byKey(const Key('provider-offer-submit')),
+      );
+      await tester.tap(find.byKey(const Key('provider-offer-submit')));
+      await tester.pumpAndSettle();
+      expect(offers.saves, isEmpty);
+      expect(find.text('Choose a store'), findsOneWidget);
+      await tester.ensureVisible(find.byType(DropdownButtonFormField<int>));
+      await tester.tap(find.byType(DropdownButtonFormField<int>));
+      await tester.pumpAndSettle();
+      expect(find.text('Inactive store'), findsNothing);
+      await tester.tap(find.text('Second store').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('provider-offer-price')),
+        '12.50',
+      );
+      await tester.ensureVisible(
+        find.byKey(const Key('provider-offer-submit')),
+      );
+      await tester.tap(find.byKey(const Key('provider-offer-submit')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm and submit'));
+      await tester.pumpAndSettle();
+      expect(offers.saves.single.storeId, 2);
+      expect(offers.saves.single.price, 1250);
       expect(tester.takeException(), isNull);
     },
   );

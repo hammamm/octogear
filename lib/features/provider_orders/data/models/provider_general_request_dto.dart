@@ -22,11 +22,23 @@ class ProviderGeneralRequestDto {
     final vehicle = json['vehicle_details'] == null
         ? null
         : _map(json['vehicle_details']);
+    final offers = json['offers'] ?? const [];
+    if (offers is! List) throw const FormatException('Invalid own offers.');
     final images = json['images'] ?? const [];
     if (images is! List) throw const FormatException('Invalid request images.');
     return ProviderGeneralRequestDto._(
       ProviderGeneralRequest(
         id: id,
+        ownOffers: List.unmodifiable(
+          offers.map((offer) {
+            final value = _map(offer);
+            return (
+              id: _id(value['id']),
+              storeId: _id(_map(value['store'])['id']),
+              storeName: _text(_map(value['store'])['name']),
+            );
+          }),
+        ),
         createdAt: date,
         status: status,
         partName: _text(json['component_name']),

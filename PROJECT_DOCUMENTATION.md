@@ -10,7 +10,7 @@ More contains My Stores, Profile, Settings, language selection and sign out.
 The Dashboard shortcut also opens My Stores under More.
 
 General Requests is connected to the API. Dashboard reporting, Direct Requests,
-My Offers, Paid Orders and profile management remain future slices. Existing
+Paid Orders and profile management remain future slices. My Offers is connected. Existing
 owned-store fetching/refresh and provider chats remain functional.
 
 ## Provider General Requests — 2026-10-15
@@ -26,13 +26,38 @@ to another account or city's results.
 Cards show the part, vehicle, customer city and date. The typed child route
 `/provider/orders/general/:orderId` displays the description, vehicle snapshot and
 authenticated photos. Customer contact information and other providers' offers
-remain private. The current fulfillment flow uses store pickup. Creating offers
-is a separate next step; this screen does not submit offers.
+remain private. The current fulfillment flow uses store pickup. Create offer and own-offer links now open the workflow described below.
 
 The provider_orders feature separates remote API calls/DTO validation, repository,
 domain use cases and Riverpod presentation state. Backend filtering and stable
 pagination remain server-side. Tests cover transport, filters, persistence,
 pagination failures/races, account changes, navigation and Arabic layouts.
+
+## Provider offer workflow — 2026-10-15
+
+General Request details links to Create offer and the provider's own offers.
+The form selects a single eligible store automatically, otherwise requires a
+choice. Only active owned stores without an existing offer are eligible. The
+total SAR amount is parsed exactly into integer halalas, including Arabic digits.
+Notes support 1,000 characters; up to five validated private photos are optional.
+Editing preserves photos unless the provider explicitly replaces or clears them.
+Review shows the selected store and total before submission. Dirty forms ask
+before leaving, double taps are blocked, and no mutation is automatically retried.
+After an ambiguous write, Check latest status performs only reads and opens the
+server's current offer when found; unconfirmed submissions remain locked.
+
+My Offers has refresh, pagination, retry, empty and loading states. Its detail
+screen shows store, total, status, notes, rejection reason and private photos.
+Edit/withdraw are available only while both offer and request remain pending;
+withdrawal requires confirmation. Successful writes invalidate affected lists
+and details. A withdrawn offer may be resubmitted using its existing database
+identity; it is never duplicated. Historical own offers remain readable without
+exposing competing offers or customer contacts. Customer responses are unchanged.
+
+HTTP calls live in remote sources; DTOs, repositories, domain use cases and
+Riverpod query/action controllers remain separate. Drafts are in memory only;
+process death does not restore a draft or gallery selection. The local API notes
+column migration was applied; other deployments must run it before rollout.
 
 ## Provider store overview — 2026-10-14
 
