@@ -1,10 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../../provider_orders/presentation/screens/provider_general_requests_panel.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../widgets/provider_page.dart';
 
-/// Navigation only. No order queries are started until the feature is connected.
+/// General Requests is live; the other provider order workflows are separate slices.
 class ProviderOrdersScreen extends StatelessWidget {
   const ProviderOrdersScreen({super.key});
 
@@ -50,17 +51,20 @@ class ProviderOrdersScreen extends StatelessWidget {
             child: TabBarView(
               children: [
                 for (final section in sections)
-                  ListView(
-                    key: PageStorageKey('provider-orders-$section'),
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      ProviderSectionPlaceholder(
-                        icon: Icons.receipt_long_outlined,
-                        descriptionKey:
-                            'provider_portal.${section}_placeholder',
-                      ),
-                    ],
-                  ),
+                  if (section == 'general')
+                    const ProviderGeneralRequestsPanel()
+                  else
+                    ListView(
+                      key: PageStorageKey('provider-orders-$section'),
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        ProviderSectionPlaceholder(
+                          icon: Icons.receipt_long_outlined,
+                          descriptionKey:
+                              'provider_portal.${section}_placeholder',
+                        ),
+                      ],
+                    ),
               ],
             ),
           ),

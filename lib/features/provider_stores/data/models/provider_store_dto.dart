@@ -15,6 +15,9 @@ class ProviderStoreDto {
     if (city != null && city is! Map<String, dynamic>) {
       throw const FormatException('Invalid store city.');
     }
+    if (city != null && (city['id'] is! int || (city['id'] as int) <= 0)) {
+      throw const FormatException('Invalid store city id.');
+    }
     final companies = value['companies'] ?? const [];
     if (companies is! List) {
       throw const FormatException('Invalid store brands.');
@@ -29,6 +32,7 @@ class ProviderStoreDto {
       },
       mobile: _text(value['mobile']),
       city: city == null ? null : _text(city['name']),
+      cityId: city == null ? null : city['id'] as int,
       location: _text(value['url_location']),
       brands: List.unmodifiable(
         companies.map((company) {

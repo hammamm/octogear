@@ -9,10 +9,30 @@ Orders contains General Requests, Direct Requests, My Offers and Paid Orders tab
 More contains My Stores, Profile, Settings, language selection and sign out.
 The Dashboard shortcut also opens My Stores under More.
 
-This slice is navigation only. Dashboard reporting, order lists, profile management
-and additional settings are localized Coming soon screens; they fetch no new data
-and show no invented metrics. Existing owned-store fetching/refresh and provider
-conversations remain functional. Typed routes are generated with build_runner.
+General Requests is connected to the API. Dashboard reporting, Direct Requests,
+My Offers, Paid Orders and profile management remain future slices. Existing
+owned-store fetching/refresh and provider chats remain functional.
+
+## Provider General Requests — 2026-10-15
+
+Orders > General Requests lists pending requests from all cities by default.
+The searchable city picker sends an optional `city_id` to the server; All cities
+clears it. My store city loads owned stores on demand and lets the provider select
+one of their distinct store cities. The filter is saved per account in AppStorage.
+Changing city or language resets pagination; refresh and explicit load-more/retry
+controls handle loading, empty and failed responses. Old responses cannot append
+to another account or city's results.
+
+Cards show the part, vehicle, customer city and date. The typed child route
+`/provider/orders/general/:orderId` displays the description, vehicle snapshot and
+authenticated photos. Customer contact information and other providers' offers
+remain private. The current fulfillment flow uses store pickup. Creating offers
+is a separate next step; this screen does not submit offers.
+
+The provider_orders feature separates remote API calls/DTO validation, repository,
+domain use cases and Riverpod presentation state. Backend filtering and stable
+pagination remain server-side. Tests cover transport, filters, persistence,
+pagination failures/races, account changes, navigation and Arabic layouts.
 
 ## Provider store overview — 2026-10-14
 

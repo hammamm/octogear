@@ -1,3 +1,9 @@
+import 'package:octogear/features/provider_orders/presentation/screens/provider_general_request_screen.dart';
+import 'package:octogear/core/api/api_failure.dart';
+import 'package:octogear/features/authentication/domain/entities/app_user.dart';
+import 'package:octogear/features/authentication/presentation/controllers/registration_cities_controller.dart';
+import 'package:octogear/features/provider_orders/presentation/controllers/provider_general_requests_providers.dart';
+import '../../features/provider_orders/provider_general_requests_fixtures.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -41,6 +47,14 @@ class _Session extends StoreSession {
   Future<void> signOut() async => replace(const SignedOutSession());
 }
 
+class _Cities extends RegistrationCitiesController {
+  @override
+  Future<List<AppCity>> build() async => const [
+    AppCity(id: 1, name: 'Riyadh'),
+    AppCity(id: 2, name: 'Jeddah'),
+  ];
+}
+
 class _Inbox extends ChatInboxController {
   @override
   Future<ChatInbox> build() async => const ChatInbox([], 1, 1);
@@ -76,6 +90,7 @@ void main() {
   Future<ProviderContainer> pump(
     WidgetTester tester,
     FakeStores stores, {
+    FakeGeneralRequests? requests,
     bool arabic = false,
     double scale = 1,
   }) async {
@@ -93,6 +108,13 @@ void main() {
           ),
           customerStoresEnabledProvider.overrideWithValue(false),
           providerStoresRepositoryProvider.overrideWithValue(stores),
+          providerGeneralRequestsRepositoryProvider.overrideWithValue(
+            requests ?? FakeGeneralRequests(),
+          ),
+          providerOrderFilterStorageProvider.overrideWithValue(
+            MemoryOrderFilterStorage(),
+          ),
+          registrationCitiesProvider.overrideWith(_Cities.new),
           chatInboxProvider.overrideWith(_Inbox.new),
           chatRealtimeConnectedProvider.overrideWithValue(true),
         ],
@@ -260,6 +282,121 @@ void main() {
   );
 
   testWidgets(
+    'General requests filter, refresh and open details inside the provider shell',
+    (tester) async {
+      final repo = FakeGeneralRequests();
+      await pump(tester, FakeStores(), requests: repo);
+      await tab(tester, 'orders');
+      expect(repo.calls, [(null, 1)]);
+      expect(find.text('Front headlight'), findsOneWidget);
+      expect(find.text('Riyadh'), findsOneWidget);
+      await _preview(tester, 'provider-general-en');
+      await tester.tap(find.byKey(const Key('provider-city-select')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('registration-city-search')),
+        'Jeddah',
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('registration-city-1')), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('registration-city-2')));
+      await tester.pumpAndSettle();
+      expect(repo.calls.last, (2, 1));
+      await tester.tap(find.byKey(const Key('provider-city-all')));
+      await tester.pumpAndSettle();
+      expect(repo.calls.last, (null, 1));
+      final count = repo.calls.length;
+      await tester.tap(find.byTooltip('Refresh requests'));
+      await tester.pumpAndSettle();
+      expect(repo.calls.length, count + 1);
+      await tester.tap(find.byKey(const ValueKey('provider-request-1')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<ProviderGeneralRequestScreen>(
+              find.byType(ProviderGeneralRequestScreen),
+            )
+            .orderId,
+        1,
+      );
+      expect(repo.detailCalls, [1]);
+      expect(find.text('Right side headlight'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
+      await _preview(tester, 'provider-general-detail-en');
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('provider-request-1')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'General requests recover from error and empty results through refresh',
+    (tester) async {
+      final repo = FakeGeneralRequests()
+        ..onList = (_, _) async =>
+            throw const ApiFailure(type: ApiFailureType.noConnection);
+      await pump(tester, FakeStores(), requests: repo);
+      await tab(tester, 'orders');
+      expect(find.text('Front headlight'), findsNothing);
+      repo.onList = (_, _) async => requestPage([]);
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+      expect(find.text('No open requests'), findsOneWidget);
+      repo.onList = null;
+      await tester.tap(find.byTooltip('Refresh requests'));
+      await tester.pumpAndSettle();
+      expect(find.text('Front headlight'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'My store city uses owned stores and load more appends requests',
+    (tester) async {
+      final repo = FakeGeneralRequests()
+        ..onList = (city, page) async => requestPage(
+          [generalRequest(id: page, cityId: city ?? 1)],
+          page: page,
+          lastPage: 2,
+          total: 2,
+        );
+      final stores = FakeStores();
+      await pump(tester, stores, requests: repo);
+      await tab(tester, 'orders');
+      expect(stores.calls, 0);
+      await tester.tap(find.byKey(const Key('provider-city-store')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ListTile, 'Riyadh'));
+      await tester.pumpAndSettle();
+      expect(stores.calls, 1);
+      expect(repo.calls.last, (1, 1));
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('provider-requests-more')),
+        250,
+        scrollable: find.descendant(
+          of: find.byType(CustomScrollView),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.tap(find.byKey(const Key('provider-requests-more')));
+      await tester.pumpAndSettle();
+      expect(repo.calls.last, (1, 2));
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('provider-request-2')),
+        200,
+        scrollable: find.descendant(
+          of: find.byType(CustomScrollView),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      expect(find.byKey(const ValueKey('provider-request-2')), findsOneWidget);
+      expect(find.byKey(const Key('provider-requests-more')), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'Arabic navigation and orders work at narrow width and double text scale',
     (tester) async {
       await pump(tester, FakeStores(), arabic: true, scale: 2);
@@ -270,6 +407,8 @@ void main() {
       expect(tester.takeException(), isNull);
       await _preview(tester, 'provider-dashboard-ar-large');
       await tab(tester, 'orders');
+      expect(tester.takeException(), isNull);
+      await _preview(tester, 'provider-general-ar-large');
       await tester.ensureVisible(
         find.byKey(const ValueKey('provider-orders-paid')),
       );

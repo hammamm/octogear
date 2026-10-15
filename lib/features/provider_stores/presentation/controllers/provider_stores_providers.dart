@@ -9,11 +9,16 @@ import '../../data/data_sources/provider_stores_remote_data_source.dart';
 import '../../data/repositories/provider_stores_repository_impl.dart';
 import '../../domain/entities/provider_store.dart';
 import '../../domain/repositories/provider_stores_repository.dart';
+import '../../domain/use_cases/get_provider_stores.dart';
 
 final providerStoresRepositoryProvider = Provider<ProviderStoresRepository>(
   (ref) => ProviderStoresRepositoryImpl(
     ProviderStoresRemoteDataSourceImpl(ref.watch(apiClientProvider)),
   ),
+);
+
+final getProviderStoresProvider = Provider(
+  (ref) => GetProviderStores(ref.watch(providerStoresRepositoryProvider)),
 );
 
 /// Refetch on locale/session changes; never poll or retry without user action.
@@ -26,5 +31,5 @@ final providerStoresProvider = FutureProvider.autoDispose<List<ProviderStore>>((
       session.user.role != AppUserRole.provider) {
     return const [];
   }
-  return ref.watch(providerStoresRepositoryProvider).fetchStores();
+  return ref.watch(getProviderStoresProvider).call();
 }, retry: (_, _) => null);

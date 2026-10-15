@@ -1,4 +1,21 @@
 {
+  "provider_requests": {
+  "all_cities": "All cities", "choose_city": "Choose city", "city_filter": "Customer city",
+  "city_number": "City #{}", "store_city": "My store city", "no_store_city": "No store city is available. Choose a city or browse all cities.",
+  "preference_failed": "The filter is applied, but could not be saved for your next visit.",
+  "request_number": "Request #{}", "unnamed": "General part request", "vehicle_unknown": "Vehicle details unavailable",
+  "city_unknown": "City not provided", "view_details": "View request", "loading": "Loading general requests",
+  "results": "{} open requests", "refresh": "Refresh requests", "empty": "No open requests",
+  "empty_body": "Try another city or select All cities. You can also refresh to check for new requests.",
+  "load_more": "Load more", "unauthorized": "Your session has expired. Sign in again.",
+  "unavailable": "This request is no longer available to your account.",
+  "invalid_filter": "This filter is no longer valid. Choose another city or select All cities.",
+  "load_error": "Couldn't load requests. Please try again.", "vehicle": "Vehicle", "date": "Requested on",
+  "transmission": "Transmission", "automatic": "Automatic", "manual": "Manual", "color": "Color", "fuel": "Fuel",
+  "description": "Request description", "not_provided": "Not provided", "photos": "Request photos", "photo": "Requested part photo",
+  "photo_error": "Couldn't load this photo.", "no_longer_open": "This request is no longer open for offers.",
+  "pickup_notice": "Orders currently use store pickup. Consider the customer's city when reviewing a request."
+},
   "provider_portal": {
   "dashboard": "Dashboard",
   "orders": "Orders",

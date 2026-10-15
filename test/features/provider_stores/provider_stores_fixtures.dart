@@ -19,6 +19,7 @@ const store = ProviderStore(
   status: ProviderStoreStatus.active,
   mobile: '+966511111111',
   city: 'Riyadh',
+  cityId: 1,
   location: 'https://maps.example.test/store',
   brands: ['Toyota', 'Honda'],
 );

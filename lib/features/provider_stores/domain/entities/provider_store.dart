@@ -9,6 +9,7 @@ class ProviderStore {
     required this.brands,
     this.mobile,
     this.city,
+    this.cityId,
     this.location,
   });
 
@@ -17,6 +18,7 @@ class ProviderStore {
   final ProviderStoreStatus status;
   final String? mobile;
   final String? city;
+  final int? cityId;
   final String? location;
   final List<String> brands;
 }

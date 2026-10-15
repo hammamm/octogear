@@ -951,6 +951,13 @@ RouteBase get $providerShellRoute => StatefulShellRouteData.$route(
           path: '/provider/orders',
           hasOverriddenOnExit: false,
           factory: $ProviderOrdersRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'general/:orderId',
+              hasOverriddenOnExit: false,
+              factory: $ProviderGeneralRequestRoute._fromState,
+            ),
+          ],
         ),
       ],
     ),
@@ -1031,6 +1038,33 @@ mixin $ProviderOrdersRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/provider/orders');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderGeneralRequestRoute on GoRouteData {
+  static ProviderGeneralRequestRoute _fromState(GoRouterState state) =>
+      ProviderGeneralRequestRoute(
+        orderId: int.parse(state.pathParameters['orderId']!),
+      );
+
+  ProviderGeneralRequestRoute get _self => this as ProviderGeneralRequestRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/orders/general/${Uri.encodeComponent(_self.orderId.toString())}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

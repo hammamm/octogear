@@ -14,6 +14,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/provider_orders/presentation/screens/provider_general_request_screen.dart';
 import '../../core/design_system/octogear_theme.dart';
 import '../../features/customer_home/presentation/screens/customer_home_screen.dart';
 import '../../core/routing/app_route_paths.dart';
@@ -423,7 +424,12 @@ class CustomerCarEditRoute extends GoRouteData with $CustomerCarEditRoute {
     ),
     TypedStatefulShellBranch<ProviderOrdersBranch>(
       routes: [
-        TypedGoRoute<ProviderOrdersRoute>(path: AppRoutePath.providerOrders),
+        TypedGoRoute<ProviderOrdersRoute>(
+          path: AppRoutePath.providerOrders,
+          routes: [
+            TypedGoRoute<ProviderGeneralRequestRoute>(path: 'general/:orderId'),
+          ],
+        ),
       ],
     ),
     TypedStatefulShellBranch<ProviderChatsBranch>(
@@ -489,6 +495,15 @@ class ProviderOrdersRoute extends GoRouteData with $ProviderOrdersRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const ProviderOrdersScreen();
+}
+
+class ProviderGeneralRequestRoute extends GoRouteData
+    with $ProviderGeneralRequestRoute {
+  const ProviderGeneralRequestRoute({required this.orderId});
+  final int orderId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProviderGeneralRequestScreen(orderId: orderId);
 }
 
 class ProviderMoreRoute extends GoRouteData with $ProviderMoreRoute {

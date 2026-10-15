@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'provider_order_filter_storage.dart';
 import '../localization/app_locale.dart';
 import '../configuration/api_configuration_loader.dart';
 
@@ -29,7 +30,11 @@ abstract interface class ProfileCacheStorage {
 /// locale in preferences. No feature may access either platform package
 /// directly.
 class AppStorage
-    implements SessionStorage, ProfileCacheStorage, ApiConfigurationCache {
+    implements
+        SessionStorage,
+        ProfileCacheStorage,
+        ApiConfigurationCache,
+        ProviderOrderFilterStorage {
   AppStorage({
     FlutterSecureStorage? secureStorage,
     Future<SharedPreferences> Function()? preferencesLoader,
@@ -143,6 +148,25 @@ class AppStorage
     await initialize();
     _cachedProfileJson = null;
     await _preferences!.remove(_cachedProfileKey);
+  }
+
+  @override
+  int? readProviderOrderCity(int userId) {
+    final id = _preferences?.getInt('octogear.provider.$userId.order_city');
+    return id != null && id > 0 ? id : null;
+  }
+
+  @override
+  Future<void> saveProviderOrderCity(int userId, int? cityId) async {
+    if (userId < 1 || (cityId != null && cityId < 1)) {
+      throw ArgumentError('Invalid provider city preference.');
+    }
+    await initialize();
+    final key = 'octogear.provider.$userId.order_city';
+    final saved = cityId == null
+        ? await _preferences!.remove(key)
+        : await _preferences!.setInt(key, cityId);
+    if (!saved) throw StateError('Could not save city preference.');
   }
 
   Future<void> saveLocale(AppLocale locale) async {
