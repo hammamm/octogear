@@ -1,5 +1,74 @@
 # OctoGear - Mobile Application Development Contract
 
+## Provider store management, change approvals and profile — 2026-10-16
+
+More > My Stores opens owner-only approved store details. The existing store
+mobile is read-only in Flutter and prohibited in the API update payload.
+Other information, supported manufacturers, registration images and up to five
+gallery photos can be proposed for review. A reason of 10–1000 characters is
+required. Sending a request never changes the live store or its public images.
+
+Store requests distinguishes new-store applications from store-change requests,
+shows pending/approved/rejected status with icons and colors, and displays the
+proposal, change reason and any rejection reason. A pending change replaces the
+store's Edit button with View pending changes, including on direct editor links.
+Approval updates the same store, preserving its ID, owner, mobile and active state.
+Rejection leaves the live store untouched. A rejected change stays in the history;
+the provider opens the current approved store to create a new change request.
+Rejected new-store applications retain their existing correction/resubmit flow.
+
+The existing admin review API lists both request types. Detail responses include
+the target store, provider's reason, previous details, proposed details/photos,
+reviewer and processing time. Accept/reject use the existing admin endpoints.
+This repository has no admin UI; the existing admin API is the integration point.
+
+API contract:
+
+- `GET /provider/stores/{store}` includes owner-only `edit_version` and nullable
+  `pending_change_request_id`, alongside approved details and private image URLs.
+- `POST /provider/stores/{store}/change-requests` accepts multipart editable
+  fields, `change_reason`, `base_version` (the fetched edit_version), and a UUID
+  `idempotency_key`. It returns a store request (201), not an updated store.
+  The legacy `PUT /provider/store/{store}` enforces the same review contract.
+  `mobile` is prohibited, including a submission of the unchanged number.
+- Omitted gallery/brand selections preserve current values. Explicit empty arrays
+  clear them in the proposal; multipart uses an empty string for an empty array.
+  Retained photo ownership and the combined five-photo limit are rechecked under
+  the store lock. Proposal documents/photos have independent private copies.
+- One pending change per store is enforced by a store lock and unique nullable
+  `pending_store_id`. Duplicate UUIDs return the same receipt; changed payloads
+  conflict. Submission and acceptance check the approved-data version to prevent
+  stale overwrites. Files and database records roll back together on failure;
+  obsolete live files are removed only after successful approval commits.
+- `POST /provider/store-requests/direct` still creates additional-store
+  applications. UUIDs protect retries. Provider request resources expose their
+  own submission key for precise timeout reconciliation; fingerprints stay hidden.
+- `POST /admin/store-requests/{request}/accept` applies pending changes atomically;
+  `/reject` records the rejection and releases the pending slot. Reviewed changes
+  cannot be resubmitted in place. New-store approvals continue creating stores.
+- `PUT /provider/profile` edits name/city while preserving account phone/role.
+
+HTTP/multipart remains in remote data sources, JSON mapping in DTOs, business
+validation in use cases, and session/write guards in Riverpod controllers. Writes
+are never automatically retried. After an uncertain result, the provider checks
+status and reconciliation matches the exact submission key. Validation preserves
+drafts, duplicate taps are blocked, and late responses cannot affect a new login.
+Provider/customer shells and the four bottom-navigation branches remain separate.
+
+Apply migrations `2026_10_16_000002_add_idempotency_to_store_requests` and
+`2026_10_16_000003_add_store_change_requests` before deploying this API version
+elsewhere. Both were applied locally without resetting existing data.
+
+Verification: the full Flutter suite passed 466 tests. The focused API regression
+run passed 88 tests (520 assertions), including approval/rejection, roles/ownership,
+locked mobile, private snapshots, replay after photo replacement, rollback,
+new-store onboarding, admin dashboard and marketplace behavior. Arabic/English
+forms and 320 dp / 200% text layouts passed; rendered previews were inspected.
+Tests use fake app repositories and an isolated in-memory database. No real store
+change was submitted or approved during verification.
+Full-project Flutter analysis reported no issues. The updated Android debug app
+was built, installed and launched on emulator-5554, then left running.
+
 ## Provider dashboard and customer follow-up — 2026-10-16
 
 Provider login now opens a live dashboard at `/provider`. It keeps the existing
@@ -90,8 +159,8 @@ More contains My Stores, Profile, Settings, language selection and sign out.
 The Dashboard shortcut also opens My Stores under More.
 
 All four Orders tabs and Dashboard reporting are connected to the API. Profile
-management remains a separate future slice. Owned-store fetching/refresh and
-provider chats remain functional.
+and store management are implemented in the 2026-10-16 slice described above.
+Provider chats remain functional.
 
 ## Provider direct requests and paid orders — 2026-10-15
 

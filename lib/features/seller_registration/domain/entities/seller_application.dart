@@ -23,6 +23,10 @@ class SellerApplication {
     required this.city,
     required this.hasDocument,
     this.rejectionReason,
+    this.storeId,
+    this.changeReason,
+    this.idempotencyKey,
+    this.picturePaths = const [],
     this.companyIds = const [],
   });
   final int id;
@@ -35,7 +39,10 @@ class SellerApplication {
       registrationNumber;
   final AppCity city;
   final bool hasDocument;
-  final String? rejectionReason;
+  final String? rejectionReason, changeReason, idempotencyKey;
+  final int? storeId;
+  final List<String> picturePaths;
+  bool get isStoreChange => storeId != null;
   final List<int> companyIds;
 }
 

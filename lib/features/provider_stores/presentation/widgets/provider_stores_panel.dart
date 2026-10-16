@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/routing/app_routes.dart';
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
@@ -167,6 +168,14 @@ class _StoreDetails extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        FilledButton.icon(
+          key: Key('manage-store-${store.id}'),
+          onPressed: () =>
+              ProviderStoreDetailsRoute(storeId: store.id).push<void>(context),
+          icon: const Icon(Icons.settings_outlined),
+          label: Text(context.tr('store_management.manage')),
+        ),
+        const SizedBox(height: 20),
         _Field(label: 'phone', value: store.mobile, leftToRight: true),
         _Field(label: 'city', value: store.city),
         _Field(label: 'location', value: store.location, leftToRight: true),

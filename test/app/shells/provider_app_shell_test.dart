@@ -1,3 +1,16 @@
+import 'package:dio/dio.dart';
+import 'package:octogear/features/provider_stores/domain/entities/provider_store_management.dart';
+import 'package:octogear/core/api/api_client.dart';
+import 'package:octogear/core/api/api_providers.dart';
+import 'package:octogear/features/provider_profile/presentation/screens/provider_profile_screen.dart';
+import 'package:octogear/features/provider_stores/presentation/controllers/provider_store_management_providers.dart';
+import 'package:octogear/features/provider_stores/presentation/screens/provider_store_details_screen.dart';
+import 'package:octogear/features/provider_stores/presentation/screens/provider_store_form_screen.dart';
+import 'package:octogear/features/provider_stores/presentation/screens/provider_store_applications_screen.dart';
+import 'package:octogear/features/seller_registration/domain/entities/seller_application.dart';
+import 'package:octogear/features/seller_registration/presentation/services/registration_document_picker.dart';
+import '../../features/provider_stores/store_management_fixtures.dart'
+    as management;
 import 'package:octogear/features/provider_dashboard/presentation/controllers/provider_dashboard_providers.dart';
 import '../../features/provider_dashboard/provider_dashboard_fixtures.dart';
 import 'package:octogear/features/provider_stores/domain/entities/provider_store.dart';
@@ -69,6 +82,13 @@ class _Inbox extends ChatInboxController {
   Future<ChatInbox> build() async => const ChatInbox([], 1, 1);
 }
 
+class _DocumentPicker implements RegistrationDocumentPicker {
+  @override
+  Future<RegistrationDocument?> pick() async => management.imageDocument;
+  @override
+  Future<RegistrationDocument?> recover() async => null;
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final translations = <String, Map<String, dynamic>>{};
@@ -99,6 +119,7 @@ void main() {
   Future<ProviderContainer> pump(
     WidgetTester tester,
     FakeStores stores, {
+    management.FakeStoreManagement? storeManagement,
     FakeGeneralRequests? requests,
     FakeOffers? offers,
     FakeManagedOrders? managedOrders,
@@ -113,6 +134,17 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          apiClientProvider.overrideWithValue(
+            ApiClient(
+              dio: Dio(BaseOptions(baseUrl: 'https://example.test/api/')),
+            ),
+          ),
+          providerStoreManagementRepositoryProvider.overrideWithValue(
+            storeManagement ?? management.FakeStoreManagement(),
+          ),
+          registrationDocumentPickerProvider.overrideWithValue(
+            _DocumentPicker(),
+          ),
           providerDashboardRepositoryProvider.overrideWithValue(
             FakeDashboard(),
           ),
@@ -187,6 +219,319 @@ void main() {
             .first,
         maxScrolls: 80,
       );
+
+  Future<void> formScroll(
+    WidgetTester tester,
+    Key key, {
+    double delta = 320,
+  }) async {
+    await tester.scrollUntilVisible(
+      find.byKey(key),
+      delta,
+      scrollable: find
+          .descendant(
+            of: find.byType(ProviderStoreFormScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+      maxScrolls: 80,
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('approved application refreshes the owned store list', (
+    tester,
+  ) async {
+    final a = management.rejectedApplication;
+    final repo = management.FakeStoreManagement()
+      ..applications = [
+        SellerApplication(
+          id: a.id,
+          status: SellerApplicationStatus.accepted,
+          name: a.name,
+          nickname: a.nickname,
+          employeeName: a.employeeName,
+          mobile: a.mobile,
+          location: a.location,
+          registrationNumber: a.registrationNumber,
+          city: a.city,
+          hasDocument: false,
+        ),
+      ];
+    final stores = FakeStores();
+    final container = await pump(tester, stores, storeManagement: repo);
+    container.read(appRouterProvider).go('/provider/more/stores');
+    await tester.pumpAndSettle();
+    expect(stores.calls, 1);
+    container
+        .read(appRouterProvider)
+        .go('/provider/more/stores/applications/11');
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('approved-store-list')),
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byType(ProviderStoreApplicationScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('approved-store-list')));
+    await tester.pumpAndSettle();
+    expect(stores.calls, 2);
+    expect(find.byType(ProviderStoresScreen), findsOneWidget);
+  });
+
+  testWidgets(
+    'store change requires a reason, locks mobile and opens the pending request',
+    (tester) async {
+      final repo = management.FakeStoreManagement();
+      final container = await pump(tester, FakeStores(), storeManagement: repo);
+      container.read(appRouterProvider).go('/provider/more/stores/1/edit');
+      await tester.pumpAndSettle();
+      await formScroll(tester, const Key('store-field-mobile'));
+      final mobile = tester.widget<TextField>(
+        find.descendant(
+          of: find.byKey(const Key('store-field-mobile')),
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(mobile.readOnly, isTrue);
+      await formScroll(tester, const Key('store-field-name'), delta: -320);
+      await tester.enterText(
+        find.byKey(const Key('store-field-name')),
+        'Proposed store',
+      );
+      await formScroll(tester, const Key('store-save'));
+      await tester.tap(find.byKey(const Key('store-save')));
+      await tester.pumpAndSettle();
+      expect(repo.writes, 0);
+      await formScroll(
+        tester,
+        const Key('store-field-change_reason'),
+        delta: -320,
+      );
+      await tester.enterText(
+        find.byKey(const Key('store-field-change_reason')),
+        'We changed our trading name.',
+      );
+      await formScroll(tester, const Key('store-save'));
+      await tester.tap(find.byKey(const Key('store-save')));
+      await tester.pumpAndSettle();
+      expect(repo.writes, 1);
+      expect(repo.lastDraft!.mobile, management.managedStore.store.mobile);
+      expect(repo.details.store.name, management.managedStore.store.name);
+      expect(find.byType(ProviderStoreApplicationScreen), findsOneWidget);
+      expect(find.text('Store change request'), findsOneWidget);
+      expect(find.text('Under review'), findsOneWidget);
+      expect(find.text('We changed our trading name.'), findsOneWidget);
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .path,
+        '/provider/more/stores/applications/11',
+      );
+      await _preview(tester, 'store-change-request-en');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'pending store changes prevent duplicate editing including direct links',
+    (tester) async {
+      final original = management.managedStore;
+      final repo = management.FakeStoreManagement()
+        ..details = ProviderStoreDetails(
+          store: original.store,
+          nickname: original.nickname,
+          employeeName: original.employeeName,
+          registrationNumber: original.registrationNumber,
+          companyIds: original.companyIds,
+          pictures: original.pictures,
+          editVersion: original.editVersion,
+          pendingChangeRequestId: 11,
+        )
+        ..applications = [
+          management.pendingApplication(management.storeDraft(), storeId: 1),
+        ];
+      final container = await pump(tester, FakeStores(), storeManagement: repo);
+      container.read(appRouterProvider).go('/provider/more/stores/1');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('store-edit')), findsNothing);
+      expect(find.byKey(const Key('store-pending-change')), findsOneWidget);
+      container.read(appRouterProvider).go('/provider/more/stores/1/edit');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('store-save')), findsNothing);
+      await tester.tap(find.byKey(const Key('store-pending-change')));
+      await tester.pumpAndSettle();
+      expect(find.byType(ProviderStoreApplicationScreen), findsOneWidget);
+      expect(repo.writes, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('store details opens editor and validation retains the draft', (
+    tester,
+  ) async {
+    final repo = management.FakeStoreManagement()
+      ..onUpdate = () async => throw const ApiFailure(
+        type: ApiFailureType.validation,
+        fieldErrors: {
+          'name': ['Please check the store name.'],
+        },
+      );
+    final container = await pump(tester, FakeStores(), storeManagement: repo);
+    container.read(appRouterProvider).go('/provider/more/stores/1');
+    await tester.pumpAndSettle();
+    expect(find.byType(ProviderStoreDetailsScreen), findsOneWidget);
+    await tester.tap(find.byKey(const Key('store-edit')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ProviderStoreFormScreen), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('store-field-name')),
+      'Changed store',
+    );
+    await formScroll(tester, const Key('store-field-change_reason'));
+    await tester.enterText(
+      find.byKey(const Key('store-field-change_reason')),
+      'We changed our trading name.',
+    );
+    await formScroll(tester, const Key('store-save'));
+    await tester.tap(find.byKey(const Key('store-save')));
+    await tester.pumpAndSettle();
+    expect(repo.writes, 1);
+    expect(find.text('Please check the store name.'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('store-field-name')))
+          .controller!
+          .text,
+      'Changed store',
+    );
+    await tester.tap(find.byType(BackButtonIcon));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tap(find.text('Discard changes'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ProviderStoreDetailsScreen), findsOneWidget);
+  });
+
+  testWidgets(
+    'rejected application can be corrected and becomes pending without changing phone',
+    (tester) async {
+      final repo = management.FakeStoreManagement();
+      final container = await pump(tester, FakeStores(), storeManagement: repo);
+      container
+          .read(appRouterProvider)
+          .go('/provider/more/stores/applications/11/edit');
+      await tester.pumpAndSettle();
+      expect(find.byType(ProviderStoreFormScreen), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('store-field-name')),
+        'Corrected store',
+      );
+      await formScroll(tester, const Key('store-field-mobile'));
+      expect(
+        tester
+            .widget<TextField>(
+              find.descendant(
+                of: find.byKey(const Key('store-field-mobile')),
+                matching: find.byType(TextField),
+              ),
+            )
+            .readOnly,
+        true,
+      );
+      await formScroll(tester, const Key('store-save'));
+      await tester.tap(find.byKey(const Key('store-save')));
+      await tester.pumpAndSettle();
+      expect(repo.writes, 1);
+      expect(repo.lastDraft!.normalizedMobile, '+966522222222');
+      expect(find.byType(ProviderStoreApplicationScreen), findsOneWidget);
+      expect(find.text('Under review'), findsOneWidget);
+      expect(find.byKey(const Key('store-resubmit')), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'new application checks an uncertain submission instead of sending it twice',
+    (tester) async {
+      final repo = management.FakeStoreManagement();
+      repo.onSubmit = () async {
+        repo.applications = [
+          management.pendingApplication(
+            repo.lastDraft!,
+            submissionKey: repo.lastKey!,
+          ),
+        ];
+        throw const ApiFailure(type: ApiFailureType.timeout);
+      };
+      final container = await pump(tester, FakeStores(), storeManagement: repo);
+      container.read(appRouterProvider).go('/provider/more/stores/add');
+      await tester.pumpAndSettle();
+      for (final (field, value) in [
+        ('name', 'Another Store'),
+        ('nick_name', 'Another'),
+        ('employee_name', 'Manager'),
+        ('mobile', '0522222222'),
+        ('url_location', 'https://maps.example.test/store'),
+        ('commercial_registration_number', '1234567890'),
+      ]) {
+        await formScroll(tester, Key('store-field-$field'));
+        await tester.enterText(find.byKey(Key('store-field-$field')), value);
+      }
+      await formScroll(tester, const Key('store-city'), delta: -320);
+      await tester.tap(find.byKey(const Key('registration-city-field')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('registration-city-1')));
+      await tester.pumpAndSettle();
+      await formScroll(tester, const Key('store-document'));
+      await tester.tap(find.byKey(const Key('store-document')));
+      await tester.pumpAndSettle();
+      await formScroll(tester, const Key('store-save'));
+      await tester.tap(find.byKey(const Key('store-save')));
+      await tester.pumpAndSettle();
+      expect(repo.writes, 1);
+      expect(find.byKey(const Key('store-check-status')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('store-check-status')));
+      await tester.pumpAndSettle();
+      expect(repo.writes, 1);
+      expect(find.byType(ProviderStoreApplicationScreen), findsOneWidget);
+      expect(find.text('Under review'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final arabic in [false, true]) {
+    for (final scale in [1.0, 2.0]) {
+      testWidgets(
+        'store form works in Arabic/English at large text arabic=$arabic scale=$scale',
+        (tester) async {
+          final container = await pump(
+            tester,
+            FakeStores(),
+            arabic: arabic,
+            scale: scale,
+          );
+          container.read(appRouterProvider).go('/provider/more/stores/1/edit');
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          if (scale == 1) {
+            await _preview(tester, 'store-editor-${arabic ? 'ar' : 'en'}');
+          }
+          await formScroll(tester, const Key('store-save'));
+          expect(tester.takeException(), isNull);
+          expect(find.byType(NavigationDestination), findsNWidgets(4));
+        },
+      );
+    }
+  }
 
   testWidgets(
     'provider starts on dashboard; orders tabs preserve selection without fetching stores',
@@ -267,7 +612,7 @@ void main() {
       await tester.tap(find.text('Profile'));
       await tester.pumpAndSettle();
       expect(find.byType(ProviderProfileScreen), findsOneWidget);
-      await tester.tap(find.byType(BackButton));
+      await tester.tap(find.byType(BackButtonIcon));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();

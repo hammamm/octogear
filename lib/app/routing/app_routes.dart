@@ -1,3 +1,4 @@
+import '../../features/provider_profile/presentation/screens/provider_profile_screen.dart';
 import '../../features/provider_orders/presentation/screens/provider_offer_screen.dart';
 import '../../features/provider_orders/domain/entities/provider_managed_order.dart';
 import '../../features/provider_orders/presentation/screens/provider_managed_order_screen.dart';
@@ -6,6 +7,9 @@ import '../../features/provider_portal/presentation/screens/provider_dashboard_s
 import '../../features/provider_portal/presentation/screens/provider_orders_screen.dart';
 import '../../features/provider_portal/presentation/screens/provider_more_screen.dart';
 import '../../features/provider_stores/presentation/screens/provider_stores_screen.dart';
+import '../../features/provider_stores/presentation/screens/provider_store_details_screen.dart';
+import '../../features/provider_stores/presentation/screens/provider_store_applications_screen.dart';
+import '../../features/provider_stores/presentation/screens/provider_store_form_screen.dart';
 import '../../features/customer_profile/presentation/screens/customer_profile_screen.dart';
 import '../../features/seller_registration/presentation/screens/seller_registration_screen.dart';
 import '../../features/customer_chats/domain/entities/chat.dart';
@@ -467,7 +471,29 @@ class CustomerCarEditRoute extends GoRouteData with $CustomerCarEditRoute {
         TypedGoRoute<ProviderMoreRoute>(
           path: AppRoutePath.providerMore,
           routes: [
-            TypedGoRoute<ProviderStoresRoute>(path: 'stores'),
+            TypedGoRoute<ProviderStoresRoute>(
+              path: 'stores',
+              routes: [
+                TypedGoRoute<ProviderStoreAddRoute>(path: 'add'),
+                TypedGoRoute<ProviderStoreApplicationsRoute>(
+                  path: 'applications',
+                  routes: [
+                    TypedGoRoute<ProviderStoreApplicationRoute>(
+                      path: ':requestId',
+                      routes: [
+                        TypedGoRoute<ProviderStoreApplicationEditRoute>(
+                          path: 'edit',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                TypedGoRoute<ProviderStoreDetailsRoute>(
+                  path: ':storeId',
+                  routes: [TypedGoRoute<ProviderStoreEditRoute>(path: 'edit')],
+                ),
+              ],
+            ),
             TypedGoRoute<ProviderProfileRoute>(path: 'profile'),
             TypedGoRoute<ProviderSettingsRoute>(path: 'settings'),
           ],
@@ -754,4 +780,54 @@ class ProviderConversationRoute extends GoRouteData
         target: ChatTarget.conversation(conversationId),
         provider: true,
       );
+}
+
+class ProviderStoreAddRoute extends GoRouteData with $ProviderStoreAddRoute {
+  const ProviderStoreAddRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const ProviderStoreFormScreen();
+}
+
+class ProviderStoreApplicationsRoute extends GoRouteData
+    with $ProviderStoreApplicationsRoute {
+  const ProviderStoreApplicationsRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const ProviderStoreApplicationsScreen();
+}
+
+class ProviderStoreApplicationRoute extends GoRouteData
+    with $ProviderStoreApplicationRoute {
+  const ProviderStoreApplicationRoute({required this.requestId});
+  final int requestId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProviderStoreApplicationScreen(requestId: requestId);
+}
+
+class ProviderStoreApplicationEditRoute extends GoRouteData
+    with $ProviderStoreApplicationEditRoute {
+  const ProviderStoreApplicationEditRoute({required this.requestId});
+  final int requestId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProviderStoreFormScreen(requestId: requestId);
+}
+
+class ProviderStoreDetailsRoute extends GoRouteData
+    with $ProviderStoreDetailsRoute {
+  const ProviderStoreDetailsRoute({required this.storeId});
+  final int storeId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProviderStoreDetailsScreen(storeId: storeId);
+}
+
+class ProviderStoreEditRoute extends GoRouteData with $ProviderStoreEditRoute {
+  const ProviderStoreEditRoute({required this.storeId});
+  final int storeId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProviderStoreFormScreen(storeId: storeId);
 }

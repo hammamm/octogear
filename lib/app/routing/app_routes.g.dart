@@ -1020,6 +1020,45 @@ RouteBase get $providerShellRoute => StatefulShellRouteData.$route(
               path: 'stores',
               hasOverriddenOnExit: false,
               factory: $ProviderStoresRoute._fromState,
+              routes: [
+                GoRouteData.$route(
+                  path: 'add',
+                  hasOverriddenOnExit: false,
+                  factory: $ProviderStoreAddRoute._fromState,
+                ),
+                GoRouteData.$route(
+                  path: 'applications',
+                  hasOverriddenOnExit: false,
+                  factory: $ProviderStoreApplicationsRoute._fromState,
+                  routes: [
+                    GoRouteData.$route(
+                      path: ':requestId',
+                      hasOverriddenOnExit: false,
+                      factory: $ProviderStoreApplicationRoute._fromState,
+                      routes: [
+                        GoRouteData.$route(
+                          path: 'edit',
+                          hasOverriddenOnExit: false,
+                          factory:
+                              $ProviderStoreApplicationEditRoute._fromState,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                GoRouteData.$route(
+                  path: ':storeId',
+                  hasOverriddenOnExit: false,
+                  factory: $ProviderStoreDetailsRoute._fromState,
+                  routes: [
+                    GoRouteData.$route(
+                      path: 'edit',
+                      hasOverriddenOnExit: false,
+                      factory: $ProviderStoreEditRoute._fromState,
+                    ),
+                  ],
+                ),
+              ],
             ),
             GoRouteData.$route(
               path: 'profile',
@@ -1371,6 +1410,159 @@ mixin $ProviderStoresRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/provider/more/stores');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderStoreAddRoute on GoRouteData {
+  static ProviderStoreAddRoute _fromState(GoRouterState state) =>
+      const ProviderStoreAddRoute();
+
+  @override
+  String get location => GoRouteData.$location('/provider/more/stores/add');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderStoreApplicationsRoute on GoRouteData {
+  static ProviderStoreApplicationsRoute _fromState(GoRouterState state) =>
+      const ProviderStoreApplicationsRoute();
+
+  @override
+  String get location =>
+      GoRouteData.$location('/provider/more/stores/applications');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderStoreApplicationRoute on GoRouteData {
+  static ProviderStoreApplicationRoute _fromState(GoRouterState state) =>
+      ProviderStoreApplicationRoute(
+        requestId: int.parse(state.pathParameters['requestId']!),
+      );
+
+  ProviderStoreApplicationRoute get _self =>
+      this as ProviderStoreApplicationRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/more/stores/applications/${Uri.encodeComponent(_self.requestId.toString())}',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderStoreApplicationEditRoute on GoRouteData {
+  static ProviderStoreApplicationEditRoute _fromState(GoRouterState state) =>
+      ProviderStoreApplicationEditRoute(
+        requestId: int.parse(state.pathParameters['requestId']!),
+      );
+
+  ProviderStoreApplicationEditRoute get _self =>
+      this as ProviderStoreApplicationEditRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/more/stores/applications/${Uri.encodeComponent(_self.requestId.toString())}/edit',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderStoreDetailsRoute on GoRouteData {
+  static ProviderStoreDetailsRoute _fromState(GoRouterState state) =>
+      ProviderStoreDetailsRoute(
+        storeId: int.parse(state.pathParameters['storeId']!),
+      );
+
+  ProviderStoreDetailsRoute get _self => this as ProviderStoreDetailsRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/more/stores/${Uri.encodeComponent(_self.storeId.toString())}',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderStoreEditRoute on GoRouteData {
+  static ProviderStoreEditRoute _fromState(GoRouterState state) =>
+      ProviderStoreEditRoute(
+        storeId: int.parse(state.pathParameters['storeId']!),
+      );
+
+  ProviderStoreEditRoute get _self => this as ProviderStoreEditRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/more/stores/${Uri.encodeComponent(_self.storeId.toString())}/edit',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

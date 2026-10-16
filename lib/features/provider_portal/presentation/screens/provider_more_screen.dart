@@ -39,21 +39,6 @@ class ProviderMoreScreen extends ConsumerWidget {
   );
 }
 
-class ProviderProfileScreen extends StatelessWidget {
-  const ProviderProfileScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const ProviderPage(
-    titleKey: 'provider_portal.profile',
-    showBack: true,
-    children: [
-      ProviderSectionPlaceholder(
-        icon: Icons.person_outline,
-        descriptionKey: 'provider_portal.profile_placeholder',
-      ),
-    ],
-  );
-}
-
 class ProviderSettingsScreen extends StatelessWidget {
   const ProviderSettingsScreen({super.key});
   @override

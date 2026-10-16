@@ -28,8 +28,34 @@ SellerApplication sellerApplicationFromJson(Object? value) {
     'rejected' => SellerApplicationStatus.rejected,
     _ => throw const FormatException('Unknown application status.'),
   };
+  final storeId = value['store_id'];
+  final reason = value['change_reason'];
+  if (storeId != null &&
+      (storeId is! int ||
+          storeId < 1 ||
+          reason is! String ||
+          reason.trim().isEmpty)) {
+    throw const FormatException('Invalid store change request.');
+  }
+  final pictures = value['pictures'] ?? const [];
+  if (pictures is! List) throw const FormatException('Invalid request photos.');
+  final paths = pictures
+      .map((p) {
+        if (p is! Map ||
+            p['id'] is! int ||
+            p['id'] < 1 ||
+            p['url'] != '/api/media/store-requests/$id/pictures/${p['id']}') {
+          throw const FormatException('Invalid private request photo.');
+        }
+        return p['url'] as String;
+      })
+      .toList(growable: false);
   return SellerApplication(
     id: id,
+    storeId: storeId as int?,
+    changeReason: reason as String?,
+    idempotencyKey: value['idempotency_key'] as String?,
+    picturePaths: List.unmodifiable(paths),
     status: status,
     name: text('name'),
     nickname: text('nick_name'),

@@ -12,7 +12,7 @@ typedef ApiDataDecoder<T> = T Function(Object? data);
 /// The single HTTP boundary for OctoGear.
 ///
 /// It centralizes base URL selection, timeouts, `Accept-Language`, and bearer
-/// authentication. Repositories provide a typed decoder and never attach
+/// authentication. Remote data sources provide typed decoders and never attach
 /// headers directly.
 class ApiClient {
   ApiClient({
@@ -105,6 +105,20 @@ class ApiClient {
       decode: decode,
     );
   }
+
+  Future<ApiEnvelope<T>> put<T>(
+    String path, {
+    required ApiDataDecoder<T> decode,
+    Object? data,
+    bool requiresAuthentication = false,
+  }) => _request(
+    () => _dio.put<Object?>(
+      _relativePath(path),
+      data: data,
+      options: _requestOptions(requiresAuthentication),
+    ),
+    decode: decode,
+  );
 
   /// Sends a typed partial update through the same authenticated API boundary
   /// as every other OctoGear request.
