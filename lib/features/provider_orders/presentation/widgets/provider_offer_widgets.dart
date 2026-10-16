@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/api/api_failure.dart';
+import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../domain/entities/provider_offer.dart';
 
@@ -53,6 +54,59 @@ class ProviderOfferError extends StatelessWidget {
   );
 }
 
+class ProviderOfferStatusBadge extends StatelessWidget {
+  const ProviderOfferStatusBadge({required this.status, super.key});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (accent, icon) = switch (status) {
+      'accepted' => (OctoGearColors.success, Icons.check_circle_rounded),
+      'pending' => (OctoGearColors.warning, Icons.schedule_rounded),
+      'rejected' => (OctoGearColors.error, Icons.cancel_rounded),
+      'not_selected' => (
+        OctoGearColors.structuralGray,
+        Icons.remove_circle_outline_rounded,
+      ),
+      _ => (OctoGearColors.structuralGray, Icons.help_outline_rounded),
+    };
+    // Darken the foreground so amber and green remain readable on pale fills.
+    final foreground = Color.alphaBlend(
+      Colors.black.withValues(alpha: 0.4),
+      accent,
+    );
+
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.1),
+          border: Border.all(color: accent.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.circular(OctoGearRadii.small),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: foreground),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                offerStatus(context, status),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: foreground,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class ProviderOfferCard extends StatelessWidget {
   const ProviderOfferCard({required this.offer, required this.open, super.key});
   final ProviderOffer offer;
@@ -80,7 +134,8 @@ class ProviderOfferCard extends StatelessWidget {
             offerMoney(context, offer.price),
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          Text(offerStatus(context, offer.status)),
+          const SizedBox(height: 8),
+          ProviderOfferStatusBadge(status: offer.status),
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: open,

@@ -2,6 +2,9 @@ import 'package:octogear/features/provider_stores/domain/entities/provider_store
 import 'package:octogear/features/provider_orders/presentation/controllers/provider_offers_providers.dart';
 import 'package:octogear/features/provider_orders/presentation/screens/provider_offer_screen.dart';
 import '../../features/provider_orders/provider_offers_fixtures.dart';
+import '../../features/provider_orders/provider_managed_orders_fixtures.dart';
+import 'package:octogear/features/provider_orders/presentation/controllers/provider_managed_orders_providers.dart';
+import 'package:octogear/features/provider_orders/presentation/screens/provider_managed_order_screen.dart';
 import 'package:octogear/features/provider_orders/presentation/screens/provider_general_request_screen.dart';
 import 'package:octogear/core/api/api_failure.dart';
 import 'package:octogear/features/authentication/domain/entities/app_user.dart';
@@ -96,6 +99,7 @@ void main() {
     FakeStores stores, {
     FakeGeneralRequests? requests,
     FakeOffers? offers,
+    FakeManagedOrders? managedOrders,
     bool arabic = false,
     double scale = 1,
   }) async {
@@ -118,6 +122,9 @@ void main() {
           ),
           providerOffersRepositoryProvider.overrideWithValue(
             offers ?? FakeOffers(),
+          ),
+          providerManagedOrdersRepositoryProvider.overrideWithValue(
+            managedOrders ?? FakeManagedOrders(),
           ),
           providerOrderFilterStorageProvider.overrideWithValue(
             MemoryOrderFilterStorage(),
@@ -162,6 +169,19 @@ void main() {
     await tester.tap(find.byKey(Key('provider-nav-$name')));
     await tester.pumpAndSettle();
   }
+
+  Future<void> scrollOrderTo(WidgetTester tester, Finder target) =>
+      tester.scrollUntilVisible(
+        target,
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byType(ProviderManagedOrderScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+        maxScrolls: 80,
+      );
 
   testWidgets(
     'provider starts on dashboard; orders tabs preserve selection without fetching stores',
@@ -569,6 +589,169 @@ void main() {
   );
 
   testWidgets(
+    'Direct requests require confirmation and move to awaiting payment',
+    (tester) async {
+      final orders = FakeManagedOrders()..items = [testManagedOrder()];
+      await pump(tester, FakeStores(), managedOrders: orders);
+      await tab(tester, 'orders');
+      await tester.tap(find.byKey(const ValueKey('provider-orders-direct')));
+      await tester.pumpAndSettle();
+      await _preview(tester, 'provider-direct-orders');
+      final card = find.byKey(const ValueKey('provider-direct-order-31'));
+      final open = find.descendant(
+        of: card,
+        matching: find.byType(OutlinedButton),
+      );
+      await tester.ensureVisible(open);
+      await tester.tap(open);
+      await tester.pumpAndSettle();
+      expect(find.byType(ProviderManagedOrderScreen), findsOneWidget);
+      await _preview(tester, 'provider-direct-details');
+      final accept = find.byKey(const Key('provider-order-accept'));
+      await scrollOrderTo(tester, accept);
+      await tester.tap(accept);
+      await tester.pumpAndSettle();
+      expect(orders.responses, isEmpty);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(TextButton),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(orders.responses, isEmpty);
+      await tester.tap(accept);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('provider-order-confirm')));
+      await tester.pumpAndSettle();
+      expect(orders.responses, [(31, true)]);
+      expect(find.byKey(const Key('provider-order-accept')), findsNothing);
+      expect(find.byKey(const Key('provider-order-reject')), findsNothing);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('provider-direct-filter-awaiting_payment')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('provider-direct-order-31')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Direct request rejection refreshes list and paid history shows completed orders',
+    (tester) async {
+      final orders = FakeManagedOrders()
+        ..items = [
+          testManagedOrder(),
+          testManagedOrder(id: 32, status: 'paid'),
+          testManagedOrder(id: 33, status: 'completed'),
+        ];
+      final container = await pump(tester, FakeStores(), managedOrders: orders);
+      container.read(appRouterProvider).go('/provider/orders/direct/31');
+      await tester.pumpAndSettle();
+      final reject = find.byKey(const Key('provider-order-reject'));
+      await scrollOrderTo(tester, reject);
+      await tester.tap(reject);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('provider-order-confirm')));
+      await tester.pumpAndSettle();
+      expect(orders.responses, [(31, false)]);
+      expect(find.byKey(const Key('provider-order-accept')), findsNothing);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      container.read(appRouterProvider).go('/provider/orders');
+      await tester.pumpAndSettle();
+      final paid = find.byKey(const ValueKey('provider-orders-paid'));
+      await tester.ensureVisible(paid);
+      await tester.tap(paid);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('provider-paid-order-32')),
+        findsOneWidget,
+      );
+      await _preview(tester, 'provider-paid-orders');
+      await tester.tap(
+        find.byKey(const ValueKey('provider-paid-filter-completed')),
+      );
+      await tester.pumpAndSettle();
+      final open = find.descendant(
+        of: find.byKey(const ValueKey('provider-paid-order-33')),
+        matching: find.byType(OutlinedButton),
+      );
+      await tester.ensureVisible(open);
+      await tester.tap(open);
+      await tester.pumpAndSettle();
+      expect(find.byType(ProviderManagedOrderScreen), findsOneWidget);
+      expect(find.byKey(const Key('provider-order-accept')), findsNothing);
+      expect(find.byKey(const Key('provider-order-reject')), findsNothing);
+      expect(
+        find.text(translations['en']!['provider_orders']['commission']),
+        findsOneWidget,
+      );
+      await _preview(tester, 'provider-paid-details');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Arabic paid details and direct actions fit narrow large-text screens',
+    (tester) async {
+      final orders = FakeManagedOrders()
+        ..items = [
+          testManagedOrder(),
+          testManagedOrder(id: 32, status: 'paid'),
+        ];
+      final container = await pump(
+        tester,
+        FakeStores(),
+        managedOrders: orders,
+        arabic: true,
+        scale: 2,
+      );
+      container.read(appRouterProvider).go('/provider/orders/paid/32');
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await _preview(tester, 'provider-paid-details-ar-large');
+      container.read(appRouterProvider).go('/provider/orders/direct/31');
+      await tester.pumpAndSettle();
+      final accept = find.byKey(const Key('provider-order-accept'));
+      await scrollOrderTo(tester, accept);
+      await tester.tap(accept);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await _preview(tester, 'provider-direct-confirm-ar-large');
+    },
+  );
+
+  testWidgets('Direct request loading errors can be retried', (tester) async {
+    final orders = FakeManagedOrders()
+      ..onList = (_, _) async =>
+          throw const ApiFailure(type: ApiFailureType.noConnection);
+    await pump(tester, FakeStores(), managedOrders: orders);
+    await tab(tester, 'orders');
+    await tester.tap(find.byKey(const ValueKey('provider-orders-direct')));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(translations['en']!['errors']['no_connection']),
+      findsOneWidget,
+    );
+    orders.onList = null;
+    orders.items = [testManagedOrder()];
+    await tester.tap(find.text(translations['en']!['common']['retry']));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('provider-direct-order-31')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
     'Arabic navigation and orders work at narrow width and double text scale',
     (tester) async {
       await pump(tester, FakeStores(), arabic: true, scale: 2);
@@ -587,7 +770,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('provider-orders-paid')));
       await tester.pumpAndSettle();
       expect(
-        find.text(translations['ar']!['provider_portal']['paid_placeholder']),
+        find.text(translations['ar']!['provider_orders']['paid_empty']),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);

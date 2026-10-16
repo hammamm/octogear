@@ -9,9 +9,49 @@ Orders contains General Requests, Direct Requests, My Offers and Paid Orders tab
 More contains My Stores, Profile, Settings, language selection and sign out.
 The Dashboard shortcut also opens My Stores under More.
 
-General Requests is connected to the API. Dashboard reporting, Direct Requests,
-Paid Orders and profile management remain future slices. My Offers is connected. Existing
-owned-store fetching/refresh and provider chats remain functional.
+All four Orders tabs are connected to the API. Dashboard reporting and profile
+management remain separate future slices. Owned-store fetching/refresh and
+provider chats remain functional.
+
+## Provider direct requests and paid orders — 2026-10-15
+
+Direct Requests defaults to pending requests sent to the provider's stores, with
+Awaiting payment, Rejected, Cancelled and All statuses filters. Cards open typed
+`/provider/orders/direct/:orderId` details inside the provider shell. Part names
+are separated from vehicle/order information by a divider. Details include store,
+vehicle, customer city, quantity, saved unit price, total, notes and private photos.
+Confirmation is required before accepting or rejecting. Acceptance uses the
+customer's saved request price, never a replacement quotation or current catalogue
+price. The server validates the reviewed quantity/price, current inventory and
+store availability inside a transaction. No stock is consumed until payment.
+Legacy requests without a valid saved price cannot be accepted; they remain
+readable/rejectable under the existing permissions.
+
+Paid Orders has Paid and Completed filters and a typed
+`/provider/orders/paid/:orderId` detail route. General and direct purchases show
+their fulfillment store, customer name, vehicle/part and recorded payment total.
+Commission and net earnings are explicitly estimates at the current configured
+rate, not payout receipts. Accepted general offers link to their existing details;
+accepted offers link back to the paid order. Customer receipt confirmation remains
+the only completion action; providers do not mark their own orders received.
+
+Remote data sources own HTTP, repositories map validated DTOs, domain use cases
+validate actions, and Riverpod controls query/action state. Lists support server
+pagination, loading, empty, refresh, errors and retry. Double submissions are
+blocked. Uncertain writes require an explicit read of current server state; writes
+are never replayed automatically. Late results are discarded after account changes
+or query replacement. Arabic/English, RTL, narrow screens and 2x text are covered.
+
+No schema migration or new package is required. Existing authorization policies,
+archived-record visibility, customer cancellation rules and payment gateway driver
+are preserved. Live payment gateway and payout integration remain separate work.
+The existing provider offer notes migration is still required on deployments that
+have not applied the previous offer slice. Restart the running app for new routes.
+
+Validation: all 403 Flutter tests and 86 focused Laravel order regression tests pass;
+Full Flutter analysis and PHP formatting checks are clean. Older customer lifecycle tests were aligned with
+the cancellation rule explicitly committed in `341b780`: awaiting-payment orders
+cannot be cancelled. Tests inspect returned, freshly locked lifecycle models.
 
 ## Provider General Requests — 2026-10-15
 

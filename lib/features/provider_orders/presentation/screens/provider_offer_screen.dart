@@ -66,7 +66,7 @@ class ProviderOfferScreen extends ConsumerWidget {
                     offerMoney(context, offer.price),
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  Text(offerStatus(context, offer.status)),
+                  ProviderOfferStatusBadge(status: offer.status),
                   const SizedBox(height: 16),
                   Text(context.tr('provider_offers.notes')),
                   SelectableText(
@@ -88,6 +88,15 @@ class ProviderOfferScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             _OfferActions(offer: offer),
+            if (offer.status == 'accepted' &&
+                ['paid', 'completed'].contains(offer.orderStatus))
+              OutlinedButton.icon(
+                onPressed: () => ProviderPaidOrderRoute(
+                  orderId: offer.orderId,
+                ).push<void>(context),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: Text(context.tr('provider_orders.payment_details')),
+              ),
             for (final path in offer.imagePaths)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),

@@ -1,4 +1,6 @@
 import '../../features/provider_orders/presentation/screens/provider_offer_screen.dart';
+import '../../features/provider_orders/domain/entities/provider_managed_order.dart';
+import '../../features/provider_orders/presentation/screens/provider_managed_order_screen.dart';
 import '../../features/provider_orders/presentation/screens/provider_offer_form_screen.dart';
 import '../../features/provider_portal/presentation/screens/provider_dashboard_screen.dart';
 import '../../features/provider_portal/presentation/screens/provider_orders_screen.dart';
@@ -434,6 +436,8 @@ class CustomerCarEditRoute extends GoRouteData with $CustomerCarEditRoute {
               path: 'general/:orderId/offer',
             ),
             TypedGoRoute<ProviderOfferRoute>(path: 'offers/:offerId'),
+            TypedGoRoute<ProviderDirectOrderRoute>(path: 'direct/:orderId'),
+            TypedGoRoute<ProviderPaidOrderRoute>(path: 'paid/:orderId'),
           ],
         ),
       ],
@@ -527,6 +531,29 @@ class ProviderOfferFormRoute extends GoRouteData with $ProviderOfferFormRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       ProviderOfferFormScreen(orderId: orderId, offerId: offerId);
+}
+
+class ProviderDirectOrderRoute extends GoRouteData
+    with $ProviderDirectOrderRoute {
+  const ProviderDirectOrderRoute({required this.orderId});
+  final int orderId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProviderManagedOrderScreen(
+        orderId: orderId,
+        kind: ProviderOrderKind.direct,
+      );
+}
+
+class ProviderPaidOrderRoute extends GoRouteData with $ProviderPaidOrderRoute {
+  const ProviderPaidOrderRoute({required this.orderId});
+  final int orderId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProviderManagedOrderScreen(
+        orderId: orderId,
+        kind: ProviderOrderKind.paid,
+      );
 }
 
 class ProviderMoreRoute extends GoRouteData with $ProviderMoreRoute {

@@ -967,6 +967,16 @@ RouteBase get $providerShellRoute => StatefulShellRouteData.$route(
               hasOverriddenOnExit: false,
               factory: $ProviderOfferRoute._fromState,
             ),
+            GoRouteData.$route(
+              path: 'direct/:orderId',
+              hasOverriddenOnExit: false,
+              factory: $ProviderDirectOrderRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'paid/:orderId',
+              hasOverriddenOnExit: false,
+              factory: $ProviderPaidOrderRoute._fromState,
+            ),
           ],
         ),
       ],
@@ -1134,6 +1144,60 @@ mixin $ProviderOfferRoute on GoRouteData {
   @override
   String get location => GoRouteData.$location(
     '/provider/orders/offers/${Uri.encodeComponent(_self.offerId.toString())}',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderDirectOrderRoute on GoRouteData {
+  static ProviderDirectOrderRoute _fromState(GoRouterState state) =>
+      ProviderDirectOrderRoute(
+        orderId: int.parse(state.pathParameters['orderId']!),
+      );
+
+  ProviderDirectOrderRoute get _self => this as ProviderDirectOrderRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/orders/direct/${Uri.encodeComponent(_self.orderId.toString())}',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderPaidOrderRoute on GoRouteData {
+  static ProviderPaidOrderRoute _fromState(GoRouterState state) =>
+      ProviderPaidOrderRoute(
+        orderId: int.parse(state.pathParameters['orderId']!),
+      );
+
+  ProviderPaidOrderRoute get _self => this as ProviderPaidOrderRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/orders/paid/${Uri.encodeComponent(_self.orderId.toString())}',
   );
 
   @override

@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../../provider_orders/presentation/screens/provider_general_requests_panel.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
-import '../widgets/provider_page.dart';
+import '../../../provider_orders/domain/entities/provider_managed_order.dart';
+import '../../../provider_orders/presentation/screens/provider_managed_orders_panel.dart';
 
-/// General Requests is live; the other provider order workflows are separate slices.
+/// Separate discovery, direct requests, offers and paid fulfillment workflows.
 class ProviderOrdersScreen extends StatelessWidget {
   const ProviderOrdersScreen({super.key});
 
@@ -57,16 +58,10 @@ class ProviderOrdersScreen extends StatelessWidget {
                   else if (section == 'offers')
                     const ProviderOffersPanel()
                   else
-                    ListView(
-                      key: PageStorageKey('provider-orders-$section'),
-                      padding: const EdgeInsets.all(20),
-                      children: [
-                        ProviderSectionPlaceholder(
-                          icon: Icons.receipt_long_outlined,
-                          descriptionKey:
-                              'provider_portal.${section}_placeholder',
-                        ),
-                      ],
+                    ProviderManagedOrdersPanel(
+                      kind: section == 'direct'
+                          ? ProviderOrderKind.direct
+                          : ProviderOrderKind.paid,
                     ),
               ],
             ),
