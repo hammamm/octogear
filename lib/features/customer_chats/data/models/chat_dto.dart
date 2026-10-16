@@ -129,6 +129,7 @@ class ChatMessageDto {
 
 class ChatContextDto {
   const ChatContextDto({
+    this.otherUserName,
     this.conversation,
     this.storeName,
     this.employeeName,
@@ -137,11 +138,12 @@ class ChatContextDto {
     this.canStart = true,
   });
   final ChatSummaryDto? conversation;
-  final String? storeName, employeeName;
+  final String? storeName, employeeName, otherUserName;
   final int? orderId, offerId;
   final bool canStart;
   bool get canSend => conversation?.canSend ?? canStart;
   ChatContext toEntity() => ChatContext(
+    otherUserName: otherUserName,
     conversation: conversation?.toEntity(),
     storeName: storeName,
     employeeName: employeeName,

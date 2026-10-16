@@ -1,3 +1,5 @@
+import 'package:octogear/features/provider_dashboard/presentation/controllers/provider_dashboard_providers.dart';
+import '../../features/provider_dashboard/provider_dashboard_fixtures.dart';
 import 'package:octogear/features/provider_stores/domain/entities/provider_store.dart';
 import 'package:octogear/features/provider_orders/presentation/controllers/provider_offers_providers.dart';
 import 'package:octogear/features/provider_orders/presentation/screens/provider_offer_screen.dart';
@@ -111,6 +113,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          providerDashboardRepositoryProvider.overrideWithValue(
+            FakeDashboard(),
+          ),
           sessionControllerProvider.overrideWith(_Session.new),
           appLocaleProvider.overrideWith(
             () => StoreLocale(arabic ? AppLocale.arabic : AppLocale.english),
@@ -208,9 +213,7 @@ void main() {
       await _preview(tester, 'provider-orders-en');
       await tab(tester, 'more');
       await tab(tester, 'orders');
-      final controller = DefaultTabController.of(
-        tester.element(find.byType(TabBar)),
-      );
+      final controller = tester.widget<TabBar>(find.byType(TabBar)).controller!;
       expect(controller.index, 2);
       expect(stores.calls, 0);
       // A provider cannot enter the customer app through a direct URL.
@@ -295,8 +298,16 @@ void main() {
         '/provider/chats',
       );
       await tab(tester, 'dashboard');
-      await tester.ensureVisible(
+      await tester.scrollUntilVisible(
         find.byKey(const Key('provider-shortcut-stores')),
+        500,
+        scrollable: find
+            .descendant(
+              of: find.byType(ProviderDashboardScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+        maxScrolls: 40,
       );
       await tester.tap(find.byKey(const Key('provider-shortcut-stores')));
       await tester.pumpAndSettle();

@@ -348,7 +348,7 @@ class ChatController extends AsyncNotifier<ChatState> {
     final id = current.context.conversation?.id ?? target.conversationId;
     if (id != null
         ? update.conversationId != id
-        : (update.offerId != target.offerId ||
+        : (update.offerId != (current.context.offerId ?? target.offerId) ||
               update.orderId != target.orderId)) {
       return;
     }
@@ -369,6 +369,7 @@ class ChatController extends AsyncNotifier<ChatState> {
               ? current.context
               : ChatContext(
                   conversation: update.conversation,
+                  otherUserName: update.conversation!.name,
                   storeName: update.conversation!.storeName,
                   employeeName: update.conversation!.employeeName,
                   orderId: update.orderId,
@@ -417,6 +418,7 @@ class ChatController extends AsyncNotifier<ChatState> {
         latest.copy(
           context: ChatContext(
             conversation: chat,
+            otherUserName: chat?.name ?? latest.context.otherUserName,
             storeName: latest.context.storeName,
             employeeName: latest.context.employeeName,
             orderId: latest.context.orderId,

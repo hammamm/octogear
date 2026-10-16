@@ -9,6 +9,8 @@ import '../../features/provider_stores/presentation/screens/provider_stores_scre
 import '../../features/customer_profile/presentation/screens/customer_profile_screen.dart';
 import '../../features/seller_registration/presentation/screens/seller_registration_screen.dart';
 import '../../features/customer_chats/domain/entities/chat.dart';
+import '../../features/provider_dashboard/domain/entities/provider_dashboard.dart';
+import '../../features/provider_dashboard/presentation/screens/provider_dashboard_activity_screen.dart';
 import '../../features/customer_notifications/presentation/screens/customer_notifications_screen.dart';
 import '../../features/customer_chats/presentation/screens/chat_conversation_screen.dart';
 import '../../features/customer_orders/presentation/screens/edit_customer_order_screen.dart';
@@ -423,7 +425,14 @@ class CustomerCarEditRoute extends GoRouteData with $CustomerCarEditRoute {
   branches: <TypedStatefulShellBranch<StatefulShellBranchData>>[
     TypedStatefulShellBranch<ProviderDashboardBranch>(
       routes: [
-        TypedGoRoute<ProviderHomeRoute>(path: AppRoutePath.providerHome),
+        TypedGoRoute<ProviderHomeRoute>(
+          path: AppRoutePath.providerHome,
+          routes: [
+            TypedGoRoute<ProviderDashboardActivityRoute>(
+              path: 'activity/:section',
+            ),
+          ],
+        ),
       ],
     ),
     TypedStatefulShellBranch<ProviderOrdersBranch>(
@@ -447,6 +456,7 @@ class CustomerCarEditRoute extends GoRouteData with $CustomerCarEditRoute {
         TypedGoRoute<ProviderChatsRoute>(
           path: AppRoutePath.providerChats,
           routes: [
+            TypedGoRoute<ProviderOrderChatRoute>(path: 'order/:orderId'),
             TypedGoRoute<ProviderConversationRoute>(path: ':conversationId'),
           ],
         ),
@@ -501,10 +511,38 @@ class ProviderHomeRoute extends GoRouteData with $ProviderHomeRoute {
 }
 
 class ProviderOrdersRoute extends GoRouteData with $ProviderOrdersRoute {
-  const ProviderOrdersRoute();
+  const ProviderOrdersRoute({this.section = 'general'});
+  final String section;
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      const ProviderOrdersScreen();
+      ProviderOrdersScreen(initialSection: section);
+}
+
+class ProviderDashboardActivityRoute extends GoRouteData
+    with $ProviderDashboardActivityRoute {
+  const ProviderDashboardActivityRoute({required this.section, this.storeId});
+  final String section;
+  final int? storeId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProviderDashboardActivityScreen(
+        section: ProviderDashboardSection.values.firstWhere(
+          (value) => value.apiValue == section,
+          orElse: () => ProviderDashboardSection.recent,
+        ),
+        storeId: storeId,
+      );
+}
+
+class ProviderOrderChatRoute extends GoRouteData with $ProviderOrderChatRoute {
+  const ProviderOrderChatRoute({required this.orderId});
+  final int orderId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ChatConversationScreen(
+        target: ChatTarget.providerOrder(orderId),
+        provider: true,
+      );
 }
 
 class ProviderGeneralRequestRoute extends GoRouteData

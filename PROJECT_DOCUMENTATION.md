@@ -1,5 +1,85 @@
 # OctoGear - Mobile Application Development Contract
 
+## Provider dashboard and customer follow-up — 2026-10-16
+
+Provider login now opens a live dashboard at `/provider`. It keeps the existing
+Dashboard / Orders / Chats / More bottom navigation. Owned-store selection scopes
+current request/offer/paid counts, attention previews, order history and sales.
+Paid orders awaiting customer receipt are shown first; accepted general offers
+and confirmed direct requests awaiting payment follow, with pending direct
+requests to review. Empty, loading, retry, refresh and no-store states are distinct.
+
+General Requests has a prominent action directly below the welcome, visible
+without scrolling even at 320 dp and 200% text scale. The dashboard displays each
+attention order once; a separate store-scoped Order history action replaces the
+overlapping recent-order preview. Paid and awaiting-payment sections are mutually
+exclusive. All three View all actions retain their section and optional store
+filter, with pagination and back navigation inside the provider shell.
+Orders tab taps and swipes update the typed route's section; bottom navigation
+preserves the current selection, while dashboard shortcuts select their named tab.
+After adding routes during development, restart the app to recreate GoRouter;
+hot reload alone can leave the existing router with its previous route table.
+
+`GET /provider/dashboard` supplies bounded previews and authoritative aggregate
+counts; `GET /provider/dashboard/orders` paginates View all using the same store
+scope. Current operational counts do not depend on the sales period. Sales sum
+recorded successful payments on paid/completed owned orders, before fees, using
+the backend's configured business calendar day, Saturday-start week, or month.
+Laravel reads `BUSINESS_TIMEZONE` through `config('app.business_timezone')`;
+the app uses the returned `sales.timezone` in its Arabic/English hint. UTC database
+storage remains unchanged. Payment `updated_at` is used as
+the current schema's successful-payment time because there is no `paid_at`;
+this is not a gateway settlement report. No revenue is inferred from offer prices.
+
+Attention cards open existing provider order details and offer Chat with customer
+only when the API allows it. `GET /provider/orders/{order}/conversation` is read-only;
+the `/messages` POST creates a conversation only with the first explicit message.
+General orders reuse the accepted offer conversation. Direct orders use a unique
+nullable conversation `order_id`, added by migration
+`2026_10_16_000001_add_direct_order_context_to_conversations` (applied locally).
+Other deployments must run that migration before serving these endpoints.
+
+Provider initiation is restricted to the owning store's awaiting-payment or paid
+orders and eligible participants. Completed orders can reconcile an already sent
+message or read an existing conversation; the order endpoint cannot start a new
+chat/message after completion. Identical retry keys return the original receipt;
+changed content conflicts. Opening screens never sends a message automatically.
+
+Dashboard data is scoped to account and locale, filters reset between accounts,
+and late pagination replies cannot overwrite a new session. Refresh runs on
+returning to the dashboard, app resume, pull-to-refresh, and explicit retry.
+Returning from order details or customer chat refreshes both dashboard and activity lists.
+Typed shortcuts open the requested Orders tab. Arabic and English screens support
+320 dp widths and 200% text scale, with responsive headers and visible status icons.
+HTTP stays in remote data sources; repositories, use cases and presentation
+controllers retain the existing feature architecture.
+
+Verification: full Flutter suite 423 passed; Flutter analysis clean; combined
+dashboard/provider/customer-order/chat API regression suite 143 passed (1,474
+assertions). The existing cancellation regression was corrected to assert the
+already-committed rule that accepted orders awaiting payment cannot be cancelled;
+production cancellation behavior is unchanged. UI previews use deterministic test
+fixtures; no real customer messages were sent.
+
+Dashboard follow-up verification: 70 targeted Flutter tests passed across dashboard,
+provider orders, provider shell, routing and feature boundaries; full Flutter
+analysis found no issues. Coverage includes all three View all sections for all
+stores and a selected store, scoped order history, top-of-page discovery, and
+tab taps/swipes followed by branch changes. The debug Android app was rebuilt,
+installed and launched successfully on the connected emulator. Existing account
+data was retained. The reported unavailable-page state was not reproduced with
+the current routes; the development app was fully restarted to load them.
+
+Timezone follow-up verification (2026-10-16): 9 dashboard API tests passed
+(151 assertions), including Saturday rollover, alternate zones, DST, and UTC
+storage. The vehicle/order validation regression run passed 47 tests, including
+all six year validators around New Year. Two existing GeneralOrderDetailsTest
+failures remain: the paid response contains a field expected absent, and the
+demo seeder creates 50 general orders where the test expects 30. Both reproduce
+in an isolated process with the original date('Y') validation behavior.
+All 24 Flutter dashboard tests passed and targeted static analysis was clean.
+The updated app was rebuilt and launched on the connected Android emulator.
+
 ## Provider navigation — 2026-10-15
 
 Provider login opens Dashboard at `/provider`, inside a separate typed stateful
@@ -9,8 +89,8 @@ Orders contains General Requests, Direct Requests, My Offers and Paid Orders tab
 More contains My Stores, Profile, Settings, language selection and sign out.
 The Dashboard shortcut also opens My Stores under More.
 
-All four Orders tabs are connected to the API. Dashboard reporting and profile
-management remain separate future slices. Owned-store fetching/refresh and
+All four Orders tabs and Dashboard reporting are connected to the API. Profile
+management remains a separate future slice. Owned-store fetching/refresh and
 provider chats remain functional.
 
 ## Provider direct requests and paid orders — 2026-10-15

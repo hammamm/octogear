@@ -6,14 +6,15 @@ import '../models/chat_dto.dart';
 class ChatRemoteDataSource {
   const ChatRemoteDataSource(this.api);
   final ApiClient api;
-  String _offer(ChatTarget target) =>
-      'customer/orders/${target.orderId}/offers/${target.offerId}/conversation';
+  String _contextPath(ChatTarget target) => target.isProviderOrder
+      ? 'provider/orders/${target.orderId}/conversation'
+      : 'customer/orders/${target.orderId}/offers/${target.offerId}/conversation';
 
   Future<ChatContextDto> open(ChatTarget target) async {
     final result = await api.get(
       target.conversationId != null
           ? 'conversations/${target.conversationId}'
-          : _offer(target),
+          : _contextPath(target),
       requiresAuthentication: true,
       decode: (value) {
         if (target.conversationId != null) {
@@ -23,6 +24,7 @@ class ChatRemoteDataSource {
           }
           return ChatContextDto(
             conversation: chat,
+            otherUserName: chat.name,
             storeName: chat.storeName,
             employeeName: chat.employeeName,
             orderId: chat.orderId,
@@ -31,9 +33,16 @@ class ChatRemoteDataSource {
         }
         final json = chatMap(value);
         if (json['order_id'] != target.orderId ||
-            json['offer_id'] != target.offerId) {
+            (!target.isProviderOrder && json['offer_id'] != target.offerId)) {
           throw const FormatException('Wrong offer');
         }
+        final offerId = json['offer_id'] == null
+            ? null
+            : chatId(json['offer_id']);
+        final otherUser = json['other_user'] == null
+            ? null
+            : chatMap(json['other_user']);
+        if (target.isProviderOrder) chatId(otherUser?['id']);
         final store = json['store'] == null ? null : chatMap(json['store']);
         if (json['can_send'] is! bool) {
           throw const FormatException('Missing send permission');
@@ -42,17 +51,18 @@ class ChatRemoteDataSource {
             ? null
             : chatSummary(json['conversation']);
         if (conversation != null &&
-            (conversation.offerId != target.offerId ||
+            (conversation.offerId != offerId ||
                 conversation.orderId != target.orderId)) {
           throw const FormatException('Wrong offer conversation');
         }
         return ChatContextDto(
           conversation: conversation,
+          otherUserName: chatText(otherUser?['name']),
           canStart: json['can_send'] as bool,
           storeName: chatText(store?['name']),
           employeeName: chatText(store?['employee_name']),
           orderId: target.orderId,
-          offerId: target.offerId,
+          offerId: offerId,
         );
       },
     );
@@ -102,7 +112,7 @@ class ChatRemoteDataSource {
     final first = target.conversationId == null;
     final result = await api.post(
       first
-          ? '${_offer(target)}/messages'
+          ? '${_contextPath(target)}/messages'
           : 'conversations/${target.conversationId}/messages',
       requiresAuthentication: true,
       data: {'content': text, 'client_message_id': clientId},
@@ -116,8 +126,8 @@ class ChatRemoteDataSource {
         }
         final chat = first ? chatSummary(json['conversation']) : null;
         if (first &&
-            (chat!.offerId != target.offerId ||
-                chat.orderId != target.orderId)) {
+            (chat!.orderId != target.orderId ||
+                (!target.isProviderOrder && chat.offerId != target.offerId))) {
           throw const FormatException('Wrong conversation receipt');
         }
         return ChatReceiptDto(message, chat);

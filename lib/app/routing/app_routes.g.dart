@@ -942,6 +942,13 @@ RouteBase get $providerShellRoute => StatefulShellRouteData.$route(
           path: '/provider',
           hasOverriddenOnExit: false,
           factory: $ProviderHomeRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'activity/:section',
+              hasOverriddenOnExit: false,
+              factory: $ProviderDashboardActivityRoute._fromState,
+            ),
+          ],
         ),
       ],
     ),
@@ -988,6 +995,11 @@ RouteBase get $providerShellRoute => StatefulShellRouteData.$route(
           hasOverriddenOnExit: false,
           factory: $ProviderChatsRoute._fromState,
           routes: [
+            GoRouteData.$route(
+              path: 'order/:orderId',
+              hasOverriddenOnExit: false,
+              factory: $ProviderOrderChatRoute._fromState,
+            ),
             GoRouteData.$route(
               path: ':conversationId',
               hasOverriddenOnExit: false,
@@ -1052,12 +1064,55 @@ mixin $ProviderHomeRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-mixin $ProviderOrdersRoute on GoRouteData {
-  static ProviderOrdersRoute _fromState(GoRouterState state) =>
-      const ProviderOrdersRoute();
+mixin $ProviderDashboardActivityRoute on GoRouteData {
+  static ProviderDashboardActivityRoute _fromState(GoRouterState state) =>
+      ProviderDashboardActivityRoute(
+        section: state.pathParameters['section']!,
+        storeId: _$convertMapValue(
+          'store-id',
+          state.uri.queryParameters,
+          int.tryParse,
+        ),
+      );
+
+  ProviderDashboardActivityRoute get _self =>
+      this as ProviderDashboardActivityRoute;
 
   @override
-  String get location => GoRouteData.$location('/provider/orders');
+  String get location => GoRouteData.$location(
+    '/provider/activity/${Uri.encodeComponent(_self.section)}',
+    queryParams: {
+      if (_self.storeId != null) 'store-id': _self.storeId!.toString(),
+    },
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderOrdersRoute on GoRouteData {
+  static ProviderOrdersRoute _fromState(GoRouterState state) =>
+      ProviderOrdersRoute(
+        section: state.uri.queryParameters['section'] ?? 'general',
+      );
+
+  ProviderOrdersRoute get _self => this as ProviderOrdersRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/orders',
+    queryParams: {if (_self.section != 'general') 'section': _self.section},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1220,6 +1275,33 @@ mixin $ProviderChatsRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/provider/chats');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderOrderChatRoute on GoRouteData {
+  static ProviderOrderChatRoute _fromState(GoRouterState state) =>
+      ProviderOrderChatRoute(
+        orderId: int.parse(state.pathParameters['orderId']!),
+      );
+
+  ProviderOrderChatRoute get _self => this as ProviderOrderChatRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/chats/order/${Uri.encodeComponent(_self.orderId.toString())}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

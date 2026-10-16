@@ -1,17 +1,27 @@
 class ChatTarget {
-  const ChatTarget.offer(this.orderId, this.offerId) : conversationId = null;
+  const ChatTarget.offer(this.orderId, this.offerId)
+    : conversationId = null,
+      isProviderOrder = false;
+  const ChatTarget.providerOrder(this.orderId)
+    : conversationId = null,
+      offerId = null,
+      isProviderOrder = true;
   const ChatTarget.conversation(this.conversationId)
     : orderId = null,
-      offerId = null;
+      offerId = null,
+      isProviderOrder = false;
   final int? orderId, offerId, conversationId;
+  final bool isProviderOrder;
   @override
   bool operator ==(Object other) =>
       other is ChatTarget &&
       other.orderId == orderId &&
       other.offerId == offerId &&
-      other.conversationId == conversationId;
+      other.conversationId == conversationId &&
+      other.isProviderOrder == isProviderOrder;
   @override
-  int get hashCode => Object.hash(orderId, offerId, conversationId);
+  int get hashCode =>
+      Object.hash(orderId, offerId, conversationId, isProviderOrder);
 }
 
 class ChatSummary {
@@ -40,6 +50,7 @@ class ChatSummary {
 
 class ChatContext {
   const ChatContext({
+    this.otherUserName,
     this.conversation,
     this.storeName,
     this.employeeName,
@@ -48,7 +59,7 @@ class ChatContext {
     this.canStart = true,
   });
   final ChatSummary? conversation;
-  final String? storeName, employeeName;
+  final String? storeName, employeeName, otherUserName;
   final int? orderId, offerId;
   final bool canStart;
   bool get canSend => conversation?.canSend ?? canStart;

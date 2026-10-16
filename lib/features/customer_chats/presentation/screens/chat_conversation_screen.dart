@@ -171,7 +171,7 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
     });
     final info = async.asData?.value.context;
     final title = widget.provider
-        ? info?.conversation?.name
+        ? info?.conversation?.name ?? info?.otherUserName
         : info?.storeName ?? info?.conversation?.name;
     final subtitle = widget.provider ? info?.storeName : info?.employeeName;
     return Scaffold(

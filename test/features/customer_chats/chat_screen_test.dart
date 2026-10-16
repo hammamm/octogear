@@ -52,6 +52,7 @@ void main() {
     FakeChatRepository repo, {
     bool arabic = false,
     bool inbox = false,
+    bool provider = false,
     double scale = 1,
     Stream<ChatUpdate>? updates,
   }) async {
@@ -63,7 +64,12 @@ void main() {
           path: '/',
           builder: (_, _) => inbox
               ? const CustomerChatsScreen()
-              : const ChatConversationScreen(target: ChatTarget.offer(17, 42)),
+              : ChatConversationScreen(
+                  target: provider
+                      ? const ChatTarget.providerOrder(17)
+                      : const ChatTarget.offer(17, 42),
+                  provider: provider,
+                ),
         ),
       ],
     );
@@ -89,6 +95,24 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'provider order chat shows the customer before the first message in Arabic at large text',
+    (tester) async {
+      final repo = FakeChatRepository()
+        ..context = const ChatContext(
+          orderId: 17,
+          offerId: 42,
+          otherUserName: 'صالح العميل',
+          storeName: 'Octo Parts',
+        );
+      await pump(tester, repo, provider: true, arabic: true, scale: 2);
+      expect(find.text('صالح العميل'), findsOneWidget);
+      expect(find.text('Octo Parts'), findsOneWidget);
+      expect(repo.sends, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   ChatMessage incoming(int id) => ChatMessage(
     id: id,
