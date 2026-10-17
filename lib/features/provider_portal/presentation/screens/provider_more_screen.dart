@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routing/app_routes.dart';
+import '../../../../core/widgets/app_language_settings_card.dart';
 import '../../../notifications/presentation/widgets/notification_entry.dart';
 import '../../../authentication/presentation/controllers/session_controller.dart';
 import '../widgets/provider_page.dart';
@@ -48,11 +49,6 @@ class ProviderSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) => const ProviderPage(
     titleKey: 'provider_portal.settings',
     showBack: true,
-    children: [
-      ProviderSectionPlaceholder(
-        icon: Icons.settings_outlined,
-        descriptionKey: 'provider_portal.settings_placeholder',
-      ),
-    ],
+    children: [AppLanguageSettingsCard()],
   );
 }

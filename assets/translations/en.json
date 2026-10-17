@@ -1,4 +1,8 @@
 {
+  "app_settings": {
+    "language": "App language",
+    "language_description": "Use OctoGear in Arabic or English. Your choice is saved automatically."
+  },
   "provider_dashboard": {
     "intro": "Your orders, customer follow-ups, and sales in one place.",
     "refresh": "Refresh dashboard",

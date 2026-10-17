@@ -1,5 +1,15 @@
 # OctoGear - Mobile Application Development Contract
 
+## Provider language settings — 2026-10-17
+
+Provider More > Settings contains only the app language setting. Customer and
+provider settings reuse the same language card and existing locale controller;
+the selection is saved locally and updates Arabic/English text, RTL/LTR direction
+and the API locale through the existing application wiring. No new API, permission,
+notification preference or inventory action is introduced. The provider route
+and bottom navigation are unchanged. Verify with existing shell/localization
+regressions and Flutter analysis.
+
 ## Provider notification inbox and Android delivery — 2026-10-17
 
 The provider dashboard bell and More entry open `/provider/notifications` inside

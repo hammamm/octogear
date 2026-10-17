@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/routing/app_routes.dart';
 import '../../../../app/shells/customer_app_shell.dart';
 import '../../../../core/design_system/octogear_theme.dart';
+import '../../../../core/widgets/app_language_settings_card.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../authentication/domain/entities/session_outcome.dart';
@@ -98,26 +99,7 @@ class CustomerSettingsScreen extends StatelessWidget {
     pageKey: 'customer-settings',
     title: context.tr('customer_more.settings'),
     showBack: true,
-    children: [
-      OctoGearSurfaceCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              context.tr('customer_more.language'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(context.tr('customer_more.language_description')),
-            const SizedBox(height: 16),
-            const Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: AppLanguageToggleButton(),
-            ),
-          ],
-        ),
-      ),
-    ],
+    children: const [AppLanguageSettingsCard()],
   );
 }
 
