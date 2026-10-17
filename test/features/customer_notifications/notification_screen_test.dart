@@ -13,9 +13,9 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:octogear/app/routing/app_routes.dart';
 import 'package:octogear/core/localization/app_locale_controller.dart';
-import 'package:octogear/features/customer_notifications/domain/entities/customer_notification.dart';
-import 'package:octogear/features/customer_notifications/presentation/controllers/notification_providers.dart';
-import 'package:octogear/features/customer_notifications/presentation/screens/customer_notifications_screen.dart';
+import 'package:octogear/features/notifications/domain/entities/app_notification.dart';
+import 'package:octogear/features/notifications/presentation/controllers/notification_providers.dart';
+import 'package:octogear/features/notifications/presentation/screens/notifications_screen.dart';
 import '../customer_chats/chat_screen_test.dart'
     show App, Translations, English, Arabic;
 import 'notification_fixtures.dart';
@@ -46,6 +46,7 @@ void main() {
     WidgetTester tester,
     FakeNotificationsRepository repo, {
     bool arabic = false,
+    bool provider = false,
     double scale = 1,
     bool settle = true,
   }) async {
@@ -55,8 +56,8 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, _) => const Scaffold(
-            body: SafeArea(child: CustomerNotificationsScreen()),
+          builder: (_, _) => Scaffold(
+            body: SafeArea(child: NotificationsScreen(provider: provider)),
           ),
         ),
         GoRoute(
@@ -80,8 +81,10 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          notificationCustomerIdProvider.overrideWithValue(1),
-          customerNotificationsRepositoryProvider.overrideWithValue(repo),
+          notificationSessionProvider.overrideWithValue(
+            provider ? providerNotificationSession : notificationSession,
+          ),
+          notificationsRepositoryProvider.overrideWithValue(repo),
           appLocaleProvider.overrideWith(arabic ? Arabic.new : English.new),
         ],
         child: EasyLocalization(
@@ -98,18 +101,151 @@ void main() {
     return router;
   }
 
+  for (final provider in [false, true]) {
+    testWidgets(
+      '${provider ? 'provider' : 'customer'} entry reads the displayed page once and keeps rows visible',
+      (tester) async {
+        final repo = FakeNotificationsRepository()
+          ..items = [
+            notification(
+              1,
+              kind: provider
+                  ? NotificationKind.offerAccepted
+                  : NotificationKind.offer,
+            ),
+          ];
+        await pump(tester, repo, provider: provider);
+        expect(repo.pageReads, hasLength(1));
+        expect(repo.pageReads.single, {notification(1).id});
+        expect(
+          find.text(
+            provider ? 'Your offer was accepted' : 'A new offer for you',
+          ),
+          findsOneWidget,
+        );
+        expect(repo.readCalls, 0);
+        expect(repo.allCalls, 0);
+        expect(find.text('0 unread notifications'), findsOneWidget);
+        expect(find.byKey(const Key('notifications-read-all')), findsNothing);
+        await tester.pump(const Duration(minutes: 2));
+        expect(repo.pageReads, hasLength(1));
+        expect(repo.pageCalls, 1);
+        expect(repo.countCalls, 0);
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+
+    testWidgets(
+      '${provider ? 'provider' : 'customer'} read failure offers retry without losing visible notifications',
+      (tester) async {
+        final repo = FakeNotificationsRepository()..failRead = true;
+        await pump(tester, repo, provider: provider);
+        expect(repo.pageReads, hasLength(1));
+        expect(find.textContaining('Could not mark this page'), findsOneWidget);
+        await tester.pump(const Duration(minutes: 2));
+        expect(repo.pageReads, hasLength(1));
+        repo.failRead = false;
+        await tester.tap(find.byKey(const Key('notifications-refresh')));
+        await tester.pumpAndSettle();
+        expect(repo.pageReads, hasLength(2));
+        expect(find.text('0 unread notifications'), findsOneWidget);
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+
+    testWidgets(
+      '${provider ? 'provider' : 'customer'} page loaded behind another route is read only after returning',
+      (tester) async {
+        final pending = Completer<NotificationPage>();
+        final repo = FakeNotificationsRepository()
+          ..onPage = (_, _) => pending.future;
+        final router = await pump(
+          tester,
+          repo,
+          provider: provider,
+          settle: false,
+        );
+        await tester.pump();
+        unawaited(
+          router.push(const CustomerOrderDetailsRoute(orderId: 17).location),
+        );
+        await tester.pumpAndSettle();
+        pending.complete(NotificationPage(items: repo.items, unreadCount: 2));
+        await tester.pumpAndSettle();
+        expect(repo.pageReads, isEmpty);
+        router.pop();
+        await tester.pumpAndSettle();
+        expect(repo.pageReads, hasLength(1));
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+
+    testWidgets(
+      '${provider ? 'provider' : 'customer'} page fetched in background waits until foreground to mark read',
+      (tester) async {
+        final pending = Completer<NotificationPage>();
+        final repo = FakeNotificationsRepository()
+          ..onPage = (_, _) => pending.future;
+        await pump(tester, repo, provider: provider, settle: false);
+        await tester.pump();
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        pending.complete(NotificationPage(items: repo.items, unreadCount: 2));
+        await tester.pumpAndSettle();
+        expect(repo.pageReads, isEmpty);
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pumpAndSettle();
+        expect(repo.pageReads, hasLength(1));
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+  }
+
+  for (final arabic in [false, true]) {
+    for (final scale in [1.0, 2.0]) {
+      testWidgets('provider inbox layout $arabic $scale', (tester) async {
+        final repo = FakeNotificationsRepository()
+          ..items = [
+            notification(1, kind: NotificationKind.offerAccepted),
+            notification(2, kind: NotificationKind.orderPaid),
+            notification(3, kind: NotificationKind.message),
+          ];
+        await pump(tester, repo, provider: true, arabic: arabic, scale: scale);
+        expect(tester.takeException(), isNull);
+        if (scale == 1) {
+          final boundary = tester.renderObject<RenderRepaintBoundary>(
+            find.byKey(const Key('chat-preview')),
+          );
+          await tester.runAsync(() async {
+            final image = await boundary.toImage(pixelRatio: 2);
+            final data = await image.toByteData(format: ui.ImageByteFormat.png);
+            await File(
+              'build/provider-notifications-${arabic ? 'ar' : 'en'}.png',
+            ).writeAsBytes(data!.buffer.asUint8List());
+            image.dispose();
+          });
+        }
+        await tester.drag(find.byType(ListView), const Offset(0, -800));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      });
+    }
+  }
+
   testWidgets(
-    'viewing does not mark read; filters and mark all update the inbox',
+    'customer filters preserve read history without marking unseen notifications',
     (tester) async {
       final repo = FakeNotificationsRepository();
       await pump(tester, repo);
+      expect(repo.pageReads, hasLength(1));
       expect(repo.readCalls, 0);
-      expect(find.text('2 unread notifications'), findsOneWidget);
+      expect(repo.allCalls, 0);
+      expect(find.text('0 unread notifications'), findsOneWidget);
+      expect(find.byKey(const Key('notifications-read-all')), findsNothing);
       await tester.tap(find.text('Unread'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('notifications-read-all')));
-      await tester.pumpAndSettle();
-      expect(repo.allCalls, 1);
       expect(find.text('You’re all caught up'), findsOneWidget);
       await tester.tap(find.text('All'));
       await tester.pumpAndSettle();
@@ -118,9 +254,9 @@ void main() {
     },
   );
   for (final kind in [
-    CustomerNotificationKind.offer,
-    CustomerNotificationKind.message,
-    CustomerNotificationKind.orderCompleted,
+    NotificationKind.offer,
+    NotificationKind.message,
+    NotificationKind.orderCompleted,
   ]) {
     testWidgets(
       '${kind.name} opens the correct target even when marking read fails',
@@ -134,13 +270,14 @@ void main() {
         );
         await tester.pumpAndSettle();
         final label = switch (kind) {
-          CustomerNotificationKind.offer => 'Offer destination',
-          CustomerNotificationKind.message => 'Chat destination',
+          NotificationKind.offer => 'Offer destination',
+          NotificationKind.message => 'Chat destination',
           _ => 'Order destination',
         };
         expect(find.text(label), findsOneWidget);
-        expect(repo.readCalls, 1);
-        if (kind == CustomerNotificationKind.message) {
+        expect(repo.readCalls, 0);
+        expect(repo.pageReads, hasLength(2));
+        if (kind == NotificationKind.message) {
           expect(router.canPop(), isFalse);
           router.go('/');
         } else {
@@ -154,7 +291,7 @@ void main() {
   }
   testWidgets('unknown updates can be read without navigation', (tester) async {
     final repo = FakeNotificationsRepository()
-      ..items = [notification(1, kind: CustomerNotificationKind.unknown)];
+      ..items = [notification(1, kind: NotificationKind.unknown)];
     final router = await pump(tester, repo);
     await tester.tap(
       find.byKey(ValueKey('notification-${notification(1).id}')),
@@ -165,15 +302,14 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
   testWidgets('rapid taps open only one page', (tester) async {
-    final pending = Completer<void>();
-    final repo = FakeNotificationsRepository()..onRead = () => pending.future;
+    final repo = FakeNotificationsRepository();
     final router = await pump(tester, repo);
     final tile = find.byKey(ValueKey('notification-${notification(1).id}'));
     await tester.tap(tile);
     await tester.tap(tile);
-    pending.complete();
     await tester.pumpAndSettle();
-    expect(repo.readCalls, 1);
+    expect(repo.readCalls, 0);
+    expect(repo.pageReads, hasLength(1));
     router.pop();
     await tester.pumpAndSettle();
     expect(router.canPop(), false);
@@ -192,44 +328,34 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
   testWidgets(
-    'reading the visible unread history still allows loading older unread rows',
+    'customer reads 20 loaded notifications, then only the next page on load older',
     (tester) async {
-      final rows = [
-        for (var i = 1; i <= 3; i++)
-          notification(i, kind: CustomerNotificationKind.unknown),
-      ];
+      final rows = List.generate(
+        25,
+        (i) => notification(i + 1, kind: NotificationKind.unknown),
+      );
       final repo = FakeNotificationsRepository()..items = rows;
       repo.onPage = (_, cursor) async => NotificationPage(
-        items: [
-          rows[cursor == null
-              ? 0
-              : cursor == 'second'
-              ? 1
-              : 2],
-        ],
+        items: cursor == null
+            ? repo.items.take(20).toList()
+            : repo.items.skip(20).toList(),
         unreadCount: repo.items.where((n) => !n.isRead).length,
-        nextCursor: cursor == null
-            ? 'second'
-            : cursor == 'second'
-            ? 'third'
-            : null,
+        nextCursor: cursor == null ? 'older' : null,
       );
       await pump(tester, repo);
-      await tester.tap(find.text('Unread'));
+      expect(repo.pageReads.single, rows.take(20).map((n) => n.id).toSet());
+      expect(repo.items.skip(20).every((n) => !n.isRead), true);
+      expect(find.text('5 unread notifications'), findsOneWidget);
+      final more = find.byKey(const Key('notifications-more'));
+      await tester.scrollUntilVisible(more, 500);
+      await tester.tap(more);
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('notifications-more')));
-      await tester.pumpAndSettle();
-      for (final row in rows.take(2)) {
-        await tester.tap(find.byKey(ValueKey('notification-${row.id}')));
-        await tester.pumpAndSettle();
-      }
-      expect(find.text('You’re all caught up'), findsNothing);
-      await tester.tap(find.byKey(const Key('notifications-more')));
-      await tester.pumpAndSettle();
-      expect(
-        find.byKey(ValueKey('notification-${rows.last.id}')),
-        findsOneWidget,
-      );
+      expect(repo.pageReads, hasLength(2));
+      expect(repo.pageReads.last, rows.skip(20).map((n) => n.id).toSet());
+      expect(repo.items.every((n) => n.isRead), true);
+      expect(repo.allCalls, 0);
+      expect(repo.readCalls, 0);
+      expect(repo.pageCalls, 2);
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -241,7 +367,7 @@ void main() {
       expect(repo.pageCalls, 1);
       expect(repo.countCalls, 0);
       final container = ProviderScope.containerOf(
-        tester.element(find.byType(CustomerNotificationsScreen)),
+        tester.element(find.byType(NotificationsScreen)),
       );
       container
           .read(notificationCountProvider.notifier)
@@ -265,8 +391,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          notificationCustomerIdProvider.overrideWithValue(1),
-          customerNotificationsRepositoryProvider.overrideWithValue(repo),
+          notificationSessionProvider.overrideWithValue(notificationSession),
+          notificationsRepositoryProvider.overrideWithValue(repo),
         ],
         child: Consumer(
           builder: (_, ref, _) {
@@ -296,7 +422,7 @@ void main() {
             ..items.add(
               notification(
                 3,
-                kind: CustomerNotificationKind.orderCompleted,
+                kind: NotificationKind.orderCompleted,
                 read: true,
               ),
             );

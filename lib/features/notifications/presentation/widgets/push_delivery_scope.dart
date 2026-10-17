@@ -15,10 +15,12 @@ import '../../../customer_chats/presentation/controllers/chat_activity_controlle
 import '../../../customer_chats/presentation/controllers/chat_realtime_providers.dart';
 import '../../../authentication/domain/entities/session_outcome.dart';
 import '../../../authentication/presentation/controllers/session_controller.dart';
-import '../../domain/entities/customer_notification.dart';
+import '../../domain/entities/app_notification.dart';
 import '../../domain/entities/push_notification.dart';
 import '../controllers/notification_providers.dart';
 import '../controllers/push_providers.dart';
+import '../notification_destination.dart';
+import '../../../authentication/domain/entities/app_user.dart';
 
 /// Application lifetime listeners handle cold-start taps after session restore.
 /// No message or lifecycle callback fetches notification lists/counts.
@@ -37,7 +39,9 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
   bool get _chatsVisible {
     final path = _router.routerDelegate.currentConfiguration.uri.path;
     return path == AppRoutePath.customerChats ||
-        path.startsWith('${AppRoutePath.customerChats}/');
+        path.startsWith('${AppRoutePath.customerChats}/') ||
+        path == AppRoutePath.providerChats ||
+        path.startsWith('${AppRoutePath.providerChats}/');
   }
 
   bool get _foreground =>
@@ -88,22 +92,27 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
 
   void _receiveChat(ChatUpdate update) {
     if (!mounted ||
-        ref.read(notificationCustomerIdProvider) == null ||
+        ref.read(notificationSessionProvider) == null ||
         update.kind != ChatUpdateKind.message ||
         update.message == null ||
         update.message!.mine) {
       return;
     }
-    final recipient = ref.read(notificationCustomerIdProvider);
+    final recipient = ref.read(notificationSessionProvider);
     _messageAlert('message:${update.message!.id}', () {
-      if (!mounted || ref.read(notificationCustomerIdProvider) != recipient) {
+      if (!mounted ||
+          !identical(ref.read(notificationSessionProvider), recipient)) {
         return;
       }
       _messageBanner?.close();
       _router.go(
-        CustomerConversationRoute(
-          conversationId: update.conversationId!,
-        ).location,
+        recipient?.user.role == AppUserRole.provider
+            ? ProviderConversationRoute(
+                conversationId: update.conversationId!,
+              ).location
+            : CustomerConversationRoute(
+                conversationId: update.conversationId!,
+              ).location,
       );
     });
   }
@@ -116,19 +125,25 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
       delivery.discardInitial();
     }
     delivery.bind(
-      userId: ref.read(notificationCustomerIdProvider),
+      userId: ref.read(notificationSessionProvider)?.user.id,
       sessionKey: ref.read(sessionStorageProvider).cachedAccessToken,
       locale: ref.read(appLocaleProvider).code,
     );
   }
 
   bool _belongs(PushNotification event) =>
-      mounted && ref.read(notificationCustomerIdProvider) == event.recipientId;
+      mounted &&
+      ref.read(notificationSessionProvider)?.user.id == event.recipientId &&
+      notificationDestination(
+            event.item,
+            ref.read(notificationSessionProvider)!.user.role,
+          ) !=
+          null;
 
   void _receive(PushNotification event) {
     if (!_belongs(event)) return;
     ref.read(notificationCountProvider.notifier).received(event.item.id);
-    if (event.item.kind == CustomerNotificationKind.message) {
+    if (event.item.kind == NotificationKind.message) {
       _messageAlert(
         event.messageId == null
             ? 'notification:${event.item.id}'
@@ -141,9 +156,9 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
       SnackBar(
         content: Text(
           context.tr(
-            event.item.kind == CustomerNotificationKind.offer
+            event.item.kind == NotificationKind.offer
                 ? 'notifications.push_offer'
-                : 'notifications.push_message',
+                : 'notifications.push_${event.item.kind.name}',
           ),
         ),
         action: SnackBarAction(
@@ -157,16 +172,10 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
   void _open(PushNotification event) {
     if (!_belongs(event)) return;
     // The destination APIs still enforce ownership and resource availability.
-    final location = switch (event.item.kind) {
-      CustomerNotificationKind.offer => CustomerOfferDetailsRoute(
-        orderId: event.item.orderId!,
-        offerId: event.item.offerId!,
-      ).location,
-      CustomerNotificationKind.message => CustomerConversationRoute(
-        conversationId: event.item.conversationId!,
-      ).location,
-      _ => null,
-    };
+    final location = notificationDestination(
+      event.item,
+      ref.read(notificationSessionProvider)!.user.role,
+    );
     if (location == null) return;
     ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
     ref.read(appRouterProvider).go(location);
@@ -174,9 +183,11 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
   }
 
   Future<void> _markOpened(PushNotification event) async {
+    final session = ref.read(notificationSessionProvider);
     try {
       await ref.read(markNotificationReadProvider)(event.item.id);
-      if (_belongs(event)) {
+      if (_belongs(event) &&
+          identical(session, ref.read(notificationSessionProvider))) {
         ref
             .read(notificationCountProvider.notifier)
             .read(all: false, id: event.item.id);

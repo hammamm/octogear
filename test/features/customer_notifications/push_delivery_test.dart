@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:octogear/features/customer_notifications/data/models/push_notification_dto.dart';
-import 'package:octogear/features/customer_notifications/domain/entities/push_notification.dart';
-import 'package:octogear/features/customer_notifications/domain/repositories/push_repository.dart';
-import 'package:octogear/features/customer_notifications/presentation/controllers/push_delivery_controller.dart';
+import 'package:octogear/features/notifications/data/models/push_notification_dto.dart';
+import 'package:octogear/features/notifications/domain/entities/push_notification.dart';
+import 'package:octogear/features/notifications/domain/repositories/push_repository.dart';
+import 'package:octogear/features/notifications/presentation/controllers/push_delivery_controller.dart';
 
 Map<String, dynamic> payload({String recipient = '1'}) => {
   'notification_id': '12345678-1234-1234-1234-123456789abc',

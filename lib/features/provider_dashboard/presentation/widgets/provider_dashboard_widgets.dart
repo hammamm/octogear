@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routing/app_routes.dart';
+import '../../../notifications/presentation/widgets/notification_entry.dart';
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
@@ -222,11 +223,12 @@ class DashboardHeader extends StatelessWidget {
     required this.titleKey,
     this.showBack = false,
     this.showRefresh = false,
+    this.showNotifications = false,
     this.onRefresh,
     super.key,
   });
   final String titleKey;
-  final bool showBack, showRefresh;
+  final bool showBack, showRefresh, showNotifications;
   final VoidCallback? onRefresh;
 
   @override
@@ -239,6 +241,7 @@ class DashboardHeader extends StatelessWidget {
       ),
     );
     final actions = [
+      if (showNotifications) const NotificationBell(provider: true),
       if (showRefresh)
         IconButton(
           key: const Key('dashboard-refresh'),

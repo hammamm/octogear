@@ -12,7 +12,7 @@ import '../../../authentication/presentation/controllers/session_controller.dart
 import '../widgets/home_promotions.dart';
 import '../widgets/home_offers.dart';
 import '../widgets/home_recent_requests.dart';
-import '../../../customer_notifications/presentation/widgets/notification_entry.dart';
+import '../../../notifications/presentation/widgets/notification_entry.dart';
 
 /// Entry point for requests and a compact summary of their latest status.
 class CustomerHomeScreen extends ConsumerWidget {

@@ -1,4 +1,4 @@
-import 'customer_notification.dart';
+import 'app_notification.dart';
 
 class PushNotification {
   const PushNotification({
@@ -7,6 +7,6 @@ class PushNotification {
     this.messageId,
   });
   final int recipientId;
-  final CustomerNotification item;
+  final AppNotification item;
   final int? messageId;
 }

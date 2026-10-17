@@ -15,7 +15,7 @@ import '../../features/seller_registration/presentation/screens/seller_registrat
 import '../../features/customer_chats/domain/entities/chat.dart';
 import '../../features/provider_dashboard/domain/entities/provider_dashboard.dart';
 import '../../features/provider_dashboard/presentation/screens/provider_dashboard_activity_screen.dart';
-import '../../features/customer_notifications/presentation/screens/customer_notifications_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/customer_chats/presentation/screens/chat_conversation_screen.dart';
 import '../../features/customer_orders/presentation/screens/edit_customer_order_screen.dart';
 import '../../features/customer_orders/presentation/screens/customer_offer_details_screen.dart';
@@ -229,7 +229,7 @@ class CustomerNotificationsRoute extends GoRouteData
   const CustomerNotificationsRoute();
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      const CustomerNotificationsScreen();
+      const NotificationsScreen();
 }
 
 class CustomerHomeBranch extends StatefulShellBranchData {
@@ -432,6 +432,7 @@ class CustomerCarEditRoute extends GoRouteData with $CustomerCarEditRoute {
         TypedGoRoute<ProviderHomeRoute>(
           path: AppRoutePath.providerHome,
           routes: [
+            TypedGoRoute<ProviderNotificationsRoute>(path: 'notifications'),
             TypedGoRoute<ProviderDashboardActivityRoute>(
               path: 'activity/:section',
             ),
@@ -534,6 +535,14 @@ class ProviderHomeRoute extends GoRouteData with $ProviderHomeRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const ProviderDashboardScreen();
+}
+
+class ProviderNotificationsRoute extends GoRouteData
+    with $ProviderNotificationsRoute {
+  const ProviderNotificationsRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const NotificationsScreen(provider: true);
 }
 
 class ProviderOrdersRoute extends GoRouteData with $ProviderOrdersRoute {

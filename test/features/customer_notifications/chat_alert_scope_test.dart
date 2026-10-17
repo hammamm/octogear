@@ -16,9 +16,9 @@ import 'package:octogear/features/customer_chats/domain/entities/chat.dart';
 import 'package:octogear/features/customer_chats/domain/entities/chat_update.dart';
 import 'package:octogear/features/customer_chats/presentation/controllers/chat_activity_controller.dart';
 import 'package:octogear/features/customer_chats/presentation/controllers/chat_realtime_providers.dart';
-import 'package:octogear/features/customer_notifications/data/models/push_notification_dto.dart';
-import 'package:octogear/features/customer_notifications/presentation/controllers/notification_providers.dart';
-import 'package:octogear/features/customer_notifications/presentation/controllers/push_providers.dart';
+import 'package:octogear/features/notifications/data/models/push_notification_dto.dart';
+import 'package:octogear/features/notifications/presentation/controllers/notification_providers.dart';
+import 'package:octogear/features/notifications/presentation/controllers/push_providers.dart';
 import '../customer_chats/chat_screen_test.dart' show English, Translations;
 import 'notification_fixtures.dart';
 import 'push_delivery_test.dart' show FakePushRepository, payload;
@@ -72,7 +72,7 @@ void main() {
               appRouterProvider.overrideWithValue(router),
               pushRepositoryProvider.overrideWithValue(push),
               chatRealtimeUpdatesProvider.overrideWith((_) => events.stream),
-              customerNotificationsRepositoryProvider.overrideWithValue(inbox),
+              notificationsRepositoryProvider.overrideWithValue(inbox),
             ],
             child: EasyLocalization(
               supportedLocales: const [Locale('en'), Locale('ar')],

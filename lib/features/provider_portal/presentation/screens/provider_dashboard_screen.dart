@@ -90,6 +90,7 @@ class _ProviderDashboardScreenState
               DashboardHeader(
                 titleKey: 'provider_portal.dashboard',
                 showRefresh: true,
+                showNotifications: true,
                 onRefresh: result.isLoading ? null : _refresh,
               ),
               const SizedBox(height: 20),

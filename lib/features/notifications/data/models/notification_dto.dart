@@ -1,4 +1,4 @@
-import '../../domain/entities/customer_notification.dart';
+import '../../domain/entities/app_notification.dart';
 
 bool isNotificationId(String value) => RegExp(
   r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
@@ -38,16 +38,23 @@ NotificationDto notificationFromJson(Object? value) {
     isRead: json['is_read'] as bool,
     createdAt: date,
     kind: switch (payload['type']) {
-      'new_offer' => CustomerNotificationKind.offer,
-      'new_message' => CustomerNotificationKind.message,
-      'order_paid' => CustomerNotificationKind.orderPaid,
-      'order_completed' => CustomerNotificationKind.orderCompleted,
-      'new_order' => CustomerNotificationKind.order,
-      _ => CustomerNotificationKind.unknown,
+      'new_offer' => NotificationKind.offer,
+      'new_message' => NotificationKind.message,
+      'order_paid' => NotificationKind.orderPaid,
+      'order_completed' => NotificationKind.orderCompleted,
+      'new_order' => NotificationKind.order,
+      'offer_accepted' => NotificationKind.offerAccepted,
+      'store_approved' => NotificationKind.storeApproved,
+      'store_rejected' => NotificationKind.storeRejected,
+      _ => NotificationKind.unknown,
     },
     orderId: target(payload['order_id']),
     offerId: target(payload['offer_id']),
     conversationId: target(payload['conversation_id']),
+    requestId: target(payload['request_id']),
+    orderType: ['general', 'specific'].contains(payload['order_type'])
+        ? payload['order_type'] as String
+        : null,
   );
 }
 
@@ -76,13 +83,16 @@ class NotificationDto {
     this.orderId,
     this.offerId,
     this.conversationId,
+    this.requestId,
+    this.orderType,
   });
   final String id;
-  final CustomerNotificationKind kind;
+  final NotificationKind kind;
   final bool isRead;
   final DateTime createdAt;
-  final int? orderId, offerId, conversationId;
-  CustomerNotification toEntity() => CustomerNotification(
+  final int? orderId, offerId, conversationId, requestId;
+  final String? orderType;
+  AppNotification toEntity() => AppNotification(
     id: id,
     kind: kind,
     isRead: isRead,
@@ -90,6 +100,8 @@ class NotificationDto {
     orderId: orderId,
     offerId: offerId,
     conversationId: conversationId,
+    requestId: requestId,
+    orderType: orderType,
   );
 }
 
@@ -107,4 +119,29 @@ class NotificationPageDto {
     unreadCount: unreadCount,
     nextCursor: nextCursor,
   );
+}
+
+class NotificationReadReceiptDto {
+  const NotificationReadReceiptDto(this.ids, this.unreadCount);
+  final Set<String> ids;
+  final int unreadCount;
+  factory NotificationReadReceiptDto.fromJson(
+    Object? value,
+    Set<String> expected,
+  ) {
+    final json = notificationMap(value);
+    final ids = json['ids'];
+    if (ids is! List ||
+        ids.length != expected.length ||
+        ids.any((id) => id is! String || !expected.contains(id)) ||
+        ids.toSet().length != expected.length) {
+      throw const FormatException('Invalid page read receipt.');
+    }
+    return NotificationReadReceiptDto(
+      Set.unmodifiable(ids.cast<String>()),
+      notificationCount(json['unread_count']),
+    );
+  }
+  NotificationReadReceipt toEntity() =>
+      NotificationReadReceipt(ids: ids, unreadCount: unreadCount);
 }

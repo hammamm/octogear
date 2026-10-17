@@ -1,3 +1,8 @@
+import '../../features/customer_notifications/notification_fixtures.dart';
+import 'package:octogear/features/notifications/presentation/controllers/notification_providers.dart';
+import 'package:octogear/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:octogear/features/notifications/presentation/widgets/notification_entry.dart';
+import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:octogear/features/provider_stores/domain/entities/provider_store_management.dart';
 import 'package:octogear/core/api/api_client.dart';
@@ -134,6 +139,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          notificationsRepositoryProvider.overrideWithValue(
+            FakeNotificationsRepository(),
+          ),
           apiClientProvider.overrideWithValue(
             ApiClient(
               dio: Dio(BaseOptions(baseUrl: 'https://example.test/api/')),
@@ -238,6 +246,41 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'dashboard bell and More open provider notifications inside its shell',
+    (tester) async {
+      final c = await pump(tester, FakeStores());
+      await tester.tap(find.byKey(const Key('provider-notification-bell')));
+      await tester.pumpAndSettle();
+      expect(find.byType(NotificationsScreen), findsOneWidget);
+      expect(
+        GoRouterState.of(
+          tester.element(find.byType(NotificationsScreen)),
+        ).uri.path,
+        '/provider/notifications',
+      );
+      expect(find.byKey(const Key('provider-nav-orders')), findsOneWidget);
+      c.read(appRouterProvider).pop();
+      await tester.pumpAndSettle();
+      await tab(tester, 'more');
+      await tester.tap(find.byType(NotificationsMenuEntry));
+      await tester.pumpAndSettle();
+      expect(find.byType(NotificationsScreen), findsOneWidget);
+      expect(
+        c
+            .read(notificationInboxProvider(false))
+            .requireValue
+            .page
+            .items
+            .every((n) => n.isRead),
+        true,
+      );
+      c.read(appRouterProvider).pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(ProviderMoreScreen), findsOneWidget);
+    },
+  );
 
   testWidgets('approved application refreshes the owned store list', (
     tester,

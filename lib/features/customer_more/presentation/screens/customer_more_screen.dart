@@ -10,7 +10,7 @@ import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../authentication/domain/entities/session_outcome.dart';
 import '../../../authentication/presentation/controllers/session_controller.dart';
-import '../../../customer_notifications/presentation/widgets/notification_entry.dart';
+import '../../../notifications/presentation/widgets/notification_entry.dart';
 
 class CustomerMoreScreen extends ConsumerWidget {
   const CustomerMoreScreen({super.key});

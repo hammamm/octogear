@@ -6,35 +6,90 @@ import '../../../../app/routing/app_routes.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../customer_orders/presentation/widgets/order_widgets.dart';
-import '../../domain/entities/customer_notification.dart';
+import '../../domain/entities/app_notification.dart';
 import '../controllers/notification_providers.dart';
 import '../controllers/push_providers.dart';
 import '../widgets/notification_tile.dart';
+import '../notification_destination.dart';
 
-class CustomerNotificationsScreen extends ConsumerStatefulWidget {
-  const CustomerNotificationsScreen({super.key});
+class NotificationsScreen extends ConsumerStatefulWidget {
+  const NotificationsScreen({this.provider = false, super.key});
+  final bool provider;
   @override
-  ConsumerState<CustomerNotificationsScreen> createState() =>
-      _CustomerNotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
 }
 
-class _CustomerNotificationsScreenState
-    extends ConsumerState<CustomerNotificationsScreen> {
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
+    with WidgetsBindingObserver {
+  GoRouter? _router;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final router = GoRouter.of(context);
+    if (_router != router) {
+      _router?.routeInformationProvider.removeListener(_schedulePageRead);
+      _router = router;
+      router.routeInformationProvider.addListener(_schedulePageRead);
+    }
+    _schedulePageRead();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _schedulePageRead();
+  }
+
+  void _schedulePageRead() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          ModalRoute.of(context)?.isCurrent != true ||
+          !TickerMode.valuesOf(context).enabled) {
+        return;
+      }
+      final lifecycle = WidgetsBinding.instance.lifecycleState;
+      if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
+      final provider = notificationInboxProvider(_unreadOnly);
+      final current = ref.read(provider).asData?.value;
+      if (current == null ||
+          current.busy ||
+          current.pageReadFailed ||
+          current.pendingReadIds.isEmpty) {
+        return;
+      }
+      ref.read(provider.notifier).markOpenedPageRead();
+    });
+  }
+
+  @override
+  void dispose() {
+    _router?.routeInformationProvider.removeListener(_schedulePageRead);
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
   bool _unreadOnly = false;
   bool _opening = false;
 
-  Future<void> _open(CustomerNotification item) async {
+  Future<void> _open(AppNotification item) async {
     if (_opening) return;
     _opening = true;
-    final customerId = ref.read(notificationCustomerIdProvider);
+    final session = ref.read(notificationSessionProvider);
     try {
       final controller = ref.read(
         notificationInboxProvider(_unreadOnly).notifier,
       );
-      final read = await controller.markRead(item);
+      final read = await controller.markOpenedPageRead();
       if (!mounted ||
-          customerId == null ||
-          ref.read(notificationCustomerIdProvider) != customerId) {
+          session == null ||
+          !identical(ref.read(notificationSessionProvider), session)) {
         return;
       }
       if (!read) {
@@ -42,25 +97,12 @@ class _CustomerNotificationsScreenState
           SnackBar(content: Text(context.tr('notifications.read_error'))),
         );
       }
-      if (!item.canOpen) return;
-      switch (item.kind) {
-        case CustomerNotificationKind.offer:
-          await CustomerOfferDetailsRoute(
-            orderId: item.orderId!,
-            offerId: item.offerId!,
-          ).push<void>(context);
-        case CustomerNotificationKind.message:
-          CustomerConversationRoute(
-            conversationId: item.conversationId!,
-          ).go(context);
-        case CustomerNotificationKind.orderPaid:
-        case CustomerNotificationKind.orderCompleted:
-        case CustomerNotificationKind.order:
-          await CustomerOrderDetailsRoute(
-            orderId: item.orderId!,
-          ).push<void>(context);
-        case CustomerNotificationKind.unknown:
-          break;
+      final location = notificationDestination(item, session.user.role);
+      if (location == null) return;
+      if (item.kind == NotificationKind.message) {
+        context.go(location);
+      } else {
+        await context.push<void>(location);
       }
     } finally {
       _opening = false;
@@ -70,6 +112,7 @@ class _CustomerNotificationsScreenState
   @override
   Widget build(BuildContext context) {
     final provider = notificationInboxProvider(_unreadOnly);
+    ref.listen(provider, (_, _) => _schedulePageRead());
     final inbox = ref.watch(provider);
     final controller = ref.read(provider.notifier);
     final current = inbox.asData?.value;
@@ -90,6 +133,8 @@ class _CustomerNotificationsScreenState
                 icon: const BackButtonIcon(),
                 onPressed: () => context.canPop()
                     ? context.pop()
+                    : widget.provider
+                    ? const ProviderHomeRoute().go(context)
                     : const CustomerHomeRoute().go(context),
               ),
               const SizedBox(width: 8),
@@ -103,6 +148,11 @@ class _CustomerNotificationsScreenState
             ],
           ),
           const SizedBox(height: 16),
+          Text(
+            context.tr('notifications.page_read_hint'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
           if (ref.watch(pushRepositoryProvider) != null)
             Align(
               alignment: AlignmentDirectional.centerStart,
@@ -143,15 +193,6 @@ class _CustomerNotificationsScreenState
                       ? null
                       : (_) => setState(() => _unreadOnly = unread),
                 ),
-              if ((count.value ?? current?.page.unreadCount ?? 0) > 0)
-                TextButton.icon(
-                  key: const Key('notifications-read-all'),
-                  onPressed: current == null || current.busy
-                      ? null
-                      : () => controller.markAllRead(),
-                  icon: const Icon(Icons.done_all, size: 20),
-                  label: Text(context.tr('notifications.mark_all')),
-                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -186,18 +227,32 @@ class _CustomerNotificationsScreenState
               ),
             ],
             data: (state) => [
-              if (state.refreshing || state.markingAll)
+              if (state.refreshing || state.markingAll || state.markingPage)
                 const LinearProgressIndicator(),
               if (state.error != null) ...[
                 OctoGearFeedbackBanner(
-                  message: context.tr('notifications.update_error'),
+                  message: context.tr(
+                    state.pageReadFailed
+                        ? 'notifications.page_read_error'
+                        : 'notifications.update_error',
+                  ),
                   tone: OctoGearFeedbackTone.error,
                 ),
                 TextButton.icon(
                   key: const Key('notifications-refresh'),
-                  onPressed: state.busy ? null : controller.refresh,
+                  onPressed: state.busy
+                      ? null
+                      : state.pageReadFailed
+                      ? controller.markOpenedPageRead
+                      : controller.refresh,
                   icon: const Icon(Icons.refresh),
-                  label: Text(context.tr('notifications.refresh')),
+                  label: Text(
+                    context.tr(
+                      state.pageReadFailed
+                          ? 'common.retry'
+                          : 'notifications.refresh',
+                    ),
+                  ),
                 ),
               ],
               if (state.page.items.isEmpty && state.page.nextCursor == null)
@@ -210,6 +265,8 @@ class _CustomerNotificationsScreenState
                   message: context.tr(
                     _unreadOnly
                         ? 'notifications.unread_empty_hint'
+                        : widget.provider
+                        ? 'notifications.provider_empty_hint'
                         : 'notifications.empty_hint',
                   ),
                   icon: _unreadOnly
@@ -236,14 +293,15 @@ class _CustomerNotificationsScreenState
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                   ),
-                CustomerNotificationTile(
+                NotificationTile(
                   key: ValueKey('notification-${state.page.items[i].id}'),
                   item: state.page.items[i],
+                  provider: widget.provider,
                   busy: state.readingId == state.page.items[i].id,
                   onTap: state.busy ? null : () => _open(state.page.items[i]),
                 ),
               ],
-              if (state.page.nextCursor != null)
+              if (state.page.nextCursor != null && !state.pageReadFailed)
                 TextButton.icon(
                   key: const Key('notifications-more'),
                   onPressed: state.busy ? null : controller.loadMore,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routing/app_routes.dart';
+import '../../../notifications/presentation/widgets/notification_entry.dart';
 import '../../../authentication/presentation/controllers/session_controller.dart';
 import '../widgets/provider_page.dart';
 
@@ -13,6 +14,8 @@ class ProviderMoreScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => ProviderPage(
     titleKey: 'provider_portal.more',
     children: [
+      const NotificationsMenuEntry(provider: true),
+      const SizedBox(height: 12),
       ProviderNavigationTile(
         key: const Key('provider-more-stores'),
         titleKey: 'provider_stores.title',

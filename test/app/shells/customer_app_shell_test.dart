@@ -1,8 +1,8 @@
 import '../../features/customer_chats/chat_fixtures.dart';
 import 'package:octogear/features/customer_chats/presentation/controllers/chat_realtime_providers.dart';
 import '../../features/customer_notifications/notification_fixtures.dart';
-import 'package:octogear/features/customer_notifications/presentation/controllers/notification_providers.dart';
-import 'package:octogear/features/customer_notifications/presentation/screens/customer_notifications_screen.dart';
+import 'package:octogear/features/notifications/presentation/controllers/notification_providers.dart';
+import 'package:octogear/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:octogear/features/customer_chats/presentation/controllers/chat_providers.dart';
 import 'package:octogear/features/customer_chats/presentation/screens/chat_conversation_screen.dart';
 import 'package:octogear/features/customer_orders/presentation/screens/customer_offer_details_screen.dart';
@@ -83,7 +83,7 @@ void main() {
       );
       await tester.tap(find.byKey(const Key('customer-notification-bell')));
       await tester.pumpAndSettle();
-      expect(find.byType(CustomerNotificationsScreen), findsOneWidget);
+      expect(find.byType(NotificationsScreen), findsOneWidget);
       await tester.tap(
         find.byKey(ValueKey('notification-${notification(1).id}')),
       );
@@ -792,7 +792,7 @@ Future<void> _pumpCustomerApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        customerNotificationsRepositoryProvider.overrideWithValue(
+        notificationsRepositoryProvider.overrideWithValue(
           FakeNotificationsRepository(),
         ),
         chatRepositoryProvider.overrideWithValue(FakeChatRepository()),

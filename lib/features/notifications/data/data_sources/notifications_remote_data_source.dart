@@ -42,6 +42,21 @@ class NotificationsRemoteDataSource {
     if (response.data != true) throw const ApiFailure.unexpected();
   }
 
+  Future<NotificationReadReceiptDto> markPageRead(Set<String> ids) async {
+    if (ids.isEmpty ||
+        ids.length > 20 ||
+        ids.any((id) => !isNotificationId(id))) {
+      throw const ApiFailure.unexpected();
+    }
+    final response = await api.patch<NotificationReadReceiptDto>(
+      'notifications/read-page',
+      requiresAuthentication: true,
+      data: {'ids': ids.toList(growable: false)},
+      decode: (value) => NotificationReadReceiptDto.fromJson(value, ids),
+    );
+    return response.data ?? (throw const ApiFailure.unexpected());
+  }
+
   Future<void> markAllRead() async {
     final response = await api.patch<bool>(
       'notifications/read-all',

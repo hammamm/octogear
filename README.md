@@ -1,5 +1,9 @@
 # OctoGear mobile app
 
+Customer and provider notifications use one shared page, available from each
+app's bell and More. Opening marks only that fetched page as read (up to 20 rows),
+with explicit retry on failure. See [notification behavior and setup](NOTIFICATIONS_IMPLEMENTATION.md).
+
 OctoGear is a bilingual Flutter marketplace for automotive spare parts. The
 app serves customers and store owners through separate, role-aware feature
 flows.

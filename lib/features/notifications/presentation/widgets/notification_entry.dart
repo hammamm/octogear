@@ -8,12 +8,15 @@ import '../../../../core/widgets/octogear_surface_card.dart';
 import '../controllers/notification_providers.dart';
 
 class NotificationBell extends ConsumerWidget {
-  const NotificationBell({super.key});
+  const NotificationBell({this.provider = false, super.key});
+  final bool provider;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final count = ref.watch(notificationCountProvider).value ?? 0;
     return IconButton(
-      key: const Key('customer-notification-bell'),
+      key: Key(
+        provider ? 'provider-notification-bell' : 'customer-notification-bell',
+      ),
       tooltip: count > 0
           ? context.tr(
               'notifications.unread_label',
@@ -24,7 +27,9 @@ class NotificationBell extends ConsumerWidget {
               ],
             )
           : context.tr('notifications.title'),
-      onPressed: () => const CustomerNotificationsRoute().push<void>(context),
+      onPressed: () => provider
+          ? const ProviderNotificationsRoute().push<void>(context)
+          : const CustomerNotificationsRoute().push<void>(context),
       icon: NotificationBadge(count: count),
     );
   }
@@ -50,12 +55,15 @@ class NotificationBadge extends StatelessWidget {
 }
 
 class NotificationsMenuEntry extends ConsumerWidget {
-  const NotificationsMenuEntry({super.key});
+  const NotificationsMenuEntry({this.provider = false, super.key});
+  final bool provider;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final count = ref.watch(notificationCountProvider).value ?? 0;
     return OctoGearSurfaceCard(
-      onTap: () => const CustomerNotificationsRoute().push<void>(context),
+      onTap: () => provider
+          ? const ProviderNotificationsRoute().push<void>(context)
+          : const CustomerNotificationsRoute().push<void>(context),
       child: Row(
         children: [
           NotificationBadge(count: count),

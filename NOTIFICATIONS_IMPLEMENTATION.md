@@ -1,3 +1,88 @@
+## Shared page reads for customers and providers — 2026-10-17
+
+User action: Open Notifications, switch filters, refresh or load an older page.
+Both authenticated roles use the existing shared screen/controller and mark only
+the displayed page's unread IDs as read, up to 20. The page-read hint and explicit
+Retry behavior are shared; neither inbox offers a whole-history Mark all action.
+Unfetched history and arrivals after the fetch stay unread. Read rows stay visible,
+including in Unread, and pagination retains its cursor. Hidden/background pages
+wait until visible. Empty/already-read pages do not issue a read request.
+
+API: Existing owner-scoped PATCH /notifications/read-page with
+{"ids":["<UUID>"]}; response data {"ids":["<UUID>"],"unread_count":3}.
+No backend change, new endpoint, analytics event, polling or background GET.
+Role-specific typed destinations and localized Arabic/English content are retained.
+Tests cover both roles, bounded batches, pagination, failed reads/retry, session
+replacement, background visibility, navigation and narrow/large-text layouts.
+This supersedes the historical customer explicit row/mark-all behavior below.
+
+Verification: all 492 Flutter tests passed, including 100 focused notification
+and shell tests. Flutter analysis and custom lint reported no issues. Customer
+English/Arabic previews were inspected; both roles also passed narrow layouts
+and 200% text tests. Existing backend behavior was reused without API changes.
+
+## Provider notifications — implementation contract (2026-10-17)
+
+Providers open Notifications from the dashboard bell or More. The shared inbox
+keeps its 20-item cursor pages. Once a provider page is displayed, Flutter sends
+one explicit `PATCH /notifications/read-page` with `{"ids":["<notification UUID>"]}`
+for that page's unread rows. The authenticated owner-only response is
+`{"success":true,"data":{"ids":["<notification UUID>"],"unread_count":3}}`.
+IDs must be distinct UUIDs (1–20); a missing or foreign ID rejects the entire
+batch. Replays preserve read timestamps. GET stays read-only. Later pages, unseen
+history and arrivals after the fetch are not marked read. Read failure retains
+unread state and offers explicit retry. Rows remain visible after acknowledgement,
+including in Unread. Customers now use the same page-read behavior (see above).
+
+Reuse the notification data/domain/controller and Android delivery infrastructure
+for both roles. New accepted-offer and store-review database alerts are written
+inside their existing transactions; push dispatch remains after commit. Existing
+payment, completion, direct-request and incoming-message alerts are reused.
+No new schema/backfill or historical pushes. General-order inbox alerts remain;
+only direct new orders trigger push. Push payloads contain allowlisted IDs and
+generic localized text, never message content, prices or review reasons.
+
+Typed role-specific navigation opens offers, general/direct/paid orders, chats or
+store-request status. Unknown targets remain readable without arbitrary links.
+Loading/empty/offline/pagination/read retry and session replacement are covered.
+Arabic/English, RTL, narrow layouts and large text use existing shared components.
+No polling or background inbox/count fetching; permission and token sync reuse
+the existing Android flow. iOS, inventory and unrelated settings remain deferred.
+Tests cover bounded reads, ownership/morph isolation, arrivals/cursors, transaction
+rollback/replay, provider push privacy/role/session guards, navigation, pagination,
+failed receipts and logout. Run API suites, Flutter tests and analysis; live FCM
+delivery requires configured server credentials and a running push worker.
+
+
+Verification on 2026-10-17: all 482 Flutter tests passed; full Flutter analysis
+and custom lint reported no issues. All 73 focused Flutter notification/shell tests
+passed, including provider and customer push navigation, bounded acknowledgements,
+pagination, failed reads, hidden/background screens and same-user session changes.
+Arabic/English previews were inspected and layouts passed at 320 dp / 200% text.
+
+The API focused run passed 61 tests (497 assertions). The complete backend suite
+finished with 537 passing tests and four pre-existing failures (4,255 assertions).
+The baseline before changes was 529 passing tests with those same four failures:
+`AuthRateLimitTest`'s two OTP IP/mobile throttling cases, and
+`GeneralOrderDetailsTest`'s paid-field and demo-seed-count expectations. Notification
+tests use isolated SQLite data and fake HTTP delivery. PHP formatting and diff
+checks passed. No migration, seed reset, real store decision, payment, customer
+message or live push was performed for verification.
+
+Runtime check on 2026-10-17: local Firebase delivery is enabled and a credential
+path is configured; no credential values were printed or changed. The Laravel API
+is running, but no `queue:work` process was running at verification. Start the
+existing push worker to deliver queued phone alerts:
+
+```powershell
+php artisan queue:work database --queue=push --tries=4 --timeout=40
+```
+
+No live push, customer message, payment or store-review action was sent as a test.
+Older customer-only implementation notes below are historical; this provider
+contract supersedes their role restriction, while preserving the customer flow.
+
+
 # Android customer push update — 2026-10-08
 
 The customer app includes FCM registration, token rotation, locale updates,
@@ -118,3 +203,5 @@ Flutter analysis and custom lint passed. Laravel's notification/shared-feature
 suite passed 28 tests (140 assertions), and Pint passed for the changed PHP files.
 The Android x64 development debug APK built successfully. The pre-existing Kotlin
 plugin migration warning remains; this slice adds no dependency or Gradle changes.
+
+Android verification: the debug app was built, installed and launched on emulator-5554 on 2026-10-17. Flutter reported app.started, then detached successfully; the app process remained running. This confirms startup, not live FCM delivery.

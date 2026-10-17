@@ -16,10 +16,10 @@ import 'package:octogear/core/storage/storage_providers.dart';
 import 'package:octogear/features/authentication/domain/entities/app_user.dart';
 import 'package:octogear/features/authentication/domain/entities/session_outcome.dart';
 import 'package:octogear/features/authentication/presentation/controllers/session_controller.dart';
-import 'package:octogear/features/customer_notifications/data/models/push_notification_dto.dart';
-import 'package:octogear/features/customer_notifications/presentation/controllers/notification_providers.dart';
-import 'package:octogear/features/customer_notifications/presentation/controllers/push_providers.dart';
-import 'package:octogear/features/customer_notifications/presentation/widgets/push_delivery_scope.dart';
+import 'package:octogear/features/notifications/data/models/push_notification_dto.dart';
+import 'package:octogear/features/notifications/presentation/controllers/notification_providers.dart';
+import 'package:octogear/features/notifications/presentation/controllers/push_providers.dart';
+import 'package:octogear/features/notifications/presentation/widgets/push_delivery_scope.dart';
 
 import '../customer_chats/chat_screen_test.dart' show English, Translations;
 import 'notification_fixtures.dart';
@@ -33,6 +33,18 @@ class PushTestSession extends SessionController {
       fullName: 'Customer',
       mobile: '+966500000001',
       role: AppUserRole.customer,
+    ),
+  );
+}
+
+class ProviderPushTestSession extends SessionController {
+  @override
+  Future<SessionOutcome> build() async => const AuthenticatedSession(
+    AppUser(
+      id: 1,
+      fullName: 'Provider',
+      mobile: '+966500000001',
+      role: AppUserRole.provider,
     ),
   );
 }
@@ -68,85 +80,99 @@ class PushTestApp extends StatelessWidget {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  testWidgets(
-    'foreground banner opens the typed destination without fetching an inbox',
-    (tester) async {
-      SharedPreferences.setMockInitialValues({});
-      await EasyLocalization.ensureInitialized();
-      final translations = <String, Map<String, dynamic>>{};
-      await tester.runAsync(() async {
-        for (final language in ['en', 'ar']) {
-          translations[language] =
-              jsonDecode(
-                    await rootBundle.loadString(
-                      'assets/translations/$language.json',
-                    ),
-                  )
-                  as Map<String, dynamic>;
-        }
-      });
-      final push = FakePushRepository();
-      final inbox = FakeNotificationsRepository();
-      final router = GoRouter(
-        routes: [
-          GoRoute(
-            path: '/',
-            builder: (_, _) => const Scaffold(body: Text('Home')),
-          ),
-          GoRoute(
-            path: const CustomerOfferDetailsRoute(
-              orderId: 17,
-              offerId: 42,
-            ).location,
-            builder: (_, _) => const Scaffold(body: Text('Offer destination')),
-          ),
-        ],
-      );
-      addTearDown(router.dispose);
-      addTearDown(push.dispose);
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            sessionControllerProvider.overrideWith(PushTestSession.new),
-            sessionStorageProvider.overrideWithValue(PushTestStorage()),
-            appLocaleProvider.overrideWith(English.new),
-            appRouterProvider.overrideWithValue(router),
-            chatRealtimeUpdatesProvider.overrideWith(
-              (_) => const Stream.empty(),
+  for (final provider in [false, true]) {
+    testWidgets(
+      'foreground banner opens typed destination without inbox fetch; provider: $provider',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({});
+        await EasyLocalization.ensureInitialized();
+        final translations = <String, Map<String, dynamic>>{};
+        await tester.runAsync(() async {
+          for (final language in ['en', 'ar']) {
+            translations[language] =
+                jsonDecode(
+                      await rootBundle.loadString(
+                        'assets/translations/$language.json',
+                      ),
+                    )
+                    as Map<String, dynamic>;
+          }
+        });
+        Map<String, dynamic> event({String recipient = '1'}) => {
+          ...payload(recipient: recipient),
+          if (provider) 'type': 'offer_accepted',
+        };
+        final banner = provider
+            ? 'A customer accepted your offer.'
+            : 'You have a new offer.';
+        final push = FakePushRepository();
+        final inbox = FakeNotificationsRepository();
+        final router = GoRouter(
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (_, _) => const Scaffold(body: Text('Home')),
             ),
-            pushRepositoryProvider.overrideWithValue(push),
-            customerNotificationsRepositoryProvider.overrideWithValue(inbox),
+            GoRoute(
+              path: provider
+                  ? const ProviderOfferRoute(offerId: 42).location
+                  : const CustomerOfferDetailsRoute(
+                      orderId: 17,
+                      offerId: 42,
+                    ).location,
+              builder: (_, _) =>
+                  const Scaffold(body: Text('Offer destination')),
+            ),
           ],
-          child: EasyLocalization(
-            supportedLocales: const [Locale('en'), Locale('ar')],
-            path: 'assets/translations',
-            startLocale: const Locale('en'),
-            saveLocale: false,
-            assetLoader: Translations(translations),
-            child: PushTestApp(router),
+        );
+        addTearDown(router.dispose);
+        addTearDown(push.dispose);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sessionControllerProvider.overrideWith(
+                provider ? ProviderPushTestSession.new : PushTestSession.new,
+              ),
+              sessionStorageProvider.overrideWithValue(PushTestStorage()),
+              appLocaleProvider.overrideWith(English.new),
+              appRouterProvider.overrideWithValue(router),
+              chatRealtimeUpdatesProvider.overrideWith(
+                (_) => const Stream.empty(),
+              ),
+              pushRepositoryProvider.overrideWithValue(push),
+              notificationsRepositoryProvider.overrideWithValue(inbox),
+            ],
+            child: EasyLocalization(
+              supportedLocales: const [Locale('en'), Locale('ar')],
+              path: 'assets/translations',
+              startLocale: const Locale('en'),
+              saveLocale: false,
+              assetLoader: Translations(translations),
+              child: PushTestApp(router),
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      push.foregroundEvents.add(
-        parsePushNotification(payload(recipient: '2'))!,
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('You have a new offer.'), findsNothing);
-      push.foregroundEvents.add(parsePushNotification(payload())!);
-      await tester.pumpAndSettle();
-      expect(find.text('You have a new offer.'), findsOneWidget);
-      expect(inbox.pageCalls, 0);
-      expect(inbox.countCalls, 0);
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
-      expect(find.text('Offer destination'), findsOneWidget);
-      expect(inbox.readCalls, 1);
-      expect(inbox.pageCalls, 0);
-      expect(inbox.countCalls, 0);
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox());
-      await tester.pumpAndSettle();
-    },
-  );
+        );
+        await tester.pumpAndSettle();
+        push.foregroundEvents.add(
+          parsePushNotification(event(recipient: '2'))!,
+        );
+        await tester.pumpAndSettle();
+        expect(find.text(banner), findsNothing);
+        push.foregroundEvents.add(parsePushNotification(event())!);
+        await tester.pumpAndSettle();
+        expect(find.text(banner), findsOneWidget);
+        expect(inbox.pageCalls, 0);
+        expect(inbox.countCalls, 0);
+        await tester.tap(find.text('Open'));
+        await tester.pumpAndSettle();
+        expect(find.text('Offer destination'), findsOneWidget);
+        expect(inbox.readCalls, 1);
+        expect(inbox.pageCalls, 0);
+        expect(inbox.countCalls, 0);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpAndSettle();
+      },
+    );
+  }
 }

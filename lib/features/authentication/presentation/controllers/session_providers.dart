@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/api/api_providers.dart';
 import '../../../../core/storage/storage_providers.dart';
-import '../../../customer_notifications/presentation/controllers/push_providers.dart';
+import '../../../notifications/presentation/controllers/push_providers.dart';
 import '../../data/data_sources/authentication_remote_data_source.dart';
 import '../../data/data_sources/profile_remote_data_source.dart';
 import '../../data/repositories/authentication_repository_impl.dart';

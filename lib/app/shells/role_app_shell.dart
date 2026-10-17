@@ -1,17 +1,19 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../features/customer_chats/presentation/controllers/chat_activity_controller.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/design_system/octogear_theme.dart';
 
 /// Independent provider branches preserve their navigation stacks on tab changes.
-class ProviderAppShell extends StatelessWidget {
+class ProviderAppShell extends ConsumerWidget {
   const ProviderAppShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: ColoredBox(
         color: OctoGearColors.canvas,
@@ -38,7 +40,12 @@ class ProviderAppShell extends StatelessWidget {
           ),
           NavigationDestination(
             key: const Key('provider-nav-chats'),
-            icon: const Icon(Icons.chat_bubble_outline_rounded),
+            icon: Badge(
+              isLabelVisible:
+                  navigationShell.currentIndex != 2 &&
+                  ref.watch(chatActivityProvider),
+              child: const Icon(Icons.chat_bubble_outline_rounded),
+            ),
             selectedIcon: const Icon(Icons.chat_bubble_rounded),
             label: context.tr('customer_chats.tab'),
           ),

@@ -3,27 +3,62 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
-import '../../domain/entities/customer_notification.dart';
+import '../../domain/entities/app_notification.dart';
+import '../../../authentication/domain/entities/app_user.dart';
+import '../notification_destination.dart';
 
-class CustomerNotificationTile extends StatelessWidget {
-  const CustomerNotificationTile({
+class NotificationTile extends StatelessWidget {
+  const NotificationTile({
     required this.item,
     required this.onTap,
     this.busy = false,
+    this.provider = false,
     super.key,
   });
-  final CustomerNotification item;
+  final AppNotification item;
   final VoidCallback? onTap;
-  final bool busy;
+  final bool busy, provider;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final canOpen =
+        notificationDestination(
+          item,
+          provider ? AppUserRole.provider : AppUserRole.customer,
+        ) !=
+        null;
+    final bodyKey = !canOpen
+        ? 'unknown'
+        : provider && item.kind == NotificationKind.message
+        ? 'providerMessage'
+        : item.kind.name;
+    final titleKey = provider && item.kind == NotificationKind.order
+        ? switch (item.orderType) {
+            'specific' => 'providerDirect',
+            'general' => 'providerGeneral',
+            _ => 'order',
+          }
+        : item.kind.name;
+    final statusColor = provider
+        ? switch (item.kind) {
+            NotificationKind.offerAccepted ||
+            NotificationKind.orderPaid ||
+            NotificationKind.orderCompleted ||
+            NotificationKind.storeApproved => OctoGearColors.success,
+            NotificationKind.storeRejected => OctoGearColors.warning,
+            _ => OctoGearColors.navy,
+          }
+        : OctoGearColors.navy;
     final icon = switch (item.kind) {
-      CustomerNotificationKind.offer => Icons.local_offer_outlined,
-      CustomerNotificationKind.message => Icons.chat_bubble_outline_rounded,
-      CustomerNotificationKind.orderPaid => Icons.payments_outlined,
-      CustomerNotificationKind.orderCompleted => Icons.task_alt_rounded,
+      NotificationKind.offer => Icons.local_offer_outlined,
+      NotificationKind.message => Icons.chat_bubble_outline_rounded,
+      NotificationKind.orderPaid => Icons.payments_outlined,
+      NotificationKind.orderCompleted => Icons.task_alt_rounded,
+      NotificationKind.offerAccepted => Icons.check_circle_outline,
+      NotificationKind.storeApproved => Icons.verified_outlined,
+      NotificationKind.storeRejected => Icons.info_outline,
+      NotificationKind.order => Icons.receipt_long_outlined,
       _ => Icons.notifications_outlined,
     };
     return Padding(
@@ -39,10 +74,12 @@ class CustomerNotificationTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundColor: item.isRead
+              backgroundColor: provider && statusColor != OctoGearColors.navy
+                  ? statusColor.withValues(alpha: 0.10)
+                  : item.isRead
                   ? OctoGearColors.surfaceMuted
                   : OctoGearColors.yellowSoft,
-              foregroundColor: OctoGearColors.navy,
+              foregroundColor: statusColor,
               child: Icon(icon, size: 20),
             ),
             const SizedBox(width: 12),
@@ -55,7 +92,7 @@ class CustomerNotificationTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          context.tr('notifications.title_${item.kind.name}'),
+                          context.tr('notifications.title_$titleKey'),
                           style: text.titleSmall?.copyWith(
                             fontWeight: item.isRead
                                 ? FontWeight.w500
@@ -79,9 +116,9 @@ class CustomerNotificationTile extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     context.tr(
-                      'notifications.body_${item.canOpen ? item.kind.name : 'unknown'}',
+                      'notifications.body_$bodyKey',
                       args: [
-                        if (item.canOpen && item.orderId != null)
+                        if (canOpen && item.orderId != null)
                           NumberFormat.decimalPattern(
                             context.locale.languageCode,
                           ).format(item.orderId),
@@ -96,7 +133,7 @@ class CustomerNotificationTile extends StatelessWidget {
                     ).add_jm().format(item.createdAt.toLocal()),
                     style: text.bodySmall,
                   ),
-                  if (!item.canOpen) ...[
+                  if (!canOpen) ...[
                     const SizedBox(height: 6),
                     Text(
                       context.tr('notifications.no_link'),

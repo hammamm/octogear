@@ -1,11 +1,30 @@
-import 'package:octogear/features/customer_notifications/domain/entities/customer_notification.dart';
-import 'package:octogear/features/customer_notifications/domain/repositories/customer_notifications_repository.dart';
+import 'package:octogear/features/notifications/domain/entities/app_notification.dart';
+import 'package:octogear/features/notifications/domain/repositories/notifications_repository.dart';
+import 'package:octogear/features/authentication/domain/entities/app_user.dart';
+import 'package:octogear/features/authentication/domain/entities/session_outcome.dart';
 
-CustomerNotification notification(
+const notificationSession = AuthenticatedSession(
+  AppUser(
+    id: 1,
+    fullName: 'Customer',
+    mobile: '+966500000001',
+    role: AppUserRole.customer,
+  ),
+);
+const providerNotificationSession = AuthenticatedSession(
+  AppUser(
+    id: 44,
+    fullName: 'Provider',
+    mobile: '+966500000044',
+    role: AppUserRole.provider,
+  ),
+);
+
+AppNotification notification(
   int id, {
-  CustomerNotificationKind kind = CustomerNotificationKind.offer,
+  NotificationKind kind = NotificationKind.offer,
   bool read = false,
-}) => CustomerNotification(
+}) => AppNotification(
   id: '00000000-0000-0000-0000-${id.toString().padLeft(12, '0')}',
   kind: kind,
   isRead: read,
@@ -15,10 +34,10 @@ CustomerNotification notification(
   conversationId: 7,
 );
 
-class FakeNotificationsRepository implements CustomerNotificationsRepository {
-  List<CustomerNotification> items = [
+class FakeNotificationsRepository implements NotificationsRepository {
+  List<AppNotification> items = [
     notification(1),
-    notification(2, kind: CustomerNotificationKind.message),
+    notification(2, kind: NotificationKind.message),
   ];
   int pageCalls = 0, countCalls = 0, readCalls = 0, allCalls = 0;
   bool failPage = false, failCount = false, failRead = false;
@@ -51,6 +70,20 @@ class FakeNotificationsRepository implements CustomerNotificationsRepository {
     if (failRead) throw Exception('offline');
     await onRead?.call();
     items = [for (final n in items) n.id == id ? n.read() : n];
+  }
+
+  final List<Set<String>> pageReads = [];
+  Future<NotificationReadReceipt> Function(Set<String>)? onPageRead;
+  @override
+  Future<NotificationReadReceipt> markPageRead(Set<String> ids) async {
+    pageReads.add(ids);
+    if (failRead) throw Exception('offline');
+    if (onPageRead != null) return onPageRead!(ids);
+    items = [for (final n in items) ids.contains(n.id) ? n.read() : n];
+    return NotificationReadReceipt(
+      ids: ids,
+      unreadCount: items.where((n) => !n.isRead).length,
+    );
   }
 
   @override

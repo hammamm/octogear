@@ -944,6 +944,11 @@ RouteBase get $providerShellRoute => StatefulShellRouteData.$route(
           factory: $ProviderHomeRoute._fromState,
           routes: [
             GoRouteData.$route(
+              path: 'notifications',
+              hasOverriddenOnExit: false,
+              factory: $ProviderNotificationsRoute._fromState,
+            ),
+            GoRouteData.$route(
               path: 'activity/:section',
               hasOverriddenOnExit: false,
               factory: $ProviderDashboardActivityRoute._fromState,
@@ -1088,6 +1093,27 @@ mixin $ProviderHomeRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/provider');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderNotificationsRoute on GoRouteData {
+  static ProviderNotificationsRoute _fromState(GoRouterState state) =>
+      const ProviderNotificationsRoute();
+
+  @override
+  String get location => GoRouteData.$location('/provider/notifications');
 
   @override
   void go(BuildContext context) => context.go(location);

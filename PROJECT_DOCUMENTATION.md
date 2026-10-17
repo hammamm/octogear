@@ -1,5 +1,57 @@
 # OctoGear - Mobile Application Development Contract
 
+## Provider notification inbox and Android delivery — 2026-10-17
+
+The provider dashboard bell and More entry open `/provider/notifications` inside
+the provider shell. The shared `features/notifications` feature serves both roles
+through existing data-source, DTO, repository, use-case and controller boundaries.
+Customer and provider destinations remain separate and use generated typed routes.
+
+Opening either inbox marks only the fetched page's unread notifications as
+read in one owner-scoped batch (up to 20 IDs). Each explicit Load older action
+acknowledges only that new page. Older history and arrivals not included in the
+page remain unread. Notifications stay visible after acknowledgement, including
+in the Unread filter. Hidden/background screens wait until visible before sending
+the acknowledgement. Failed reads preserve the page and offer explicit retry;
+logout or same-user login replacement discards stale results. Customers and
+providers share this page-read behavior and hint; neither shows Mark all as read.
+Neither app polls the inbox.
+
+Accepted offers, payments, receipt confirmation, direct requests, messages and
+store-review decisions link to their existing authorized details or chats. Accepted
+and paid notifications have green status icons. New general-order inbox alerts
+retain the existing city-based backend audience; browsing requests remains all
+cities by default. New-order push is limited to direct requests. Provider chats
+now reuse the existing activity indicator and socket/FCM message deduplication.
+
+`PATCH /notifications/read-page` accepts `{"ids":["<UUID>"]}` and returns
+`{"ids":["<UUID>"],"unread_count":3}` inside the standard `data` envelope.
+Validation requires 1–20 distinct UUIDs. The server rejects the whole batch when
+any ID is missing or belongs to another account/model. Reads are idempotent.
+GET remains read-only. No migration, inventory work or new dependency is needed.
+
+Android permission, registration, token rotation, foreground banners, cold-start
+taps and logout cleanup use the existing push system for both roles. No background
+notification GETs are introduced. Push contains generic localized text and validated
+IDs, without customer message text, prices or store-review reasons. Server delivery
+still requires the configured push queue worker; iOS remains deferred.
+See NOTIFICATIONS_IMPLEMENTATION.md and the API's PUSH_NOTIFICATIONS.md.
+
+Verification on 2026-10-17: all 482 Flutter tests passed; full Flutter analysis
+and custom lint reported no issues. All 73 focused Flutter notification/shell tests
+passed, including provider and customer push navigation, bounded acknowledgements,
+pagination, failed reads, hidden/background screens and same-user session changes.
+Arabic/English previews were inspected and layouts passed at 320 dp / 200% text.
+
+The API focused run passed 61 tests (497 assertions). The complete backend suite
+finished with 537 passing tests and four pre-existing failures (4,255 assertions).
+The baseline before changes was 529 passing tests with those same four failures:
+`AuthRateLimitTest`'s two OTP IP/mobile throttling cases, and
+`GeneralOrderDetailsTest`'s paid-field and demo-seed-count expectations. Notification
+tests use isolated SQLite data and fake HTTP delivery. PHP formatting and diff
+checks passed. No migration, seed reset, real store decision, payment, customer
+message or live push was performed for verification.
+
 ## Provider store management, change approvals and profile — 2026-10-16
 
 More > My Stores opens owner-only approved store details. The existing store

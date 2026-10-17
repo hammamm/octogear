@@ -1,10 +1,9 @@
-import '../../domain/entities/customer_notification.dart';
-import '../../domain/repositories/customer_notifications_repository.dart';
+import '../../domain/entities/app_notification.dart';
+import '../../domain/repositories/notifications_repository.dart';
 import '../data_sources/notifications_remote_data_source.dart';
 
-class CustomerNotificationsRepositoryImpl
-    implements CustomerNotificationsRepository {
-  const CustomerNotificationsRepositoryImpl(this._remote);
+class NotificationsRepositoryImpl implements NotificationsRepository {
+  const NotificationsRepositoryImpl(this._remote);
   final NotificationsRemoteDataSource _remote;
   @override
   Future<NotificationPage> page({
@@ -18,4 +17,7 @@ class CustomerNotificationsRepositoryImpl
   Future<void> markRead(String id) => _remote.markRead(id);
   @override
   Future<void> markAllRead() => _remote.markAllRead();
+  @override
+  Future<NotificationReadReceipt> markPageRead(Set<String> ids) async =>
+      (await _remote.markPageRead(ids)).toEntity();
 }

@@ -5,11 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:octogear/core/api/api_client.dart';
 import 'package:octogear/core/api/api_failure.dart';
-import 'package:octogear/features/customer_notifications/data/data_sources/notifications_remote_data_source.dart';
-import 'package:octogear/features/customer_notifications/data/models/notification_dto.dart';
-import 'package:octogear/features/customer_notifications/data/repositories/customer_notifications_repository_impl.dart';
-import 'package:octogear/features/customer_notifications/domain/entities/customer_notification.dart';
-import 'package:octogear/features/customer_notifications/presentation/controllers/notification_providers.dart';
+import 'package:octogear/features/notifications/data/data_sources/notifications_remote_data_source.dart';
+import 'package:octogear/features/notifications/data/models/notification_dto.dart';
+import 'package:octogear/features/notifications/data/repositories/notifications_repository_impl.dart';
+import 'package:octogear/features/notifications/domain/entities/app_notification.dart';
+import 'package:octogear/features/notifications/presentation/controllers/notification_providers.dart';
 
 import 'notification_fixtures.dart';
 
@@ -20,8 +20,8 @@ void main() {
   }) async {
     final c = ProviderContainer(
       overrides: [
-        notificationCustomerIdProvider.overrideWithValue(1),
-        customerNotificationsRepositoryProvider.overrideWithValue(repo),
+        notificationSessionProvider.overrideWithValue(notificationSession),
+        notificationsRepositoryProvider.overrideWithValue(repo),
       ],
     );
     addTearDown(c.dispose);
@@ -108,6 +108,7 @@ void main() {
         );
       final c = await setup(repo);
       final controller = c.read(notificationInboxProvider(false).notifier);
+      await controller.markOpenedPageRead();
       repo.failPage = true;
       await controller.loadMore();
       expect(
@@ -140,8 +141,8 @@ void main() {
     final controller = c.read(notificationInboxProvider(false).notifier);
     final read = controller.markRead(notification(1));
     c.updateOverrides([
-      notificationCustomerIdProvider.overrideWithValue(null),
-      customerNotificationsRepositoryProvider.overrideWithValue(repo),
+      notificationSessionProvider.overrideWithValue(null),
+      notificationsRepositoryProvider.overrideWithValue(repo),
     ]);
     await c.read(notificationInboxProvider(false).future);
     pending.complete();
@@ -176,10 +177,7 @@ void main() {
       ).toEntity().canOpen,
       false,
     );
-    expect(
-      notificationFromJson(json(null)).kind,
-      CustomerNotificationKind.unknown,
-    );
+    expect(notificationFromJson(json(null)).kind, NotificationKind.unknown);
     expect(
       () => notificationFromJson(json(null)..['created_at'] = 'invalid'),
       throwsFormatException,
@@ -218,7 +216,7 @@ void main() {
           },
         ),
       );
-      final repo = CustomerNotificationsRepositoryImpl(
+      final repo = NotificationsRepositoryImpl(
         NotificationsRemoteDataSource(api),
       );
       expect(
