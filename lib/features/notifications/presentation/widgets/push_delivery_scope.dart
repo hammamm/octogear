@@ -81,7 +81,7 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
     _messageBanner?.close();
     _messageBanner = ScaffoldMessenger.maybeOf(context)?.showSnackBar(
       SnackBar(
-        content: Text(context.tr('notifications.push_message')),
+        content: _bannerContent(context.tr('notifications.push_message')),
         action: SnackBarAction(
           label: context.tr('notifications.open'),
           onPressed: open,
@@ -89,6 +89,23 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
       ),
     );
   }
+
+  Widget _bannerContent(String message) => Row(
+    children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.asset(
+          'assets/icons/app_icon.png',
+          width: 32,
+          height: 32,
+          cacheWidth: (32 * MediaQuery.devicePixelRatioOf(context)).round(),
+          excludeFromSemantics: true,
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(child: Text(message)),
+    ],
+  );
 
   void _receiveChat(ChatUpdate update) {
     if (!mounted ||
@@ -154,7 +171,7 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
     }
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
       SnackBar(
-        content: Text(
+        content: _bannerContent(
           context.tr(
             event.item.kind == NotificationKind.offer
                 ? 'notifications.push_offer'
