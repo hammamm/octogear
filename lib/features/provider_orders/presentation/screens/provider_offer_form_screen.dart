@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/media/image_upload_policy.dart';
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/api/api_failure.dart';
 import '../../../general_requests/presentation/widgets/general_request_photos.dart';
@@ -168,7 +169,9 @@ class _OfferEditorState extends ConsumerState<_OfferEditor> {
   }
 
   Future<void> _pick() async {
-    if (_picking || (_photos?.length ?? 0) >= 5) return;
+    if (_picking || (_photos?.length ?? 0) >= ImageUploadPolicy.maxFiles) {
+      return;
+    }
     setState(() {
       _picking = true;
       _photoError = null;
@@ -385,7 +388,9 @@ class _OfferEditorState extends ConsumerState<_OfferEditor> {
                         }),
                 ),
                 OutlinedButton.icon(
-                  onPressed: locked || (_photos?.length ?? 0) >= 5
+                  onPressed:
+                      locked ||
+                          (_photos?.length ?? 0) >= ImageUploadPolicy.maxFiles
                       ? null
                       : _pick,
                   icon: const Icon(Icons.add_photo_alternate_outlined),

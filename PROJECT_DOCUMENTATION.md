@@ -1303,3 +1303,8 @@ additive API endpoints, deployment order, account guards and validation. This
 approved slice uses existing database notifications and foreground count polling;
 Firebase push, permissions and token registration remain deferred. Older notes
 describing customer notifications as entirely deferred are superseded by this slice.
+
+
+## Shared image upload policy (2026-10-19)
+
+Implementation scope: consolidate the existing gallery count, file size, accepted MIME types and decoded image dimension limits in `lib/core/media/image_upload_policy.dart`. Customer garage, general requests, provider offers/store changes and registration document pickers use the shared policy. Keep current validation, picker compression, response payloads and localized messages unchanged. Laravel `config/images.php` remains authoritative; policy changes require updating both runtimes and rebuilding the app. Cloud storage credentials and disk selection belong exclusively to the API; Flutter continues using authenticated media routes. No live storage switch or existing-file migration is performed.

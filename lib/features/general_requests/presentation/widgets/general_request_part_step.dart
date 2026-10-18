@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/media/image_upload_policy.dart';
 import '../../../part_requests/domain/entities/part_request.dart';
 import 'general_request_feedback.dart';
 import 'general_request_photos.dart';
@@ -121,7 +122,7 @@ class GeneralRequestPartStep extends StatelessWidget {
             photos: photos,
             onRemove: disabled ? null : onRemovePhoto,
           ),
-          if (photos.length < 5)
+          if (photos.length < ImageUploadPolicy.maxFiles)
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: OutlinedButton.icon(

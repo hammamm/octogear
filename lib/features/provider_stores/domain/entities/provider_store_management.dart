@@ -1,3 +1,4 @@
+import '../../../../core/media/image_upload_policy.dart';
 import '../../../authentication/domain/entities/app_user.dart';
 import '../../../authentication/domain/entities/saudi_mobile_number.dart';
 import '../../../seller_registration/domain/entities/seller_application.dart';
@@ -59,17 +60,14 @@ class ProviderStoreDraft {
   bool get isValid =>
       details.isValid &&
       normalizedMobile != null &&
-      retainedPictureIds.length + pictures.length <= 5 &&
+      retainedPictureIds.length + pictures.length <=
+          ImageUploadPolicy.maxFiles &&
       retainedPictureIds.every((id) => id > 0) &&
       retainedPictureIds.toSet().length == retainedPictureIds.length &&
       [if (details.document != null) details.document!, ...pictures].every(
         (image) =>
             image.bytes.isNotEmpty &&
-            image.bytes.length <= 5 * 1024 * 1024 &&
-            const [
-              'image/jpeg',
-              'image/png',
-              'image/webp',
-            ].contains(image.mimeType),
+            image.bytes.length <= ImageUploadPolicy.maxBytes &&
+            ImageUploadPolicy.mimeTypes.contains(image.mimeType),
       );
 }

@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/media/image_upload_policy.dart';
 import '../../domain/entities/create_customer_car_command.dart';
 
-const customerCarPhotoLimit = 5;
-const customerCarPhotoMaximumBytes = 5 * 1024 * 1024;
+const customerCarPhotoLimit = ImageUploadPolicy.maxFiles;
+const customerCarPhotoMaximumBytes = ImageUploadPolicy.maxBytes;
 
 final customerCarGalleryPickerProvider = Provider<CustomerCarGalleryPicker>((
   ref,
@@ -123,7 +124,7 @@ class ImagePickerCustomerCarGalleryPicker implements CustomerCarGalleryPicker {
 
   String? _supportedMimeType(XFile file) {
     final declaredType = file.mimeType?.toLowerCase();
-    if (_supportedMimeTypes.contains(declaredType)) return declaredType;
+    if (ImageUploadPolicy.mimeTypes.contains(declaredType)) return declaredType;
 
     // Some Android gallery providers omit MIME metadata. Use only the local
     // extension to classify the temporary file; its original name is never
@@ -137,5 +138,3 @@ class ImagePickerCustomerCarGalleryPicker implements CustomerCarGalleryPicker {
     return null;
   }
 }
-
-const _supportedMimeTypes = <String>{'image/jpeg', 'image/png', 'image/webp'};

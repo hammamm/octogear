@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/media/image_upload_policy.dart';
 import '../../../../app/routing/app_routes.dart';
 import '../../../customer_garage/domain/entities/customer_car.dart';
 import '../../../customer_garage/presentation/controllers/customer_car_form_references_controller.dart';
@@ -138,7 +139,11 @@ class _GeneralPartRequestScreenState
   }
 
   Future<void> _pickPhoto({bool recover = false}) async {
-    if (_picking || _photos.length >= 5 || _state.locked) return;
+    if (_picking ||
+        _photos.length >= ImageUploadPolicy.maxFiles ||
+        _state.locked) {
+      return;
+    }
     setState(() {
       _picking = true;
       _photoError = false;

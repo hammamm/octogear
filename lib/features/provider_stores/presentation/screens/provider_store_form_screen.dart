@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/media/image_upload_policy.dart';
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
@@ -218,7 +219,8 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
                 onPressed: () => Navigator.pop(ctx, true),
                 child: Text(ctx.tr('store_management.document')),
               ),
-              if (_retained.length + _photos.length < 5)
+              if (_retained.length + _photos.length <
+                  ImageUploadPolicy.maxFiles)
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
                   child: Text(ctx.tr('store_management.photos')),
@@ -255,7 +257,8 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
       setState(() {
         if (document) {
           _document = image;
-        } else if (_retained.length + _photos.length < 5) {
+        } else if (_retained.length + _photos.length <
+            ImageUploadPolicy.maxFiles) {
           _photos.add(image);
         }
       });
@@ -710,7 +713,9 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
                         OutlinedButton.icon(
                           key: const Key('store-add-photo'),
                           onPressed:
-                              locked || _retained.length + _photos.length >= 5
+                              locked ||
+                                  _retained.length + _photos.length >=
+                                      ImageUploadPolicy.maxFiles
                               ? null
                               : () => _pick(document: false),
                           icon: const Icon(Icons.add_photo_alternate_outlined),

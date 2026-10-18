@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/media/image_upload_policy.dart';
 import '../../domain/entities/seller_application.dart';
 
 abstract interface class RegistrationDocumentPicker {
@@ -36,7 +37,7 @@ class GalleryRegistrationDocumentPicker implements RegistrationDocumentPicker {
 
   Future<RegistrationDocument?> _read(XFile? file) async {
     if (file == null) return null;
-    if (await file.length() > 5 * 1024 * 1024) {
+    if (await file.length() > ImageUploadPolicy.maxBytes) {
       throw const FormatException('Document too large.');
     }
     final bytes = await file.readAsBytes();
@@ -46,7 +47,7 @@ class GalleryRegistrationDocumentPicker implements RegistrationDocumentPicker {
       [82, 73, 70, 70, _, _, _, _, 87, 69, 66, 80, ...] => 'image/webp',
       _ => throw const FormatException('Unsupported document.'),
     };
-    if (bytes.isEmpty || bytes.length > 5 * 1024 * 1024) {
+    if (bytes.isEmpty || bytes.length > ImageUploadPolicy.maxBytes) {
       throw const FormatException('Invalid document size.');
     }
     final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
@@ -55,8 +56,8 @@ class GalleryRegistrationDocumentPicker implements RegistrationDocumentPicker {
       try {
         if (descriptor.width < 1 ||
             descriptor.height < 1 ||
-            descriptor.width > 4096 ||
-            descriptor.height > 4096) {
+            descriptor.width > ImageUploadPolicy.maxDimension ||
+            descriptor.height > ImageUploadPolicy.maxDimension) {
           throw const FormatException('Invalid document dimensions.');
         }
       } finally {

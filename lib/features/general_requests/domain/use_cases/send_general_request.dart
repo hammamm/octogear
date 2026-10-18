@@ -1,3 +1,4 @@
+import '../../../../core/media/image_upload_policy.dart';
 import '../entities/general_request.dart';
 import '../repositories/general_request_repository.dart';
 
@@ -13,12 +14,12 @@ class SendGeneralRequest {
                 command.componentName!.runes.length > 255)) ||
         command.description.runes.length > 1000 ||
         command.idempotencyKey.isEmpty ||
-        command.photos.length > 5 ||
+        command.photos.length > ImageUploadPolicy.maxFiles ||
         command.photos.any(
           (p) =>
               p.bytes.isEmpty ||
-              p.bytes.length > 5 * 1024 * 1024 ||
-              !['image/jpeg', 'image/png', 'image/webp'].contains(p.mimeType),
+              p.bytes.length > ImageUploadPolicy.maxBytes ||
+              !ImageUploadPolicy.mimeTypes.contains(p.mimeType),
         ) ||
         (vehicle is SavedRequestVehicle && vehicle.id < 1) ||
         (vehicle is NewRequestVehicle &&

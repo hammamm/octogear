@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/media/image_upload_policy.dart';
 import '../../domain/entities/part_request.dart';
 
 abstract interface class PartRequestPhotoPicker {
@@ -37,7 +38,7 @@ class GalleryPartRequestPhotoPicker implements PartRequestPhotoPicker {
   Future<PartRequestPhoto?> _read(XFile? file) async {
     if (file == null) return null;
     final length = await file.length();
-    if (length < 1 || length > 5 * 1024 * 1024) {
+    if (length < 1 || length > ImageUploadPolicy.maxBytes) {
       throw const FormatException('Invalid image size.');
     }
     final bytes = await file.readAsBytes();
@@ -57,7 +58,8 @@ class GalleryPartRequestPhotoPicker implements PartRequestPhotoPicker {
     try {
       final descriptor = await ui.ImageDescriptor.encoded(buffer);
       try {
-        if (descriptor.width > 4096 || descriptor.height > 4096) {
+        if (descriptor.width > ImageUploadPolicy.maxDimension ||
+            descriptor.height > ImageUploadPolicy.maxDimension) {
           throw const FormatException('Image too large.');
         }
       } finally {

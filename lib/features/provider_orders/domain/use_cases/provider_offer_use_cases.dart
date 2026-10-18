@@ -1,3 +1,4 @@
+import '../../../../core/media/image_upload_policy.dart';
 import '../entities/provider_offer.dart';
 import '../repositories/provider_offers_repository.dart';
 
@@ -31,16 +32,12 @@ class SaveProviderOffer {
         command.price > 2147483647 ||
         (command.offerId != null && command.offerId! < 1) ||
         command.notes.runes.length > 1000 ||
-        (command.photos?.length ?? 0) > 5 ||
+        (command.photos?.length ?? 0) > ImageUploadPolicy.maxFiles ||
         (command.photos?.any(
               (photo) =>
                   photo.bytes.isEmpty ||
-                  photo.bytes.length > 5 * 1024 * 1024 ||
-                  ![
-                    'image/jpeg',
-                    'image/png',
-                    'image/webp',
-                  ].contains(photo.mimeType),
+                  photo.bytes.length > ImageUploadPolicy.maxBytes ||
+                  !ImageUploadPolicy.mimeTypes.contains(photo.mimeType),
             ) ??
             false)) {
       throw ArgumentError('Invalid offer submission.');
