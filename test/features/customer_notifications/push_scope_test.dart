@@ -11,6 +11,7 @@ import 'package:octogear/app/routing/app_router.dart';
 import 'package:octogear/features/customer_chats/presentation/controllers/chat_realtime_providers.dart';
 import 'package:octogear/app/routing/app_routes.dart';
 import 'package:octogear/core/localization/app_locale_controller.dart';
+import 'package:octogear/core/localization/app_locale.dart';
 import 'package:octogear/core/storage/app_storage.dart';
 import 'package:octogear/core/storage/storage_providers.dart';
 import 'package:octogear/features/authentication/domain/entities/app_user.dart';
@@ -21,9 +22,19 @@ import 'package:octogear/features/notifications/presentation/controllers/notific
 import 'package:octogear/features/notifications/presentation/controllers/push_providers.dart';
 import 'package:octogear/features/notifications/presentation/widgets/push_delivery_scope.dart';
 
-import '../customer_chats/chat_screen_test.dart' show English, Translations;
+import '../customer_chats/chat_screen_test.dart' show Translations;
 import 'notification_fixtures.dart';
 import 'push_delivery_test.dart' show FakePushRepository, payload;
+
+class PushTestLocale extends AppLocaleController {
+  @override
+  AppLocale build() => AppLocale.english;
+
+  @override
+  Future<void> select(AppLocale locale) async {
+    state = locale;
+  }
+}
 
 class PushTestSession extends SessionController {
   @override
@@ -134,7 +145,7 @@ void main() {
                 provider ? ProviderPushTestSession.new : PushTestSession.new,
               ),
               sessionStorageProvider.overrideWithValue(PushTestStorage()),
-              appLocaleProvider.overrideWith(English.new),
+              appLocaleProvider.overrideWith(PushTestLocale.new),
               appRouterProvider.overrideWithValue(router),
               chatRealtimeUpdatesProvider.overrideWith(
                 (_) => const Stream.empty(),
@@ -153,6 +164,20 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        // Startup counts load even without a bell on this deep-link landing page.
+        expect(inbox.countCalls, 1);
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(PushDeliveryScope)),
+        );
+        expect(container.read(notificationCountProvider).requireValue, 2);
+        await container.read(appLocaleProvider.notifier).toggle();
+        await tester.pumpAndSettle();
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pumpAndSettle();
+        expect(inbox.countCalls, 1);
         push.foregroundEvents.add(
           parsePushNotification(event(recipient: '2'))!,
         );
@@ -162,13 +187,13 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text(banner), findsOneWidget);
         expect(inbox.pageCalls, 0);
-        expect(inbox.countCalls, 0);
+        expect(inbox.countCalls, 1);
         await tester.tap(find.text('Open'));
         await tester.pumpAndSettle();
         expect(find.text('Offer destination'), findsOneWidget);
         expect(inbox.readCalls, 1);
         expect(inbox.pageCalls, 0);
-        expect(inbox.countCalls, 0);
+        expect(inbox.countCalls, 1);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
         await tester.pumpAndSettle();

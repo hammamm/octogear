@@ -328,7 +328,24 @@ void main() {
     'dashboard bell and More open provider notifications inside its shell',
     (tester) async {
       final c = await pump(tester, FakeStores());
-      await tester.tap(find.byKey(const Key('provider-notification-bell')));
+      final bell = find.byKey(const Key('provider-notification-bell'));
+      final refresh = find.byKey(const Key('dashboard-refresh'));
+      expect(find.byTooltip('2 unread notifications'), findsOneWidget);
+      expect(
+        tester
+            .widget<Badge>(
+              find.descendant(of: bell, matching: find.byType(Badge)),
+            )
+            .label,
+        isA<Text>().having((text) => text.data, 'number', '2'),
+      );
+      expect(tester.getRect(refresh).left - tester.getRect(bell).right, 8);
+      expect(
+        tester.getRect(find.widgetWithIcon(TextButton, Icons.language)).left -
+            tester.getRect(refresh).right,
+        8,
+      );
+      await tester.tap(bell);
       await tester.pumpAndSettle();
       expect(find.byType(NotificationsScreen), findsOneWidget);
       expect(

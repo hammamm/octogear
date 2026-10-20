@@ -43,6 +43,7 @@ class FakeNotificationsRepository implements NotificationsRepository {
   bool failPage = false, failCount = false, failRead = false;
   Future<NotificationPage> Function(bool, String?)? onPage;
   Future<void> Function()? onRead;
+  Future<int> Function()? onCount;
   @override
   Future<NotificationPage> page({
     required bool unreadOnly,
@@ -61,6 +62,7 @@ class FakeNotificationsRepository implements NotificationsRepository {
   Future<int> unreadCount() async {
     ++countCalls;
     if (failCount) throw Exception('offline');
+    if (onCount != null) return onCount!();
     return items.where((n) => !n.isRead).length;
   }
 

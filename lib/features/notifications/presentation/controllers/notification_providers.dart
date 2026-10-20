@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:octogear/features/notifications/domain/repositories/notifications_repository.dart';
 
@@ -55,7 +57,7 @@ final markNotificationPageReadProvider = Provider(
   ),
 );
 
-// Local badge only. Watching this provider must never issue an HTTP request.
+// Fetch one initial count per authenticated session, then reconcile local updates.
 final notificationCountProvider =
     AsyncNotifierProvider<NotificationCountController, int>(
       NotificationCountController.new,
@@ -64,15 +66,41 @@ final notificationCountProvider =
 class NotificationCountController extends AsyncNotifier<int> {
   final Set<String> _seen = {};
   final Set<String> _read = {};
+  int _revision = 0;
+
   @override
   int build() {
-    ref.watch(notificationSessionProvider);
+    final session = ref.watch(notificationSessionProvider);
+    final revision = ++_revision;
+    ref.onDispose(() => ++_revision);
     _seen.clear();
     _read.clear();
+    if (session != null) unawaited(_loadInitial(session, revision));
     return 0;
   }
 
+  Future<void> _loadInitial(AuthenticatedSession session, int revision) async {
+    bool isCurrent() =>
+        ref.mounted &&
+        revision == _revision &&
+        identical(ref.read(notificationSessionProvider), session);
+    try {
+      final count = await ref.read(getUnreadNotificationCountProvider)();
+      if (!isCurrent()) return;
+      // Push delivery may overlap this server snapshot. Do not add the same
+      // arrival twice or erase a larger count already observed locally.
+      final local = state.value ?? 0;
+      state = AsyncData(count > local ? count : local);
+    } catch (error, stack) {
+      if (!isCurrent() || (state.value ?? 0) > 0) return;
+      // Keep navigation usable. Opening the inbox reconciles the badge and
+      // exposes the existing offline/retry UI if the connection is still down.
+      state = AsyncError(error, stack);
+    }
+  }
+
   void acknowledge(NotificationReadReceipt receipt) {
+    ++_revision;
     // A push can arrive after the server calculated its receipt count. Preserve
     // known arrivals without counting them twice when the receipt includes them.
     final remaining = (state.value ?? 0) - receipt.ids.difference(_read).length;
@@ -84,6 +112,7 @@ class NotificationCountController extends AsyncNotifier<int> {
   }
 
   void reconcile(NotificationPage page) {
+    ++_revision;
     _seen.addAll(page.items.map((item) => item.id));
     _read.addAll(
       page.items.where((item) => item.isRead).map((item) => item.id),
@@ -99,6 +128,7 @@ class NotificationCountController extends AsyncNotifier<int> {
 
   void read({required bool all, String? id}) {
     if (id != null && !_read.add(id)) return;
+    ++_revision;
     if (all) _read.addAll(_seen);
     state = AsyncData(all ? 0 : ((state.value ?? 0) - 1).clamp(0, 1 << 31));
   }

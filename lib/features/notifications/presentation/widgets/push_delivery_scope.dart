@@ -229,6 +229,8 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
       _messageBanner = null;
       WidgetsBinding.instance.addPostFrameCallback((_) => _bind());
     });
+    // Initialize the shared badge even when entering through a deep link.
+    ref.listen(notificationCountProvider, (_, _) {});
     // Hold one connection across customer tabs; no notification inbox fetches.
     ref.listen(chatRealtimeUpdatesProvider, (_, next) {
       final update = next.asData?.value;

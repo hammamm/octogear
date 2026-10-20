@@ -81,7 +81,22 @@ void main() {
         translations: englishTranslations,
         locale: AppLocale.english,
       );
-      await tester.tap(find.byKey(const Key('customer-notification-bell')));
+      final bell = find.byKey(const Key('customer-notification-bell'));
+      expect(find.byTooltip('2 unread notifications'), findsOneWidget);
+      expect(
+        tester
+            .widget<Badge>(
+              find.descendant(of: bell, matching: find.byType(Badge)),
+            )
+            .label,
+        isA<Text>().having((text) => text.data, 'number', '2'),
+      );
+      expect(
+        tester.getRect(find.widgetWithIcon(TextButton, Icons.language)).left -
+            tester.getRect(bell).right,
+        8,
+      );
+      await tester.tap(bell);
       await tester.pumpAndSettle();
       expect(find.byType(NotificationsScreen), findsOneWidget);
       await tester.tap(

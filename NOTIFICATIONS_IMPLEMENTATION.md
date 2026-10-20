@@ -1,3 +1,31 @@
+## Startup notification badge — 2026-10-20
+
+User action: Enter the app after login or successful session restoration.
+Roles/permissions: Both authenticated customers and providers; no signed-out request.
+API: Reuse authenticated GET /notifications/unread-count and its existing
+standard envelope with data: {"unread_count": 3}. No backend changes.
+State: Load once for the active authenticated session, independently of push
+permission. Keep the bell usable while loading or offline; an inbox visit can
+reconcile/recover the count. Hide zero badges. Never poll or reload on navigation,
+language changes or resume. Discard responses from replaced/disposed sessions
+and responses superseded by inbox/read updates. Merge concurrent pushes using
+the greater of the server snapshot and known local unread count, avoiding double
+counting arrivals already included in the snapshot.
+Navigation: Existing customer/provider inbox routes remain unchanged.
+Locale/RTL: Reuse localized badge/tooltip; add 8 dp between customer Home bell
+and language control, and between provider dashboard utility controls.
+Analytics/notifications: No new analytics, permissions or push delivery changes.
+Tests: Startup for both roles, signed-out and replaced sessions, pending request
+races, failures/recovery, no repeat fetch on rebuild/resume, existing narrow/RTL
+header and inbox navigation regressions, analyze, custom lint and full suite.
+This owner-requested startup count read supersedes the older zero-on-startup
+policy in the historical notes; inbox fetching and automatic polling remain unchanged.
+
+Verification: All 523 Flutter tests passed, including startup badge/session races,
+numeric bells, button gaps, deep-link entry and Arabic/English large-text layouts.
+Flutter analysis and custom lint reported no issues; git diff checks passed.
+Tests used fixtures; no physical-device or live-backend verification was performed.
+
 ## Shared page reads for customers and providers — 2026-10-17
 
 User action: Open Notifications, switch filters, refresh or load an older page.

@@ -68,6 +68,7 @@ class CustomerHomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   const NotificationBell(),
+                  const SizedBox(width: OctoGearSpacing.xSmall),
                   const AppLanguageToggleButton(compact: true),
                 ],
               ),

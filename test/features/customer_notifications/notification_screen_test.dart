@@ -130,7 +130,7 @@ void main() {
         await tester.pump(const Duration(minutes: 2));
         expect(repo.pageReads, hasLength(1));
         expect(repo.pageCalls, 1);
-        expect(repo.countCalls, 0);
+        expect(repo.countCalls, 1);
         await tester.pumpWidget(const SizedBox());
       },
     );
@@ -365,7 +365,7 @@ void main() {
       final repo = FakeNotificationsRepository();
       await pump(tester, repo);
       expect(repo.pageCalls, 1);
-      expect(repo.countCalls, 0);
+      expect(repo.countCalls, 1);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(NotificationsScreen)),
       );
@@ -377,11 +377,11 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
       expect(repo.pageCalls, 1);
-      expect(repo.countCalls, 0);
+      expect(repo.countCalls, 1);
       await container.read(notificationInboxProvider(false).notifier).refresh();
       await tester.pumpAndSettle();
       expect(repo.pageCalls, 2);
-      expect(repo.countCalls, 0);
+      expect(repo.countCalls, 1);
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -403,13 +403,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(repo.countCalls, 0);
+    expect(repo.countCalls, 1);
     expect(repo.pageCalls, 0);
     await tester.pump(const Duration(minutes: 2));
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
-    expect(repo.countCalls, 0);
+    expect(repo.countCalls, 1);
     expect(repo.pageCalls, 0);
     await tester.pumpWidget(const SizedBox());
   });

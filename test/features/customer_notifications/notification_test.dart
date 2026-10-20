@@ -156,7 +156,7 @@ void main() {
     expect(await controller.markAllRead(), false);
     expect(await c.read(notificationCountProvider.future), 0);
     expect(repo.pageCalls, 1);
-    expect(repo.countCalls, 0);
+    expect(repo.countCalls, 1);
   });
   test('malformed targets and unknown payloads never open arbitrary links', () {
     Map<String, Object?> json(Object? payload) => {

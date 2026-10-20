@@ -241,14 +241,19 @@ class DashboardHeader extends StatelessWidget {
       ),
     );
     final actions = [
-      if (showNotifications) const NotificationBell(provider: true),
-      if (showRefresh)
+      if (showNotifications) ...[
+        const NotificationBell(provider: true),
+        const SizedBox(width: OctoGearSpacing.xSmall),
+      ],
+      if (showRefresh) ...[
         IconButton(
           key: const Key('dashboard-refresh'),
           onPressed: onRefresh,
           tooltip: context.tr('provider_dashboard.refresh'),
           icon: const Icon(Icons.refresh_rounded),
         ),
+        const SizedBox(width: OctoGearSpacing.xSmall),
+      ],
       const AppLanguageToggleButton(compact: true),
     ];
     if (MediaQuery.textScalerOf(context).scale(1) >= 1.5) {

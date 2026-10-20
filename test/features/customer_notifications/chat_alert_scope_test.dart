@@ -117,7 +117,7 @@ void main() {
         );
         expect(container.read(chatActivityProvider), !inChats);
         expect(inbox.pageCalls, 0);
-        expect(inbox.countCalls, 0);
+        expect(inbox.countCalls, 1);
         // Entering Chats removes a banner already visible on another tab.
         router.go('/customer/chats');
         await tester.pumpAndSettle();

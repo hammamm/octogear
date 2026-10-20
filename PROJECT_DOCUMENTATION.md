@@ -1,5 +1,18 @@
 # OctoGear - Mobile Application Development Contract
 
+## Startup unread badge and header spacing — 2026-10-20
+
+Both authenticated roles now load GET /notifications/unread-count once at session
+entry, including deep-link entry, using the shared notification controller.
+The existing bell shows the localized unread number; zero stays hidden. Inbox
+and read updates supersede a pending startup snapshot; old-session responses are
+ignored. Push permission is independent. Navigation, locale changes and resume
+do not trigger another count fetch, and no polling is added. A failed startup
+read leaves the bell usable and the inbox can recover the count. Customer Home
+has an 8 dp gap between bell and language buttons; provider dashboard controls
+have the same gap. See NOTIFICATIONS_IMPLEMENTATION.md for the current contract.
+This supersedes the historical no-startup-count rule, not the inbox read policy.
+
 ## Provider language settings — 2026-10-17
 
 Provider More > Settings contains only the app language setting. Customer and
