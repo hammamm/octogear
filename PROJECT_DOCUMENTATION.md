@@ -1,5 +1,21 @@
 # OctoGear - Mobile Application Development Contract
 
+## Registration scrolling only on overflow — 2026-10-20
+
+User action: View or resize the registration page, increase text size or open the
+keyboard. The page stays fixed when its content fits and scrolls when it overflows.
+Roles/API/navigation: Existing new-account registration; no API, submission,
+authorization, route or notification changes. Existing errors remain visible.
+Layout: Reuse the shared authentication page scaffold. Its minimum child height
+must exclude its own vertical padding inside the already-safe viewport. Clamp
+that height to zero for extremely short windows. Preserve native scroll physics,
+keyboard dismissal, safe areas, responsive width and Arabic/English direction.
+Tests: Actual registration layouts on Android/iOS, fitting versus short/resized
+viewports, keyboard insets and large text; existing authentication tests and analysis.
+Verification: All 58 authentication/routing tests passed, including six new
+registration layout cases. Flutter analysis of the changed Dart files and diff
+checks passed. No physical-device verification was performed.
+
 ## Startup unread badge and header spacing — 2026-10-20
 
 Both authenticated roles now load GET /notifications/unread-count once at session

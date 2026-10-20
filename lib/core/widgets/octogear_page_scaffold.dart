@@ -37,9 +37,10 @@ class OctoGearPageScaffold extends StatelessWidget {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       maxWidth: 520,
-                      minHeight:
-                          constraints.maxHeight -
-                          MediaQuery.paddingOf(context).vertical,
+                      // SafeArea already removes system insets. The scroll
+                      // view's padding must also fit within this viewport.
+                      minHeight: (constraints.maxHeight - padding.vertical)
+                          .clamp(0.0, double.infinity),
                     ),
                     child: child,
                   ),
