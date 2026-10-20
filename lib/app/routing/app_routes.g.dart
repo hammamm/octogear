@@ -1001,6 +1001,11 @@ RouteBase get $providerShellRoute => StatefulShellRouteData.$route(
           factory: $ProviderChatsRoute._fromState,
           routes: [
             GoRouteData.$route(
+              path: 'offers/:offerId/edit',
+              hasOverriddenOnExit: false,
+              factory: $ProviderChatOfferFormRoute._fromState,
+            ),
+            GoRouteData.$route(
               path: 'order/:orderId',
               hasOverriddenOnExit: false,
               factory: $ProviderOrderChatRoute._fromState,
@@ -1340,6 +1345,35 @@ mixin $ProviderChatsRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/provider/chats');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ProviderChatOfferFormRoute on GoRouteData {
+  static ProviderChatOfferFormRoute _fromState(GoRouterState state) =>
+      ProviderChatOfferFormRoute(
+        offerId: int.parse(state.pathParameters['offerId']!),
+        orderId: int.parse(state.uri.queryParameters['order-id']!),
+      );
+
+  ProviderChatOfferFormRoute get _self => this as ProviderChatOfferFormRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/provider/chats/offers/${Uri.encodeComponent(_self.offerId.toString())}/edit',
+    queryParams: {'order-id': _self.orderId.toString()},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../../domain/entities/chat.dart';
+import '../../../provider_orders/presentation/widgets/provider_chat_offers.dart';
 import '../controllers/chat_providers.dart';
 import '../widgets/chat_message_bubble.dart';
 import '../widgets/chat_connection_status.dart';
@@ -234,6 +235,14 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
           ),
           data: (state) => Column(
             children: [
+              if (widget.provider && state.context.conversation != null)
+                ProviderChatOffers(
+                  key: ValueKey(state.context.conversation!.id),
+                  conversationId: state.context.conversation!.id,
+                  currentOfferId:
+                      state.context.offerId ??
+                      state.context.conversation!.offerId,
+                ),
               if (state.context.orderId != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
@@ -260,7 +269,11 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
                               ),
                               const SizedBox(height: 14),
                               Text(
-                                context.tr('chat.start'),
+                                context.tr(
+                                  widget.provider
+                                      ? 'chat_offers.start'
+                                      : 'chat.start',
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ],

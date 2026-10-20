@@ -6,9 +6,15 @@ import '../models/provider_offer_dto.dart';
 class ProviderOffersRemoteDataSource {
   const ProviderOffersRemoteDataSource(this.api);
   final ApiClient api;
-  Future<ProviderOffersPageDto> list({int page = 1, int? orderId}) async {
+  Future<ProviderOffersPageDto> list({
+    int page = 1,
+    int? orderId,
+    int? conversationId,
+  }) async {
     final response = await api.get<List<ProviderOfferDto>>(
-      'provider/orders/offers',
+      conversationId == null
+          ? 'provider/orders/offers'
+          : 'provider/conversations/$conversationId/offers',
       requiresAuthentication: true,
       queryParameters: {'page': page, 'order_id': ?orderId},
       decode: (data) {
@@ -21,7 +27,9 @@ class ProviderOffersRemoteDataSource {
         meta == null ||
         meta.currentPage != page ||
         response.data!.any(
-          (offer) => orderId != null && offer.value.orderId != orderId,
+          (offer) =>
+              (orderId != null && offer.value.orderId != orderId) ||
+              (conversationId != null && !offer.value.canEdit),
         )) {
       throw const ApiFailure.unexpected();
     }

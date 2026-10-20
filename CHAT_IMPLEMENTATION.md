@@ -1,3 +1,29 @@
+# Quiet chat offer lookup — 2026-10-20
+
+User action: Opening a provider conversation silently checks for editable offers.
+Loading and successful empty results occupy no space: no spinner, placeholder,
+empty message or refresh button. A nonempty result reveals the existing single
+offer action or multiple-offer chooser. Lookup errors retain explicit Retry;
+an already opened chooser retains its pagination/loading/error feedback.
+The existing provider authorization, endpoint, editor route, session isolation,
+chat disposal, messages and drafts are unchanged. No new strings or side effects.
+Verification: update the existing widget checks for hidden loading/empty states,
+zero reserved height, appearance after loading, and disappearance after refresh;
+retain single/multiple-offer, error/retry and Arabic/English coverage.
+
+Verified: all 79 affected chat, offer and provider-shell tests passed; Flutter
+analysis and custom lint reported no issues. No device build or live API changes.
+
+# Provider offer editing from chat — 2026-10-19
+
+Existing provider conversations expose editable offers for that customer through
+the authorized `GET /provider/conversations/{conversation}/offers` endpoint.
+A sole offer opens the existing price/notes/photos editor; multiple offers use a
+paginated chooser with request, offer, store and total, marking the current chat's
+offer. The typed editor stays under Chats and returns without losing the draft.
+Accepted/paid orders and customer request fields retain their existing rules.
+No automatic message or offer write occurs on opening. See the current contract
+and verification in [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md#edit-provider-offers-from-chat--2026-10-19).
 # Offer chat — 2026-10-04
 
 User action: Open Chat from an offer without writing anything. Read an existing

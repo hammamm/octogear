@@ -1,4 +1,18 @@
 {
+  "chat_offers": {
+    "start": "Discuss the request with your customer. Send a message to start the conversation.",
+    "edit": "Edit offer",
+    "choose": "Edit customer offers ({})",
+    "title": "Choose an offer to edit",
+    "hint": "Your editable offers for this customer. Check the request and store before choosing.",
+    "empty": "No editable offers. Only pending offers on pending requests can be changed.",
+    "loading": "Loading editable offers…",
+    "failed": "Could not load editable offers.",
+    "current": "This chat’s offer",
+    "identity": "Request #{} · Offer #{}",
+    "refresh": "Refresh offers",
+    "more": "Load more offers"
+  },
   "app_settings": {
     "language": "App language",
     "language_description": "Use OctoGear in Arabic or English. Your choice is saved automatically."

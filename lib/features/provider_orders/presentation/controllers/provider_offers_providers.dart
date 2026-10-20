@@ -48,7 +48,15 @@ final providerOffersProvider =
       ProviderOffersState
     >(ProviderOffersController.new, retry: (_, _) => null);
 
+final providerChatOffersProvider = AsyncNotifierProvider.autoDispose
+    .family<ProviderOffersController, ProviderOffersState, int>(
+      (id) => ProviderOffersController(conversationId: id),
+      retry: (_, _) => null,
+    );
+
 class ProviderOffersController extends AsyncNotifier<ProviderOffersState> {
+  ProviderOffersController({this.conversationId});
+  final int? conversationId;
   int _generation = 0;
   @override
   Future<ProviderOffersState> build() async {
@@ -62,7 +70,9 @@ class ProviderOffersController extends AsyncNotifier<ProviderOffersState> {
       throw const ApiFailure(type: ApiFailureType.unauthorized);
     }
     return ProviderOffersState(
-      await ref.watch(getProviderOffersProvider).call(),
+      await ref
+          .watch(getProviderOffersProvider)
+          .call(conversationId: conversationId),
     );
   }
 
@@ -78,7 +88,10 @@ class ProviderOffersController extends AsyncNotifier<ProviderOffersState> {
     final get = ref.read(getProviderOffersProvider);
     state = AsyncData(ProviderOffersState(current.page, loadingMore: true));
     try {
-      final next = await get(page: current.page.page + 1);
+      final next = await get(
+        page: current.page.page + 1,
+        conversationId: conversationId,
+      );
       if (!ref.mounted || generation != _generation) return;
       final items = {
         for (final item in current.page.items) item.id: item,
@@ -165,6 +178,7 @@ class ProviderOfferActions extends Notifier<ProviderOfferActionState> {
       ].contains(error.type);
   void _invalidate([int? offerId]) {
     ref.invalidate(providerOffersProvider);
+    ref.invalidate(providerChatOffersProvider);
     ref.invalidate(providerGeneralRequestsProvider);
     ref.invalidate(providerGeneralRequestProvider(key.orderId));
     if (offerId != null) ref.invalidate(providerOfferProvider(offerId));

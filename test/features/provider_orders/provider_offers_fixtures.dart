@@ -40,14 +40,20 @@ Map<String, dynamic> offerJson() => {
 class FakeOffers implements ProviderOffersRepository {
   final calls = <(int, int?)>[];
   final saves = <ProviderOfferCommand>[];
+  final conversations = <int?>[];
   int withdrawals = 0;
   List<ProviderOffer> items = [];
   Future<ProviderOffer> Function(ProviderOfferCommand)? onSave;
   Future<ProviderOffersPage> Function(int, int?)? onList;
   Future<ProviderOffer> Function(int)? onGet;
   @override
-  Future<ProviderOffersPage> list({int page = 1, int? orderId}) async {
+  Future<ProviderOffersPage> list({
+    int page = 1,
+    int? orderId,
+    int? conversationId,
+  }) async {
     calls.add((page, orderId));
+    conversations.add(conversationId);
     return onList?.call(page, orderId) ??
         ProviderOffersPage(
           List.of(

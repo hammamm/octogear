@@ -1,3 +1,5 @@
+import '../../features/customer_chats/chat_fixtures.dart';
+import 'package:octogear/features/provider_orders/presentation/screens/provider_offer_form_screen.dart';
 import '../../features/customer_notifications/notification_fixtures.dart';
 import 'package:octogear/features/notifications/presentation/controllers/notification_providers.dart';
 import 'package:octogear/features/notifications/presentation/screens/notifications_screen.dart';
@@ -127,6 +129,7 @@ void main() {
     management.FakeStoreManagement? storeManagement,
     FakeGeneralRequests? requests,
     FakeOffers? offers,
+    FakeChatRepository? chats,
     FakeManagedOrders? managedOrders,
     bool arabic = false,
     double scale = 1,
@@ -175,6 +178,11 @@ void main() {
             MemoryOrderFilterStorage(),
           ),
           registrationCitiesProvider.overrideWith(_Cities.new),
+          if (chats != null) chatRepositoryProvider.overrideWithValue(chats),
+          if (chats != null)
+            chatRealtimeUpdatesProvider.overrideWith(
+              (_) => const Stream.empty(),
+            ),
           chatInboxProvider.overrideWith(_Inbox.new),
           chatRealtimeConnectedProvider.overrideWithValue(true),
         ],
@@ -247,6 +255,75 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  for (final arabic in [false, true]) {
+    testWidgets(
+      'chat offer editor stays in Chats and preserves the draft in the real shell ($arabic)',
+      (tester) async {
+        final offers = FakeOffers()..items = [testOffer()];
+        final chats = FakeChatRepository()
+          ..context = const ChatContext(
+            conversation: ChatSummary(
+              id: 7,
+              name: 'Customer',
+              orderId: 1,
+              offerId: 11,
+            ),
+            orderId: 1,
+            offerId: 11,
+          );
+        final c = await pump(
+          tester,
+          FakeStores(),
+          offers: offers,
+          chats: chats,
+          arabic: arabic,
+          scale: 2,
+        );
+        final router = c.read(appRouterProvider);
+        router.go('/provider/chats/7');
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<NavigationBar>(find.byType(NavigationBar))
+              .selectedIndex,
+          2,
+        );
+        await tester.enterText(find.byKey(const Key('chat-composer')), 'Draft');
+        tester.view.viewInsets = FakeViewPadding(
+          bottom: 320 * tester.view.devicePixelRatio,
+        );
+        addTearDown(tester.view.resetViewInsets);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        tester.view.resetViewInsets();
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('chat-edit-offer')));
+        await tester.pumpAndSettle();
+        expect(find.byType(ProviderOfferFormScreen), findsOneWidget);
+        expect(
+          tester
+              .widget<NavigationBar>(find.byType(NavigationBar))
+              .selectedIndex,
+          2,
+        );
+        expect(
+          GoRouterState.of(
+            tester.element(find.byType(ProviderOfferFormScreen)),
+          ).uri.path,
+          '/provider/chats/offers/11/edit',
+        );
+        router.pop();
+        await tester.pumpAndSettle();
+        expect(find.text('Draft'), findsOneWidget);
+        expect(
+          router.routeInformationProvider.value.uri.path,
+          '/provider/chats/7',
+        );
+        expect(chats.sends, 0);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   testWidgets(
     'dashboard bell and More open provider notifications inside its shell',
     (tester) async {

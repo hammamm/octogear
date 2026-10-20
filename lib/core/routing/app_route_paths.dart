@@ -32,5 +32,6 @@ abstract final class AppRoutePath {
   static const providerNotifications = '/provider/notifications';
   static const providerOrders = '/provider/orders';
   static const providerChats = '/provider/chats';
+  static const providerChatOfferEditSegment = 'offers/:offerId/edit';
   static const providerMore = '/provider/more';
 }

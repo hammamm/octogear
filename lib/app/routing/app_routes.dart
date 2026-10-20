@@ -461,6 +461,9 @@ class CustomerCarEditRoute extends GoRouteData with $CustomerCarEditRoute {
         TypedGoRoute<ProviderChatsRoute>(
           path: AppRoutePath.providerChats,
           routes: [
+            TypedGoRoute<ProviderChatOfferFormRoute>(
+              path: AppRoutePath.providerChatOfferEditSegment,
+            ),
             TypedGoRoute<ProviderOrderChatRoute>(path: 'order/:orderId'),
             TypedGoRoute<ProviderConversationRoute>(path: ':conversationId'),
           ],
@@ -567,6 +570,18 @@ class ProviderDashboardActivityRoute extends GoRouteData
         ),
         storeId: storeId,
       );
+}
+
+class ProviderChatOfferFormRoute extends GoRouteData
+    with $ProviderChatOfferFormRoute {
+  const ProviderChatOfferFormRoute({
+    required this.orderId,
+    required this.offerId,
+  });
+  final int orderId, offerId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProviderOfferFormScreen(orderId: orderId, offerId: offerId);
 }
 
 class ProviderOrderChatRoute extends GoRouteData with $ProviderOrderChatRoute {

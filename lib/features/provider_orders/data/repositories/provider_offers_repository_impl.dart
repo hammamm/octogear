@@ -6,8 +6,15 @@ class ProviderOffersRepositoryImpl implements ProviderOffersRepository {
   const ProviderOffersRepositoryImpl(this._remote);
   final ProviderOffersRemoteDataSource _remote;
   @override
-  Future<ProviderOffersPage> list({int page = 1, int? orderId}) async =>
-      (await _remote.list(page: page, orderId: orderId)).toEntity();
+  Future<ProviderOffersPage> list({
+    int page = 1,
+    int? orderId,
+    int? conversationId,
+  }) async => (await _remote.list(
+    page: page,
+    orderId: orderId,
+    conversationId: conversationId,
+  )).toEntity();
   @override
   Future<ProviderOffer> get(int id) async => (await _remote.get(id)).toEntity();
   @override

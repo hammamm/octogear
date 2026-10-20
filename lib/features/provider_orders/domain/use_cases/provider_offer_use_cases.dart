@@ -5,11 +5,21 @@ import '../repositories/provider_offers_repository.dart';
 class GetProviderOffers {
   const GetProviderOffers(this._repository);
   final ProviderOffersRepository _repository;
-  Future<ProviderOffersPage> call({int page = 1, int? orderId}) {
-    if (page < 1 || (orderId != null && orderId < 1)) {
+  Future<ProviderOffersPage> call({
+    int page = 1,
+    int? orderId,
+    int? conversationId,
+  }) {
+    if (page < 1 ||
+        (orderId != null && orderId < 1) ||
+        (conversationId != null && conversationId < 1)) {
       throw ArgumentError('Invalid offer query.');
     }
-    return _repository.list(page: page, orderId: orderId);
+    return _repository.list(
+      page: page,
+      orderId: orderId,
+      conversationId: conversationId,
+    );
   }
 }
 

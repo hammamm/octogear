@@ -1308,3 +1308,72 @@ describing customer notifications as entirely deferred are superseded by this sl
 ## Shared image upload policy (2026-10-19)
 
 Implementation scope: consolidate the existing gallery count, file size, accepted MIME types and decoded image dimension limits in `lib/core/media/image_upload_policy.dart`. Customer garage, general requests, provider offers/store changes and registration document pickers use the shared policy. Keep current validation, picker compression, response payloads and localized messages unchanged. Laravel `config/images.php` remains authoritative; policy changes require updating both runtimes and rebuilding the app. Cloud storage credentials and disk selection belong exclusively to the API; Flutter continues using authenticated media routes. No live storage switch or existing-file migration is performed.
+
+## Edit provider offers from chat — 2026-10-19
+
+User action: A provider in an existing customer conversation sees an Edit offer
+action with the sole editable offer's request, part, store and total. Multiple
+editable offers open a paginated chooser for that customer, across owned stores
+and requests; the conversation's offer is identified and ordered first. The
+existing offer editor changes price, notes and optional photos and returns to chat.
+
+Roles/permissions: Provider-only, participant-authorized lookup; the server derives
+the customer from the conversation, never a supplied customer ID. Only the
+provider's pending offers on pending requests are selectable. Existing locked
+update policies and transactions remain authoritative if selection races editing.
+Accepted/paid orders and customer-owned request fields retain their current rules.
+
+API: GET /provider/conversations/7/offers?page=1 returns editable offers scoped
+to an authorized conversation. Older servers return unavailable instead of silently
+ignoring a customer filter. It returns the existing
+ProviderOrderOfferResource envelope, e.g. data: [{id:11, order_id:1,
+order_status:"pending", store:{id:1,name:"Parts"}, price:12345,
+status:"pending", can_edit:true, can_withdraw:true, ...}], with existing meta.
+Only editable offers for that conversation's customer are returned. The existing
+/provider/orders/offers list and order_id behavior remain unchanged.
+Existing multipart POST + _method=PUT saves the offer. No schema/backfill,
+new payment transition, automatic message, notification or write retry is added.
+
+Loading/empty/error/offline (updated 2026-10-20): The chat strip is hidden with
+zero reserved space while loading or when no editable offers exist. Nonempty
+results reveal the edit action and refresh control; lookup failures retain Retry.
+The opened chooser retains explicit loading/empty/error and pagination feedback.
+Pagination retains loaded rows after failure. Account and
+locale changes discard stale results. No polling. Editor entry reloads the selected
+offer; returning refreshes the chooser and existing offer caches are invalidated.
+
+Navigation: A typed provider Chats child editor uses orderId/offerId only; pushing
+and popping preserves the conversation and unsent message. No conversation is
+created by browsing offers. A provider-order preview exposes the shortcut after
+its first explicit message creates a conversation.
+
+Locale/RTL: Arabic and English, directional layout, scrollable chooser and editor,
+large text and keyboard-safe chat; use existing theme, money and error helpers.
+Tests: scope/ownership, legacy/direct/offer chats, pagination/validation, locked
+and deleted records, single/multiple/empty/error states, stale session/locale and
+pagination responses, edit-return/draft retention, Arabic/English large text.
+
+Verification (2026-10-19): the full Flutter suite passed 506 tests. The two added
+real-provider-shell integration tests also pass, including Chats branch retention,
+back navigation, unsent drafts and keyboard layouts in both locales at 200% text.
+After correcting the provider empty-chat copy, all 28 affected chat/offer tests
+passed again. Arabic/English single-offer and chooser renders were inspected.
+Flutter analysis and custom lint reported no issues; generated routing was rebuilt
+with build_runner. Tests use fake repositories; no real customer message or offer
+was changed. No APK/device or remote deployment verification was performed.
+
+API checks: the existing offer/chat subset passed 36 tests (348 assertions), and
+the new scoped-lookup suite passed 5 tests (41 assertions). Targeted Pint and diff
+checks passed. The complete suite ran 556 tests / 4,347 assertions: 551 passed,
+three failed and two errored. The failures are two AuthRateLimitTest expectations
+and the GeneralOrderDetailsTest paid quantity-field expectation; errors are demo
+image copies in GeneralOrderDetailsTest and ProviderDemoSeederTest. Loading the
+committed controller/policy in a separate in-memory test process reproduced all
+three assertion failures and the ProviderDemoSeederTest image-copy error; the
+other seed case passed that focused rerun. Auth, payment, image storage and seed
+behavior were not changed. Existing unrelated admin edits were preserved.
+
+Rollout: serve the new API route with the updated Flutter build. No migration or
+worker change is required. Restart Flutter after rebuilding to load the typed
+route; hot reload alone may retain the old router. An older backend leaves the
+chat lookup unavailable with explicit retry rather than showing unscoped offers.
