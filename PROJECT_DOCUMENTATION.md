@@ -1,5 +1,23 @@
 # OctoGear - Mobile Application Development Contract
 
+## Company picker initial loading — 2026-10-20
+
+User action: Open supported companies in seller registration or provider store
+creation/editing, search, clear the search or load another page.
+API: Existing public GET /reference/companies?page=1&per_page=20 returns localized
+{id, name} items in data with standard pagination meta. Sending search= is rejected
+with 422 (search must be a string); omit search when the trimmed query is empty,
+matching the existing city source. Nonempty search and page sizing stay unchanged.
+State/navigation: Preserve the shared picker, selection across pages/search,
+loading/empty/error/Retry UI, submission payloads, routes and role permissions.
+Locale: Preserve Accept-Language and Arabic/English layout. No notification changes.
+Verification plan: Transport regressions for opening, blank/cleared search,
+nonempty search and pagination; existing seller/store tests and changed-file analysis.
+Verification: All 37 seller-registration/provider-store tests passed; changed-file
+Flutter analysis and diff checks are clean. Read-only local API checks reproduced
+the original 422 and confirmed 20 results per first page (103 total) in Arabic and
+English without empty search, plus a successful Toyota search. No store was submitted.
+
 ## Registration scrolling only on overflow — 2026-10-20
 
 User action: View or resize the registration page, increase text size or open the

@@ -11,7 +11,11 @@ class SellerCompanySource implements SellerCompanyRepository {
   Future<SellerCompanyPage> fetch(String query, int page) async {
     final result = await api.get<List<SellerCompany>>(
       'reference/companies',
-      queryParameters: {'search': query, 'page': page, 'per_page': 20},
+      queryParameters: {
+        if (query.trim().isNotEmpty) 'search': query.trim(),
+        'page': page,
+        'per_page': 20,
+      },
       decode: (value) {
         if (value is! List) {
           throw const FormatException('Invalid manufacturers.');
