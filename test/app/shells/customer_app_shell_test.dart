@@ -1,3 +1,7 @@
+import 'package:octogear/core/storage/storage_providers.dart';
+import 'package:octogear/features/authentication/domain/use_cases/save_language_preference_use_case.dart';
+import 'package:octogear/features/authentication/presentation/controllers/language_preference_providers.dart';
+import '../../features/authentication/language_preference_fixtures.dart';
 import '../../features/customer_chats/chat_fixtures.dart';
 import 'package:octogear/features/customer_chats/presentation/controllers/chat_realtime_providers.dart';
 import '../../features/customer_notifications/notification_fixtures.dart';
@@ -807,6 +811,10 @@ Future<void> _pumpCustomerApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sessionStorageProvider.overrideWithValue(FakeLanguageSessionStorage()),
+        saveLanguagePreferenceUseCaseProvider.overrideWithValue(
+          SaveLanguagePreferenceUseCase(FakeLanguagePreferenceRepository()),
+        ),
         notificationsRepositoryProvider.overrideWithValue(
           FakeNotificationsRepository(),
         ),

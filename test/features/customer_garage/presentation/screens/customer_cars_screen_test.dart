@@ -1,3 +1,7 @@
+import 'package:octogear/core/storage/storage_providers.dart';
+import 'package:octogear/features/authentication/domain/use_cases/save_language_preference_use_case.dart';
+import 'package:octogear/features/authentication/presentation/controllers/language_preference_providers.dart';
+import '../../../authentication/language_preference_fixtures.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -199,6 +203,12 @@ Future<void> _pumpCarsScreen(
       saveLocale: false,
       child: ProviderScope(
         overrides: [
+          sessionStorageProvider.overrideWithValue(
+            FakeLanguageSessionStorage(),
+          ),
+          saveLanguagePreferenceUseCaseProvider.overrideWithValue(
+            SaveLanguagePreferenceUseCase(FakeLanguagePreferenceRepository()),
+          ),
           getCustomerCarsUseCaseProvider.overrideWithValue(useCase),
           appLocaleProvider.overrideWith(
             locale == AppLocale.arabic
@@ -235,6 +245,12 @@ Future<void> _pumpCustomerApp(
       saveLocale: false,
       child: ProviderScope(
         overrides: [
+          sessionStorageProvider.overrideWithValue(
+            FakeLanguageSessionStorage(),
+          ),
+          saveLanguagePreferenceUseCaseProvider.overrideWithValue(
+            SaveLanguagePreferenceUseCase(FakeLanguagePreferenceRepository()),
+          ),
           appLocaleProvider.overrideWith(_EnglishLocaleController.new),
           getCustomerCarsUseCaseProvider.overrideWithValue(useCase),
           sessionControllerProvider.overrideWith(

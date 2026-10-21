@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'routing/app_router.dart';
+import '../features/authentication/presentation/widgets/language_preference_scope.dart';
 import '../features/notifications/presentation/widgets/push_delivery_scope.dart';
 import '../features/authentication/presentation/widgets/session_refresh_scope.dart';
 import '../core/design_system/octogear_theme.dart';
@@ -35,7 +36,9 @@ class OctoGearApp extends ConsumerWidget {
       supportedLocales: context.supportedLocales,
       routerConfig: ref.watch(appRouterProvider),
       builder: (context, child) => SessionRefreshScope(
-        child: PushDeliveryScope(child: child ?? const SizedBox.shrink()),
+        child: LanguagePreferenceScope(
+          child: PushDeliveryScope(child: child ?? const SizedBox.shrink()),
+        ),
       ),
     );
   }

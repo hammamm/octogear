@@ -50,6 +50,17 @@ class ApiClient {
 
           if (options.extra[_requiresAuthenticationKey] == true) {
             final token = _accessTokenResolver();
+            final expected = options.extra.remove(_expectedAccessTokenKey);
+            if (expected != null && token != expected) {
+              handler.reject(
+                DioException(
+                  requestOptions: options,
+                  type: DioExceptionType.cancel,
+                  message: 'The originating session has changed.',
+                ),
+              );
+              return;
+            }
             if (token != null && token.isNotEmpty) {
               options.headers[_authorizationHeader] = 'Bearer $token';
             }
@@ -66,6 +77,7 @@ class ApiClient {
 
   static const _requiresAuthenticationKey = 'octogear.requiresAuthentication';
   static const _authorizationHeader = 'Authorization';
+  static const _expectedAccessTokenKey = 'octogear.expectedAccessToken';
 
   final Dio _dio;
   final AccessTokenResolver _accessTokenResolver;
@@ -127,12 +139,16 @@ class ApiClient {
     required ApiDataDecoder<T> decode,
     Object? data,
     bool requiresAuthentication = false,
+    String? expectedAccessToken,
   }) {
     return _request(
       () => _dio.patch<Object?>(
         _relativePath(path),
         data: data,
-        options: _requestOptions(requiresAuthentication),
+        options: _requestOptions(
+          requiresAuthentication,
+          expectedAccessToken: expectedAccessToken,
+        ),
       ),
       decode: decode,
     );
@@ -251,9 +267,13 @@ class ApiClient {
     bool requiresAuthentication, {
     Map<String, String> headers = const {},
     String? contentType,
+    String? expectedAccessToken,
   }) {
     return Options(
-      extra: {_requiresAuthenticationKey: requiresAuthentication},
+      extra: {
+        _requiresAuthenticationKey: requiresAuthentication,
+        _expectedAccessTokenKey: ?expectedAccessToken,
+      },
       headers: headers.isEmpty ? null : headers,
       contentType: contentType,
     );

@@ -9,6 +9,7 @@ class CurrentUserDto {
     required this.mobile,
     required this.type,
     this.city,
+    this.preferredLanguage,
   });
 
   final int id;
@@ -16,6 +17,7 @@ class CurrentUserDto {
   final String mobile;
   final String type;
   final CityDto? city;
+  final String? preferredLanguage;
 
   factory CurrentUserDto.fromJson(Object? value) {
     final json = _objectMap(value);
@@ -31,12 +33,19 @@ class CurrentUserDto {
       throw const FormatException('Current-user response has invalid fields.');
     }
 
+    final preferredLanguage = json['preferred_language'];
+    if (preferredLanguage != null &&
+        preferredLanguage != 'ar' &&
+        preferredLanguage != 'en') {
+      throw const FormatException('Unsupported account language.');
+    }
     final cityValue = json['city'];
     return CurrentUserDto(
       id: id.toInt(),
       fullName: fullName,
       mobile: mobile,
       type: type,
+      preferredLanguage: preferredLanguage as String?,
       city: cityValue == null ? null : CityDto.fromJson(cityValue),
     );
   }
@@ -52,6 +61,7 @@ class CurrentUserDto {
       fullName: fullName,
       mobile: mobile,
       role: role,
+      preferredLanguage: preferredLanguage,
       city: city == null ? null : AppCity(id: city!.id, name: city!.name),
     );
   }
@@ -61,6 +71,7 @@ class CurrentUserDto {
       'id': id,
       'full_name': fullName,
       'type': type,
+      if (preferredLanguage != null) 'preferred_language': preferredLanguage,
       'city': city == null ? null : {'id': city!.id, 'name': city!.name},
     });
   }

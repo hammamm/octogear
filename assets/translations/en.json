@@ -14,6 +14,7 @@
     "more": "Load more offers"
   },
   "app_settings": {
+    "language_save_failed": "Your language changed on this device, but could not be saved to your account.",
     "language": "App language",
     "language_description": "Use OctoGear in Arabic or English. Your choice is saved automatically."
   },

@@ -1438,3 +1438,29 @@ Rollout: serve the new API route with the updated Flutter build. No migration or
 worker change is required. Restart Flutter after rebuilding to load the typed
 route; hot reload alone may retain the old router. An older backend leaves the
 chat lookup unavailable with explicit retry rather than showing unscoped offers.
+
+## Account language preference — 2026-10-21
+
+**User action:** Select Arabic or English using the existing shared language button.
+**Roles/permissions:** Authenticated customers and providers save only their own
+account preference. Visitors retain the existing local-only selection.
+**API:** `GET /profile` includes nullable `preferred_language` (`ar`/`en`).
+`PATCH /profile/language` accepts and returns `{"preferred_language":"ar"}`
+inside the standard envelope. Registration captures the current supported
+Accept-Language header; an explicit registration preferred_language takes precedence.
+**Session behavior:** After validation, restore the saved account language. For
+legacy accounts with no preference, save the current app language once. The last
+explicit saved choice wins across devices; no preference is guessed from nationality.
+**Loading/error/offline:** UI and direction switch immediately. Serialize rapid
+choices, bind each write to the originating login, ignore stale completions, and
+offer localized manual Retry after a failed save. No polling or automatic retries.
+An offline unsaved choice remains local for this session; a fresh login restores
+the last server-confirmed preference. Ordinary API reads do not write preferences.
+**Navigation/locale:** No route changes. Keep the shared locale interceptor,
+reference invalidation, local persistence and existing translated controls.
+**Analytics/notifications:** No analytics. Existing push registration observes the
+active device locale; the account field does not rewrite other device registrations.
+**Tests:** Backend validation, ownership, registration, profile and repeat writes;
+Flutter DTO mapping, transport/session guards, restore, switches, failures/retry,
+rapid choices, account replacement, and architecture checks. Apply the additive
+backend language migration before deploying this app update.

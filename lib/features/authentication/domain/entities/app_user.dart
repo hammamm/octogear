@@ -42,6 +42,7 @@ class AppUser {
     required this.mobile,
     required this.role,
     this.city,
+    this.preferredLanguage,
   });
 
   final int id;
@@ -49,4 +50,5 @@ class AppUser {
   final String mobile;
   final AppUserRole role;
   final AppCity? city;
+  final String? preferredLanguage;
 }
