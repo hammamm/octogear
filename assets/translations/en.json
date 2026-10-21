@@ -163,6 +163,7 @@
     "step_3_body": "Check the details below. Use Back to make any changes.",
     "employee": "Contact person's full name",
     "registration": "Commercial registration number",
+    "registration_invalid": "Enter the 10-digit commercial registration number.",
     "store_name": "Store name",
     "nickname": "Short display name",
     "location": "Store location link (HTTPS)",

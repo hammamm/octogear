@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../../core/widgets/digits_input_formatter.dart';
+import '../../../authentication/presentation/widgets/saudi_mobile_input_formatter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -416,15 +419,30 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
         controller: _text[name],
         readOnly: locked || readOnly,
         maxLength: max,
+        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+        inputFormatters: [
+          if (name == 'mobile' && !readOnly) const SaudiMobileInputFormatter(),
+          if (name == 'commercial_registration_number')
+            const DigitsInputFormatter(),
+        ],
         minLines: name == 'change_reason' ? 3 : 1,
         maxLines: name == 'change_reason' ? 5 : 1,
         keyboardType: keyboard,
         textInputAction: TextInputAction.next,
-        textDirection: ['mobile', 'url_location'].contains(name)
+        textDirection:
+            [
+              'mobile',
+              'url_location',
+              'commercial_registration_number',
+            ].contains(name)
             ? TextDirection.ltr
             : null,
         decoration: InputDecoration(
           labelText: context.tr(label),
+          prefixText: name == 'mobile' && !readOnly ? '+966  ' : null,
+          hintText: name == 'mobile' && !readOnly
+              ? context.tr('auth.phone_hint')
+              : null,
           errorText: errors[name]?.firstOrNull,
           errorMaxLines: 4,
         ),
@@ -438,6 +456,10 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
           }
           if (name == 'url_location' && !validStoreLocation(value)) {
             return context.tr('store_management.location_error');
+          }
+          if (name == 'commercial_registration_number' &&
+              !validCommercialRegistrationNumber(value)) {
+            return context.tr('seller.registration_invalid');
           }
           if (name == 'mobile') {
             final parsed = SaudiMobileNumber.tryParse(value);
@@ -563,7 +585,9 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
                       field(
                         'mobile',
                         'provider_stores.phone',
-                        max: 15,
+                        max: widget.application != null || widget.store != null
+                            ? 15
+                            : 9,
                         keyboard: TextInputType.phone,
                         readOnly:
                             widget.application != null || widget.store != null,
@@ -622,7 +646,8 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
                       field(
                         'commercial_registration_number',
                         'store_management.registration',
-                        max: 50,
+                        max: commercialRegistrationNumberLength,
+                        keyboard: TextInputType.number,
                       ),
                       if (_document != null)
                         Image.memory(

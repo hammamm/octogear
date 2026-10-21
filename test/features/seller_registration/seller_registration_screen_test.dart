@@ -193,7 +193,7 @@ void main() {
         await fill(
           tester,
           'seller-commercial_registration_number',
-          '1234567890',
+          arabic ? '١٢٣٤٥٦٧٨٩٠١٢abc' : '123456789012abc',
         );
         await tap(tester, 'seller-document');
         await tap(tester, 'seller-next');
@@ -206,7 +206,21 @@ void main() {
         );
         if (scale == 1) await capture(tester, '${arabic ? 'ar' : 'en'}-store');
         await tap(tester, 'seller-next');
-        await fill(tester, 'seller-mobile', '0500000002');
+        await fill(tester, 'seller-mobile', '500');
+        await tap(tester, 'seller-next');
+        expect(repo.sends, 0);
+        await fill(
+          tester,
+          'seller-mobile',
+          arabic ? '+٩٦٦ ٥٠٠٠٠٠٠٠٢' : '0500000002',
+        );
+        expect(
+          tester
+              .widget<TextFormField>(find.byKey(const Key('seller-mobile')))
+              .controller!
+              .text,
+          '500000002',
+        );
         await tap(tester, 'seller-next');
         expect(find.text('0042'), findsOneWidget);
         if (scale == 1) await capture(tester, '${arabic ? 'ar' : 'en'}-phone');
@@ -216,6 +230,7 @@ void main() {
         await tap(tester, 'seller-next');
         expect(repo.submits, 1);
         expect(repo.lastDraft!.name, 'Octo Parts');
+        expect(repo.lastDraft!.registrationNumber, '1234567890');
         expect(
           find.text(
             arabic ? 'طلبك قيد المراجعة' : 'Your application is under review',
@@ -229,6 +244,21 @@ void main() {
       });
     }
   }
+  testWidgets('short commercial registration blocks the next step', (
+    tester,
+  ) async {
+    final repo = FakeSellerRepository();
+    await pump(tester, repo);
+    await fill(tester, 'seller-commercial_registration_number', '123');
+    await tap(tester, 'seller-document');
+    await tap(tester, 'seller-next');
+    expect(
+      find.text('Enter the 10-digit commercial registration number.'),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('seller-name')), findsNothing);
+    expect(repo.submits, 0);
+  });
   testWidgets(
     'rejected application pre-fills corrections and retains the document',
     (tester) async {

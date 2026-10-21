@@ -1464,3 +1464,22 @@ active device locale; the account field does not rewrite other device registrati
 Flutter DTO mapping, transport/session guards, restore, switches, failures/retry,
 rapid choices, account replacement, and architecture checks. Apply the additive
 backend language migration before deploying this app update.
+
+## Seller form numeric limits — 2026-10-21
+
+Seller registration and provider additional-store forms limit mobile entry to nine
+national digits alongside +966, and commercial registration to ten digits. The
+Ministry of Commerce form confirms the ten-digit registration format:
+https://mc.gov.sa/en/eservices/Pages/CompanyComplaint.aspx
+Arabic/Persian digits normalize to ASCII. Common complete Saudi phone formats
+normalize before length enforcement. Short/invalid numbers show localized errors.
+Shared formatters and draft validation cover onboarding, corrections and store
+proposals. Existing verified mobiles remain read-only; OTP, permissions, endpoints,
+loading/error states, navigation and notifications retain their existing behavior.
+This is client form validation; the API contract is unchanged (registration strings
+are currently bounded at 50 characters server-side). Tests cover input limits,
+pasting, correction and Arabic/English seller journeys.
+
+Verification: all 547 Flutter tests pass, including 69 focused seller/store tests.
+Flutter analysis and custom lint report no issues. No live application was submitted
+and no database migration or backend change is needed for these form limits.

@@ -616,13 +616,31 @@ void main() {
         ('name', 'Another Store'),
         ('nick_name', 'Another'),
         ('employee_name', 'Manager'),
-        ('mobile', '0522222222'),
+        ('mobile', '+966 522222222'),
         ('url_location', 'https://maps.example.test/store'),
-        ('commercial_registration_number', '1234567890'),
+        ('commercial_registration_number', '١٢٣٤٥٦٧٨٩٠١٢abc'),
       ]) {
         await formScroll(tester, Key('store-field-$field'));
         await tester.enterText(find.byKey(Key('store-field-$field')), value);
       }
+      expect(
+        tester
+            .widget<TextFormField>(find.byKey(const Key('store-field-mobile')))
+            .controller!
+            .text,
+        '522222222',
+      );
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.byKey(
+                const Key('store-field-commercial_registration_number'),
+              ),
+            )
+            .controller!
+            .text,
+        '1234567890',
+      );
       await formScroll(tester, const Key('store-city'), delta: -320);
       await tester.tap(find.byKey(const Key('registration-city-field')));
       await tester.pumpAndSettle();

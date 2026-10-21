@@ -68,8 +68,7 @@ class SellerApplicationDraft {
         nickname,
         employeeName,
       ].every((v) => v.trim().isNotEmpty && v.runes.length <= 100) &&
-      registrationNumber.trim().isNotEmpty &&
-      registrationNumber.runes.length <= 50 &&
+      validCommercialRegistrationNumber(registrationNumber) &&
       cityId > 0 &&
       companyIds.length <= 100 &&
       companyIds.every((id) => id > 0) &&
@@ -85,3 +84,8 @@ bool validStoreLocation(String value) {
       uri.host.isNotEmpty &&
       uri.userInfo.isEmpty;
 }
+
+const commercialRegistrationNumberLength = 10;
+
+bool validCommercialRegistrationNumber(String value) =>
+    RegExp(r'^[0-9]{10}$').hasMatch(value.trim());

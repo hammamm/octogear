@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
+import '../../../../core/widgets/digits_input_formatter.dart';
+import '../../../authentication/presentation/widgets/saudi_mobile_input_formatter.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../authentication/domain/entities/app_user.dart';
 import '../../../authentication/domain/entities/saudi_mobile_number.dart';
@@ -151,7 +153,9 @@ class _SellerFormState extends ConsumerState<_SellerForm> {
     _employee.text = application.employeeName;
     _registration.text = application.registrationNumber;
     _location.text = application.location;
-    _mobile.text = application.mobile;
+    _mobile.text =
+        SaudiMobileNumber.tryParse(application.mobile)?.nationalNumber ??
+        application.mobile;
     _city = application.city;
     _companyIds = application.companyIds.toSet();
     setState(() {
@@ -477,7 +481,13 @@ class _SellerFormState extends ConsumerState<_SellerForm> {
             'commercial_registration_number',
             state,
             busy,
-            max: 50,
+            max: commercialRegistrationNumberLength,
+            keyboard: TextInputType.number,
+            inputFormatters: const [DigitsInputFormatter()],
+            textDirection: TextDirection.ltr,
+            validator: (value) => validCommercialRegistrationNumber(value ?? '')
+                ? null
+                : context.tr('seller.registration_invalid'),
             icon: Icons.badge_outlined,
           ),
           if (_document != null)
@@ -597,10 +607,12 @@ class _SellerFormState extends ConsumerState<_SellerForm> {
             enabled: !busy,
             textDirection: TextDirection.ltr,
             keyboardType: TextInputType.phone,
+            inputFormatters: const [SaudiMobileInputFormatter()],
             autofillHints: const [AutofillHints.telephoneNumberNational],
             decoration: InputDecoration(
               labelText: context.tr('seller.mobile'),
-              hintText: '05XXXXXXXX',
+              hintText: context.tr('auth.phone_hint'),
+              prefixText: '+966  ',
               errorText: state.error?.fieldErrors['mobile']?.firstOrNull,
               prefixIcon: const Icon(Icons.phone_outlined),
             ),
@@ -715,7 +727,11 @@ class _SellerFormState extends ConsumerState<_SellerForm> {
             ('seller.registration', _registration.text),
             ('auth.city_label', _city?.name ?? ''),
             ('seller.location', _location.text),
-            ('seller.mobile', _mobile.text),
+            (
+              'seller.mobile',
+              SaudiMobileNumber.tryParse(_mobile.text)?.displayValue ??
+                  _mobile.text,
+            ),
           ]) ...[
             Text(
               context.tr(pair.$1),
@@ -745,6 +761,8 @@ class _SellerFormState extends ConsumerState<_SellerForm> {
     int max = 100,
     IconData? icon,
     TextInputType? keyboard,
+    List<TextInputFormatter>? inputFormatters,
+    TextDirection? textDirection,
     String? Function(String?)? validator,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 20),
@@ -753,6 +771,9 @@ class _SellerFormState extends ConsumerState<_SellerForm> {
       controller: controller,
       enabled: !busy,
       keyboardType: keyboard,
+      inputFormatters: inputFormatters,
+      textDirection: textDirection,
+      maxLengthEnforcement: MaxLengthEnforcement.enforced,
       textInputAction: TextInputAction.next,
       maxLength: max,
       decoration: InputDecoration(
