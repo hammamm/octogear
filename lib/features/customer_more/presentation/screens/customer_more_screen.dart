@@ -9,6 +9,7 @@ import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/app_language_settings_card.dart';
 import '../../../../core/widgets/app_language_toggle_button.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
+import '../../../../core/widgets/octogear_menu_entry.dart';
 import '../../../authentication/domain/entities/session_outcome.dart';
 import '../../../authentication/presentation/controllers/session_controller.dart';
 import '../../../notifications/presentation/widgets/notification_entry.dart';
@@ -55,8 +56,8 @@ class CustomerMoreScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 20),
-        _MenuEntry(
-          icon: Icons.storefront_outlined,
+        OctoGearMenuEntry(
+          leading: const Icon(Icons.storefront_outlined),
           title: context.tr('seller.menu_title'),
           subtitle: context.tr('seller.menu_description'),
           onTap: () => const SellerRegistrationRoute().push<void>(context),
@@ -64,22 +65,22 @@ class CustomerMoreScreen extends ConsumerWidget {
         const SizedBox(height: 12),
         const NotificationsMenuEntry(),
         const SizedBox(height: 12),
-        _MenuEntry(
-          icon: Icons.person_outline_rounded,
+        OctoGearMenuEntry(
+          leading: const Icon(Icons.person_outline_rounded),
           title: context.tr('customer_more.profile'),
           subtitle: context.tr('customer_more.profile_description'),
           onTap: () => const CustomerProfileRoute().push<void>(context),
         ),
         const SizedBox(height: 12),
-        _MenuEntry(
-          icon: Icons.directions_car_outlined,
+        OctoGearMenuEntry(
+          leading: const Icon(Icons.directions_car_outlined),
           title: context.tr('customer_garage.account_entry_title'),
           subtitle: context.tr('customer_garage.account_entry_description'),
           onTap: () => const CustomerCarsRoute().push<void>(context),
         ),
         const SizedBox(height: 12),
-        _MenuEntry(
-          icon: Icons.tune_rounded,
+        OctoGearMenuEntry(
+          leading: const Icon(Icons.tune_rounded),
           title: context.tr('customer_more.settings'),
           subtitle: context.tr('customer_more.settings_description'),
           onTap: () => const CustomerSettingsRoute().push<void>(context),
@@ -145,50 +146,5 @@ class _MorePage extends StatelessWidget {
       const SizedBox(height: 20),
       ...children,
     ],
-  );
-}
-
-class _MenuEntry extends StatelessWidget {
-  const _MenuEntry({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String title, subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => OctoGearSurfaceCard(
-    padding: EdgeInsets.zero,
-    child: Semantics(
-      button: true,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(OctoGearRadii.large),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Icon(icon, color: OctoGearColors.navy, size: 26),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(subtitle),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_rounded),
-            ],
-          ),
-        ),
-      ),
-    ),
   );
 }

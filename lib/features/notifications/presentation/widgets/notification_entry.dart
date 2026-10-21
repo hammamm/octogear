@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../../../core/widgets/octogear_surface_card.dart';
+import '../../../../core/widgets/octogear_menu_entry.dart';
 import '../controllers/notification_providers.dart';
 
 class NotificationBell extends ConsumerWidget {
@@ -60,34 +60,13 @@ class NotificationsMenuEntry extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final count = ref.watch(notificationCountProvider).value ?? 0;
-    return OctoGearSurfaceCard(
+    return OctoGearMenuEntry(
+      leading: NotificationBadge(count: count),
+      title: context.tr('notifications.title'),
+      subtitle: context.tr('notifications.menu_hint'),
       onTap: () => provider
           ? const ProviderNotificationsRoute().push<void>(context)
           : const CustomerNotificationsRoute().push<void>(context),
-      child: Row(
-        children: [
-          NotificationBadge(count: count),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.tr('notifications.title'),
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  context.tr('notifications.menu_hint'),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right_rounded),
-        ],
-      ),
     );
   }
 }

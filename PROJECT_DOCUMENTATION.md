@@ -1,5 +1,19 @@
 # OctoGear - Mobile Application Development Contract
 
+## Shared More menu entry — 2026-10-21
+
+User action: Open More and use its menu entries. Extract the existing customer
+menu row into OctoGearMenuEntry, a presentation-only shared widget accepting a
+leading widget, title, subtitle and tap callback. Customer entries and the shared
+customer/provider NotificationsMenuEntry reuse its padding, text and arrow.
+NotificationsMenuEntry retains its count subscription, badge and role-specific
+route; no API, session, read, loading/error or notification-delivery change.
+Preserve Arabic/English, RTL and enlarged-text layouts. Verify existing More,
+notification and shell regressions plus static analysis; no new dependency.
+Verification: All 117 notification/customer/provider shell tests passed, including
+More navigation and narrow Arabic/large-text layouts. Changed-file Flutter analysis
+and diff checks passed. Existing Arabic translation edits were left untouched.
+
 ## Company picker initial loading — 2026-10-20
 
 User action: Open supported companies in seller registration or provider store
