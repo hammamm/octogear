@@ -7,7 +7,7 @@ import '../../../../app/routing/app_routes.dart';
 import '../../../../app/shells/customer_app_shell.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/app_language_settings_card.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../../core/widgets/octogear_menu_entry.dart';
 import '../../../authentication/domain/entities/session_outcome.dart';
@@ -62,6 +62,10 @@ class CustomerMoreScreen extends ConsumerWidget {
           subtitle: context.tr('seller.menu_description'),
           onTap: () => const SellerRegistrationRoute().push<void>(context),
         ),
+        const SizedBox(height: 12),
+        const SupportMenuEntry(),
+        const SizedBox(height: 12),
+        const AppLanguageSettingsCard(),
         const SizedBox(height: 12),
         const NotificationsMenuEntry(),
         const SizedBox(height: 12),
@@ -140,7 +144,7 @@ class _MorePage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const AppLanguageToggleButton(compact: true),
+          const SupportButton(),
         ],
       ),
       const SizedBox(height: 20),

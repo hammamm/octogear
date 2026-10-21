@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../domain/entities/create_customer_car_command.dart';
 import '../../domain/entities/customer_car.dart';
@@ -419,7 +419,7 @@ class _CreateCustomerCarHeader extends StatelessWidget {
               icon: const BackButtonIcon(),
             ),
             const Spacer(),
-            const AppLanguageToggleButton(compact: true),
+            const SupportButton(),
           ],
         ),
         const SizedBox(height: OctoGearSpacing.large),

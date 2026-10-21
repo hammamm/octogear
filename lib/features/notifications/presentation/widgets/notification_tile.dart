@@ -53,6 +53,7 @@ class NotificationTile extends StatelessWidget {
     final icon = switch (item.kind) {
       NotificationKind.offer => Icons.local_offer_outlined,
       NotificationKind.message => Icons.chat_bubble_outline_rounded,
+      NotificationKind.supportReply => Icons.support_agent_rounded,
       NotificationKind.orderPaid => Icons.payments_outlined,
       NotificationKind.orderCompleted => Icons.task_alt_rounded,
       NotificationKind.offerAccepted => Icons.check_circle_outline,

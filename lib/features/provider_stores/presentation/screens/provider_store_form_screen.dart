@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/media/image_upload_policy.dart';
 import '../../../../app/routing/app_routes.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../authentication/domain/entities/app_user.dart';
 import '../../../authentication/domain/entities/saudi_mobile_number.dart';
@@ -521,7 +521,7 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                   ),
-                  const AppLanguageToggleButton(compact: true),
+                  const SupportButton(),
                 ],
               ),
               const SizedBox(height: 20),

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../controllers/chat_providers.dart';
 import '../widgets/chat_connection_status.dart';
 
@@ -59,7 +59,7 @@ class _CustomerChatsScreenState extends ConsumerState<CustomerChatsScreen> {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
-              const AppLanguageToggleButton(compact: true),
+              const SupportButton(),
             ],
           ),
           const SizedBox(height: 20),

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/routing/app_routes.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../controllers/customer_orders_providers.dart';
 import '../controllers/order_lifecycle_controller.dart';
 import '../widgets/order_widgets.dart';
@@ -44,7 +44,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
-              const AppLanguageToggleButton(compact: true),
+              const SupportButton(),
             ],
           ),
           const SizedBox(height: 20),

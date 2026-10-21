@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../domain/entities/chat.dart';
 import '../../../provider_orders/presentation/widgets/provider_chat_offers.dart';
 import '../controllers/chat_providers.dart';
@@ -220,7 +220,7 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
             ),
           ],
         ),
-        actions: const [AppLanguageToggleButton(compact: true)],
+        actions: const [SupportButton()],
       ),
       body: SafeArea(
         top: false,

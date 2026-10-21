@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../domain/entities/customer_order.dart';
 import '../controllers/customer_orders_providers.dart';
@@ -91,7 +91,7 @@ class CustomerOfferDetailsScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
-                const AppLanguageToggleButton(compact: true),
+                const SupportButton(),
               ],
             ),
             const SizedBox(height: 16),

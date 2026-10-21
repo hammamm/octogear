@@ -93,7 +93,10 @@ class ChatInboxController extends AsyncNotifier<ChatInbox> {
   }
 
   void _receive(ChatUpdate update) {
-    if (update.kind == ChatUpdateKind.disconnected) return;
+    if (update.kind == ChatUpdateKind.disconnected ||
+        update.kind == ChatUpdateKind.support) {
+      return;
+    }
     if (_initializing || busy) {
       if (_pendingUpdates.length < 512) {
         _pendingUpdates.add(update);
@@ -342,7 +345,10 @@ class ChatController extends AsyncNotifier<ChatState> {
       unawaited(refresh());
       return;
     }
-    if (update.kind == ChatUpdateKind.disconnected) return;
+    if (update.kind == ChatUpdateKind.disconnected ||
+        update.kind == ChatUpdateKind.support) {
+      return;
+    }
     final current = state.asData?.value;
     if (current == null) return;
     final id = current.context.conversation?.id ?? target.conversationId;

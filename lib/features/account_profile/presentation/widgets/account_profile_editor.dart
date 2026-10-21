@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import '../../../../core/api/api_failure.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../authentication/domain/entities/app_user.dart';
 import '../../../authentication/presentation/widgets/authentication_failure_text.dart';
@@ -136,7 +136,7 @@ class _ProfileFormState extends State<AccountProfileEditor> {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
-              const AppLanguageToggleButton(compact: true),
+              const SupportButton(),
             ],
           ),
           const SizedBox(height: 20),

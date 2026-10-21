@@ -4,6 +4,11 @@ import '../domain/entities/app_notification.dart';
 
 String? notificationDestination(AppNotification item, AppUserRole role) {
   if (!item.canOpen) return null;
+  if (item.kind == NotificationKind.supportReply) {
+    return role == AppUserRole.provider
+        ? const ProviderSupportRoute().location
+        : const CustomerSupportRoute().location;
+  }
   if (role == AppUserRole.provider) {
     return switch (item.kind) {
       NotificationKind.offerAccepted => ProviderOfferRoute(

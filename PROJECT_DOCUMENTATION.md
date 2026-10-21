@@ -1483,3 +1483,19 @@ pasting, correction and Arabic/English seller journeys.
 Verification: all 547 Flutter tests pass, including 69 focused seller/store tests.
 Flutter analysis and custom lint report no issues. No live application was submitted
 and no database migration or backend change is needed for these form limits.
+
+
+## Customer/provider support chat — 2026-10-21
+
+Approved: one text conversation per account, created with the first message;
+closed history explicitly reopens. Shared support icon and unread count replace
+authenticated header language buttons. More keeps language and adds support;
+login/account registration keep language without support. GET /support/conversation
+loads once per session and on entry/reconnect; HTTP sends/read/reopen and private
+support.updated snapshots reuse the existing session socket. Support replies use
+existing inbox/Android delivery with typed support destinations. Arabic/English,
+RTL, large text, keyboard, empty/error/retry, ownership and stale-session guards
+are required. No polling, automatic send retry, analytics or web UI changes.
+See the API SUPPORT_CHAT.md for payloads, version/read semantics and deployment.
+Tests cover duplicate sends, read boundaries, concurrent closure, reconnect,
+badges/navigation and preserved customer/provider chats.

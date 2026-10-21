@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../controllers/general_request_providers.dart';
 import 'general_request_feedback.dart';
 
@@ -53,7 +53,7 @@ class GeneralRequestFlowLayout extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
-                const AppLanguageToggleButton(compact: true),
+                const SupportButton(),
               ],
             ),
             const SizedBox(height: 16),

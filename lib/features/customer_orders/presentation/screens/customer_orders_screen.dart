@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/config/customer_features.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../domain/entities/customer_order.dart';
 import '../controllers/customer_orders_providers.dart';
 import '../widgets/order_widgets.dart';
@@ -51,7 +51,7 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const AppLanguageToggleButton(compact: true),
+                          const SupportButton(),
                         ],
                       ),
                       const SizedBox(height: 8),

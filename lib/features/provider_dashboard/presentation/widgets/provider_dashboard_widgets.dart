@@ -7,7 +7,7 @@ import '../../../notifications/presentation/widgets/notification_entry.dart';
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/design_system/octogear_theme.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../provider_orders/presentation/widgets/provider_managed_order_widgets.dart';
 import '../../../provider_orders/presentation/widgets/provider_offer_widgets.dart';
 import '../../domain/entities/provider_dashboard.dart';
@@ -254,7 +254,7 @@ class DashboardHeader extends StatelessWidget {
         ),
         const SizedBox(width: OctoGearSpacing.xSmall),
       ],
-      const AppLanguageToggleButton(compact: true),
+      const SupportButton(),
     ];
     if (MediaQuery.textScalerOf(context).scale(1) >= 1.5) {
       return Column(

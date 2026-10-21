@@ -1,4 +1,12 @@
 {
+  "support": {
+    "title": "Customer service", "menu_hint": "Get help from our support team.",
+    "unread": "Customer service: {} unread messages", "welcome": "How can we help? Send our support team a message.",
+    "start": "Start a conversation", "message": "Write a message", "send": "Send", "retry": "Retry",
+    "open": "Open", "closed": "Closed", "resolved": "Support has marked this conversation as resolved. Still need help?",
+    "reopen": "Reopen conversation", "older": "Load older messages", "error": "We couldn't update your conversation. Please try again.",
+    "read_error": "We couldn't update your read status.", "send_error": "Your message was not confirmed. Tap send to retry."
+  },
   "chat_offers": {
     "start": "Discuss the request with your customer. Send a message to start the conversation.",
     "edit": "Edit offer",
@@ -205,6 +213,7 @@
     "leave": "Leave"
   },
   "notifications": {
+    "title_supportReply": "Customer service", "body_supportReply": "You have a reply from the support team.", "push_supportReply": "You have a new reply from customer service.",
     "push_offer": "You have a new offer.",
     "push_message": "You have a new message.",
     "open": "Open",

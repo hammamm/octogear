@@ -1,6 +1,7 @@
 enum NotificationKind {
   offer,
   message,
+  supportReply,
   orderPaid,
   orderCompleted,
   order,
@@ -32,7 +33,8 @@ class AppNotification {
   bool get canOpen => switch (kind) {
     NotificationKind.offer ||
     NotificationKind.offerAccepted => orderId != null && offerId != null,
-    NotificationKind.message => conversationId != null,
+    NotificationKind.message ||
+    NotificationKind.supportReply => conversationId != null,
     NotificationKind.orderPaid ||
     NotificationKind.orderCompleted ||
     NotificationKind.order => orderId != null,

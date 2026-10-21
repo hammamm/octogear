@@ -15,6 +15,7 @@ Before recommending code changes or editing files:
 | --- | --- |
 | [README.md](README.md) | Every request: project entry point, environments, local setup and verification. |
 | [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md) | Every request: development contract, architecture, engineering rules and relevant feature decisions. |
+| [SUPPORT_CHAT_IMPLEMENTATION.md](SUPPORT_CHAT_IMPLEMENTATION.md) | Support conversations, unread badges, close/reopen, administrator support APIs and realtime delivery. |
 | [CHAT_IMPLEMENTATION.md](CHAT_IMPLEMENTATION.md) | Conversations, message sending/retry, history, read state or chat navigation; also read the newer chat updates in PROJECT_DOCUMENTATION.md. |
 | [NOTIFICATIONS_IMPLEMENTATION.md](NOTIFICATIONS_IMPLEMENTATION.md) | Customer/provider inbox, page reads, badges, Android push, token/session lifecycle or notification navigation. |
 | [ORDER_LIFECYCLE_IMPLEMENTATION.md](ORDER_LIFECYCLE_IMPLEMENTATION.md) | Order status, cancellation, receipt confirmation, pickup, checkout or payment history. |

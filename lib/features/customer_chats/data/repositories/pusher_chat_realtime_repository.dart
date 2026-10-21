@@ -1,3 +1,4 @@
+import '../../../support_chat/data/models/support_dto.dart';
 import 'dart:async';
 import 'dart:math';
 
@@ -100,6 +101,15 @@ class PusherChatRealtimeRepository implements ChatRealtimeRepository {
           _subscribed = true;
           _attempt = 0;
           _emit(const ChatUpdate(ChatUpdateKind.connected));
+        }),
+      );
+      _subscriptions.add(
+        channel.bind('support.updated').listen((event) {
+          if (!current()) return;
+          final update = parseSupportUpdate(event.tryGetDataAsMap());
+          if (update != null) {
+            _emit(ChatUpdate(ChatUpdateKind.support, support: update));
+          }
         }),
       );
       _subscriptions.add(

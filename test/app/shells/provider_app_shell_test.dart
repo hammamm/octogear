@@ -341,7 +341,7 @@ void main() {
       );
       expect(tester.getRect(refresh).left - tester.getRect(bell).right, 8);
       expect(
-        tester.getRect(find.widgetWithIcon(TextButton, Icons.language)).left -
+        tester.getRect(find.byKey(const Key('support-button'))).left -
             tester.getRect(refresh).right,
         8,
       );

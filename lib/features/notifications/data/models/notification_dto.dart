@@ -40,6 +40,7 @@ NotificationDto notificationFromJson(Object? value) {
     kind: switch (payload['type']) {
       'new_offer' => NotificationKind.offer,
       'new_message' => NotificationKind.message,
+      'support_reply' => NotificationKind.supportReply,
       'order_paid' => NotificationKind.orderPaid,
       'order_completed' => NotificationKind.orderCompleted,
       'new_order' => NotificationKind.order,
@@ -50,7 +51,11 @@ NotificationDto notificationFromJson(Object? value) {
     },
     orderId: target(payload['order_id']),
     offerId: target(payload['offer_id']),
-    conversationId: target(payload['conversation_id']),
+    conversationId: target(
+      payload[payload['type'] == 'support_reply'
+          ? 'support_conversation_id'
+          : 'conversation_id'],
+    ),
     requestId: target(payload['request_id']),
     orderType: ['general', 'specific'].contains(payload['order_type'])
         ? payload['order_type'] as String

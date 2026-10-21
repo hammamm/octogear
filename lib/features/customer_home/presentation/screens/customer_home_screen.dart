@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../customer_orders/domain/entities/customer_order.dart';
 import '../../../customer_orders/presentation/controllers/customer_orders_providers.dart';
 import '../../../authentication/domain/entities/session_outcome.dart';
@@ -69,7 +69,7 @@ class CustomerHomeScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   const NotificationBell(),
                   const SizedBox(width: OctoGearSpacing.xSmall),
-                  const AppLanguageToggleButton(compact: true),
+                  const SupportButton(),
                 ],
               ),
               const SizedBox(height: 16),

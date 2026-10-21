@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import '../support_chat/support_wire.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -96,6 +97,21 @@ void main() {
       await until(() => updates.any((u) => u.kind == ChatUpdateKind.message));
       expect(updates.last.message!.text, 'Hello over WebSocket');
       expect(updates.last.message!.mine, isFalse);
+      sockets.single.add(
+        jsonEncode({
+          'event': 'support.updated',
+          'channel': 'private-chat.sessions.1',
+          'data': jsonEncode({
+            'kind': 'message',
+            'conversation': wireConversation(),
+            'message': wireMessage(),
+          }),
+        }),
+      );
+      await until(() => updates.any((u) => u.kind == ChatUpdateKind.support));
+      expect(updates.last.support!.conversation.unread, 1);
+      expect(updates.last.support!.message!.text, 'Support reply');
+      expect(sockets, hasLength(1));
       await sockets.single.close();
       await until(
         () =>

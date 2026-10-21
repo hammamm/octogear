@@ -1,3 +1,4 @@
+import '../../../support_chat/presentation/widgets/support_entry.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,10 @@ class ProviderMoreScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => ProviderPage(
     titleKey: 'provider_portal.more',
     children: [
+      const SupportMenuEntry(),
+      const SizedBox(height: 12),
+      const AppLanguageSettingsCard(),
+      const SizedBox(height: 12),
       const NotificationsMenuEntry(provider: true),
       const SizedBox(height: 12),
       ProviderNavigationTile(

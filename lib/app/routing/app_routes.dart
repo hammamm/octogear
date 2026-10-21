@@ -1,3 +1,4 @@
+import '../../features/support_chat/presentation/screens/support_chat_screen.dart';
 import '../../features/provider_profile/presentation/screens/provider_profile_screen.dart';
 import '../../features/provider_orders/presentation/screens/provider_offer_screen.dart';
 import '../../features/provider_orders/domain/entities/provider_managed_order.dart';
@@ -854,4 +855,20 @@ class ProviderStoreEditRoute extends GoRouteData with $ProviderStoreEditRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       ProviderStoreFormScreen(storeId: storeId);
+}
+
+@TypedGoRoute<CustomerSupportRoute>(path: AppRoutePath.customerSupport)
+class CustomerSupportRoute extends GoRouteData with $CustomerSupportRoute {
+  const CustomerSupportRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const SupportChatScreen();
+}
+
+@TypedGoRoute<ProviderSupportRoute>(path: AppRoutePath.providerSupport)
+class ProviderSupportRoute extends GoRouteData with $ProviderSupportRoute {
+  const ProviderSupportRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const SupportChatScreen();
 }

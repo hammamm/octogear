@@ -107,12 +107,16 @@ class ApiClient {
     required ApiDataDecoder<T> decode,
     Object? data,
     bool requiresAuthentication = false,
+    String? expectedAccessToken,
   }) {
     return _request(
       () => _dio.post<Object?>(
         _relativePath(path),
         data: data,
-        options: _requestOptions(requiresAuthentication),
+        options: _requestOptions(
+          requiresAuthentication,
+          expectedAccessToken: expectedAccessToken,
+        ),
       ),
       decode: decode,
     );

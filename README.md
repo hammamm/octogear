@@ -146,3 +146,5 @@ flutter test
 
 Keep Flutter work in this repository. The Laravel backend lives separately at
 `C:\Tamkkun\OctoGearProject\OctoGear-api` and must never be committed here.
+
+Customer/provider support chat, unread badges and close/reopen behavior are documented in [SUPPORT_CHAT_IMPLEMENTATION.md](SUPPORT_CHAT_IMPLEMENTATION.md).

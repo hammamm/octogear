@@ -15,6 +15,8 @@ List<RouteBase> get $appRoutes => [
   $customerShellRoute,
   $customerAccountRoute,
   $providerShellRoute,
+  $customerSupportRoute,
+  $providerSupportRoute,
 ];
 
 RouteBase get $sessionLoadingRoute => GoRouteData.$route(
@@ -1687,4 +1689,58 @@ T? _$convertMapValue<T>(
 ) {
   final value = map[key];
   return value == null ? null : converter(value);
+}
+
+RouteBase get $customerSupportRoute => GoRouteData.$route(
+  path: '/customer/support',
+  hasOverriddenOnExit: false,
+  factory: $CustomerSupportRoute._fromState,
+);
+
+mixin $CustomerSupportRoute on GoRouteData {
+  static CustomerSupportRoute _fromState(GoRouterState state) =>
+      const CustomerSupportRoute();
+
+  @override
+  String get location => GoRouteData.$location('/customer/support');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $providerSupportRoute => GoRouteData.$route(
+  path: '/provider/support',
+  hasOverriddenOnExit: false,
+  factory: $ProviderSupportRoute._fromState,
+);
+
+mixin $ProviderSupportRoute on GoRouteData {
+  static ProviderSupportRoute _fromState(GoRouterState state) =>
+      const ProviderSupportRoute();
+
+  @override
+  String get location => GoRouteData.$location('/provider/support');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
 }

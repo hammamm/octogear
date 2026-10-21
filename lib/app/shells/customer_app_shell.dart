@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/design_system/octogear_theme.dart';
 import '../../core/config/customer_features.dart';
-import '../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../core/widgets/octogear_brand_header.dart';
 import '../../core/widgets/octogear_surface_card.dart';
 import '../routing/app_routes.dart';
@@ -240,7 +240,7 @@ class _TabHeading extends StatelessWidget {
           ),
         ),
         const SizedBox(width: OctoGearSpacing.small),
-        const AppLanguageToggleButton(compact: true),
+        const SupportButton(),
       ],
     );
   }

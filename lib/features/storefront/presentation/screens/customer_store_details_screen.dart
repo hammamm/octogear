@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../domain/entities/marketplace_store.dart';
 import '../../domain/entities/storefront_store_details.dart';
@@ -193,7 +193,7 @@ class _StoreDetailsHeader extends StatelessWidget {
               icon: const BackButtonIcon(),
             ),
             const Spacer(),
-            const AppLanguageToggleButton(compact: true),
+            const SupportButton(),
           ],
         ),
         const SizedBox(height: OctoGearSpacing.large),

@@ -17,6 +17,7 @@ PushNotification? parsePushNotification(Map<String, dynamic> data) {
   final kind = switch (data['type']) {
     'new_offer' => NotificationKind.offer,
     'new_message' => NotificationKind.message,
+    'support_reply' => NotificationKind.supportReply,
     'offer_accepted' => NotificationKind.offerAccepted,
     'order_paid' => NotificationKind.orderPaid,
     'order_completed' => NotificationKind.orderCompleted,
@@ -38,7 +39,11 @@ PushNotification? parsePushNotification(Map<String, dynamic> data) {
     createdAt: DateTime.now(),
     orderId: id('order_id'),
     offerId: id('offer_id'),
-    conversationId: id('conversation_id'),
+    conversationId: id(
+      kind == NotificationKind.supportReply
+          ? 'support_conversation_id'
+          : 'conversation_id',
+    ),
     requestId: id('request_id'),
     orderType: ['general', 'specific'].contains(data['order_type'])
         ? data['order_type'] as String
@@ -48,7 +53,11 @@ PushNotification? parsePushNotification(Map<String, dynamic> data) {
       ? PushNotification(
           recipientId: recipient,
           item: item,
-          messageId: id('message_id'),
+          messageId: id(
+            kind == NotificationKind.supportReply
+                ? 'support_message_id'
+                : 'message_id',
+          ),
         )
       : null;
 }

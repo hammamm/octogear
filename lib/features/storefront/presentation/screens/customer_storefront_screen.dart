@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routing/app_routes.dart';
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../domain/entities/storefront_filters.dart';
 import '../controllers/storefront_controller.dart';
@@ -248,7 +248,7 @@ class _StorefrontHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(width: OctoGearSpacing.small),
-            const AppLanguageToggleButton(compact: true),
+            const SupportButton(),
           ],
         ),
         const SizedBox(height: OctoGearSpacing.large),

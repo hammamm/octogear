@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/routing/app_routes.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../customer_orders/presentation/widgets/order_widgets.dart';
 import '../../domain/entities/app_notification.dart';
@@ -144,7 +144,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
-              const AppLanguageToggleButton(compact: true),
+              const SupportButton(),
             ],
           ),
           const SizedBox(height: 16),

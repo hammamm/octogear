@@ -1,3 +1,4 @@
+import '../../../support_chat/presentation/controllers/support_providers.dart';
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -160,6 +161,14 @@ class _PushDeliveryScopeState extends ConsumerState<PushDeliveryScope>
   void _receive(PushNotification event) {
     if (!_belongs(event)) return;
     ref.read(notificationCountProvider.notifier).received(event.item.id);
+    if (event.item.kind == NotificationKind.supportReply) {
+      unawaited(ref.read(supportChatProvider.notifier).refreshSummary());
+      final path = _router.routerDelegate.currentConfiguration.uri.path;
+      if (path == AppRoutePath.customerSupport ||
+          path == AppRoutePath.providerSupport) {
+        return;
+      }
+    }
     if (event.item.kind == NotificationKind.message) {
       _messageAlert(
         event.messageId == null

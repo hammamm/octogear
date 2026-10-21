@@ -96,7 +96,7 @@ void main() {
         isA<Text>().having((text) => text.data, 'number', '2'),
       );
       expect(
-        tester.getRect(find.widgetWithIcon(TextButton, Icons.language)).left -
+        tester.getRect(find.byKey(const Key('support-button'))).left -
             tester.getRect(bell).right,
         8,
       );
@@ -524,6 +524,14 @@ void main() {
     expect(
       find.byKey(const PageStorageKey<String>('customer-tab-more')),
       findsOneWidget,
+    );
+    await tester.scrollUntilVisible(
+      find.text('Profile'),
+      150,
+      scrollable: find.descendant(
+        of: find.byKey(const PageStorageKey<String>('customer-tab-more')),
+        matching: find.byType(Scrollable),
+      ),
     );
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();

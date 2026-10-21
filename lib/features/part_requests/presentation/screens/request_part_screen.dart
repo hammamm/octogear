@@ -12,7 +12,7 @@ import '../../../../app/routing/app_routes.dart';
 import '../../../customer_orders/presentation/controllers/customer_orders_providers.dart';
 import '../../../../core/api/api_failure.dart';
 import '../../../../core/design_system/octogear_theme.dart';
-import '../../../../core/widgets/app_language_toggle_button.dart';
+import 'package:octogear/features/support_chat/presentation/widgets/support_entry.dart';
 import '../../../../core/widgets/octogear_surface_card.dart';
 import '../../../storefront/domain/entities/storefront_car_catalog.dart';
 import '../../../storefront/presentation/controllers/storefront_car_catalog_providers.dart';
@@ -207,7 +207,7 @@ class _RequestPartScreenState extends ConsumerState<RequestPartScreen> {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
-              const AppLanguageToggleButton(compact: true),
+              const SupportButton(),
             ],
           ),
           const SizedBox(height: 20),

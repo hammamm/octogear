@@ -1,3 +1,4 @@
+import '../features/support_chat/presentation/widgets/support_entry.dart';
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -37,7 +38,9 @@ class OctoGearApp extends ConsumerWidget {
       routerConfig: ref.watch(appRouterProvider),
       builder: (context, child) => SessionRefreshScope(
         child: LanguagePreferenceScope(
-          child: PushDeliveryScope(child: child ?? const SizedBox.shrink()),
+          child: SupportSessionScope(
+            child: PushDeliveryScope(child: child ?? const SizedBox.shrink()),
+          ),
         ),
       ),
     );
