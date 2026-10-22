@@ -65,8 +65,6 @@ class CustomerMoreScreen extends ConsumerWidget {
         const SizedBox(height: 12),
         const SupportMenuEntry(),
         const SizedBox(height: 12),
-        const AppLanguageSettingsCard(),
-        const SizedBox(height: 12),
         const NotificationsMenuEntry(),
         const SizedBox(height: 12),
         OctoGearMenuEntry(

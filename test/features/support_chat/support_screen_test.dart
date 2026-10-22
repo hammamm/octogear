@@ -103,6 +103,13 @@ void main() {
         await tester.pumpAndSettle();
         expect(repo.texts, ['Please help']);
         expect(find.text('Please help'), findsOneWidget);
+        expect(
+          tester.getBottomRight(find.byKey(const Key('support-message'))).dy,
+          closeTo(
+            tester.getBottomRight(find.byType(SafeArea).first).dy - 12,
+            1,
+          ),
+        );
         expect(tester.takeException(), isNull);
       },
     );

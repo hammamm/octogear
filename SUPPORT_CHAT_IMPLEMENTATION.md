@@ -74,3 +74,12 @@ support events. Both customer/provider shell tests cover the new header spacing
 and More layout. Actual device push delivery and the future web dashboard were
 not exercised by these automated checks.
 Final static checks: flutter analyze and dart run custom_lint both completed with no issues. Diff whitespace checks passed.
+
+## Bottom-aligned support conversation — 2026-10-22
+
+Customer and provider support use the same screen. Keep the composer and closed
+conversation action at the bottom, with the reversed timeline filling the remaining
+height. Cap the action area's height to preserve scrolling with the keyboard and
+large Arabic/English text. API, navigation, message ordering, read acknowledgements,
+and notification behavior are unchanged. Verify the existing support widget tests,
+including composer position, and run targeted analysis.

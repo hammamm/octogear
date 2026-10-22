@@ -132,189 +132,204 @@ class _SupportPageState extends ConsumerState<_SupportPage>
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const ChatConnectionStatus(),
-            if (state.conversation != null)
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  context.tr(closed ? 'support.closed' : 'support.open'),
+        child: LayoutBuilder(
+          builder: (context, constraints) => Column(
+            children: [
+              const ChatConnectionStatus(),
+              if (state.conversation != null)
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    context.tr(closed ? 'support.closed' : 'support.open'),
+                  ),
                 ),
-              ),
-            if (state.error != null)
-              _retry('support.error', () => _controller.open()),
-            if (state.readError)
-              _retry('support.read_error', () async {
-                final incoming = state.messages.where((m) => !m.mine);
-                if (incoming.isNotEmpty && _visible && _atLatest) {
-                  await _controller.markRead(incoming.first.id);
-                }
-              }),
-            Expanded(
-              flex: 3,
-              child: state.loading && !state.loaded
-                  ? const Center(child: CircularProgressIndicator())
-                  : state.conversation == null &&
-                        !_started &&
-                        state.error == null
-                  ? Center(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.support_agent_rounded, size: 56),
-                            const SizedBox(height: 16),
-                            Text(
-                              context.tr('support.welcome'),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 20),
-                            FilledButton(
-                              key: const Key('support-start'),
-                              onPressed: () => setState(() => _started = true),
-                              child: Text(context.tr('support.start')),
-                            ),
-                          ],
+              if (state.error != null)
+                _retry('support.error', () => _controller.open()),
+              if (state.readError)
+                _retry('support.read_error', () async {
+                  final incoming = state.messages.where((m) => !m.mine);
+                  if (incoming.isNotEmpty && _visible && _atLatest) {
+                    await _controller.markRead(incoming.first.id);
+                  }
+                }),
+              Expanded(
+                flex: 3,
+                child: state.loading && !state.loaded
+                    ? const Center(child: CircularProgressIndicator())
+                    : state.conversation == null &&
+                          !_started &&
+                          state.error == null
+                    ? Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.support_agent_rounded, size: 56),
+                              const SizedBox(height: 16),
+                              Text(
+                                context.tr('support.welcome'),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
+                              FilledButton(
+                                key: const Key('support-start'),
+                                onPressed: () =>
+                                    setState(() => _started = true),
+                                child: Text(context.tr('support.start')),
+                              ),
+                            ],
+                          ),
                         ),
+                      )
+                    : ListView.builder(
+                        key: const Key('support-timeline'),
+                        controller: _scroll,
+                        reverse: true,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        itemCount:
+                            state.messages.length + (state.hasMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == state.messages.length) {
+                            return Center(
+                              child: TextButton(
+                                onPressed: state.paging
+                                    ? null
+                                    : _controller.older,
+                                child: state.paging
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(),
+                                      )
+                                    : Text(context.tr('support.older')),
+                              ),
+                            );
+                          }
+                          final message = state.messages[index];
+                          final day =
+                              index == state.messages.length - 1 ||
+                              !sameChatDay(
+                                message.createdAt,
+                                state.messages[index + 1].createdAt,
+                              );
+                          return Column(
+                            children: [
+                              if (day)
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Text(
+                                    chatDayLabel(context, message.createdAt),
+                                  ),
+                                ),
+                              ChatMessageBubble(message: message),
+                            ],
+                          );
+                        },
                       ),
-                    )
-                  : ListView.builder(
-                      key: const Key('support-timeline'),
-                      controller: _scroll,
-                      reverse: true,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      itemCount:
-                          state.messages.length + (state.hasMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == state.messages.length) {
-                          return Center(
-                            child: TextButton(
-                              onPressed: state.paging
+              ),
+              if (closed)
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: constraints.maxHeight * 0.4,
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          context.tr('support.resolved'),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        FilledButton(
+                          key: const Key('support-reopen'),
+                          onPressed: state.busy ? null : _controller.reopen,
+                          child: Text(context.tr('support.reopen')),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (canCompose)
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: constraints.maxHeight * 0.4,
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      12,
+                      4,
+                      12,
+                      12,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (state.sendError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(context.tr('support.send_error')),
+                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                key: const Key('support-message'),
+                                controller: _text,
+                                readOnly:
+                                    state.busy || _controller.hasPendingSend,
+                                minLines: 1,
+                                maxLines: 4,
+                                maxLength: 2000,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                decoration: InputDecoration(
+                                  hintText: context.tr('support.message'),
+                                  counterText: '',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton.filled(
+                              key: const Key('support-send'),
+                              tooltip: context.tr(
+                                state.sendError != null
+                                    ? 'support.retry'
+                                    : 'support.send',
+                              ),
+                              onPressed: state.busy
                                   ? null
-                                  : _controller.older,
-                              child: state.paging
+                                  : () async {
+                                      if (_text.text.trim().isEmpty) return;
+                                      final sent = await _controller.send(
+                                        _text.text,
+                                      );
+                                      if (mounted && sent) {
+                                        _text.clear();
+                                        if (_scroll.hasClients) {
+                                          _scroll.jumpTo(0);
+                                        }
+                                      }
+                                    },
+                              icon: state.busy
                                   ? const SizedBox(
                                       width: 20,
                                       height: 20,
                                       child: CircularProgressIndicator(),
                                     )
-                                  : Text(context.tr('support.older')),
+                                  : const Icon(Icons.send_rounded),
                             ),
-                          );
-                        }
-                        final message = state.messages[index];
-                        final day =
-                            index == state.messages.length - 1 ||
-                            !sameChatDay(
-                              message.createdAt,
-                              state.messages[index + 1].createdAt,
-                            );
-                        return Column(
-                          children: [
-                            if (day)
-                              Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Text(
-                                  chatDayLabel(context, message.createdAt),
-                                ),
-                              ),
-                            ChatMessageBubble(message: message),
                           ],
-                        );
-                      },
-                    ),
-            ),
-            if (closed)
-              Flexible(
-                flex: 2,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        context.tr('support.resolved'),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      FilledButton(
-                        key: const Key('support-reopen'),
-                        onPressed: state.busy ? null : _controller.reopen,
-                        child: Text(context.tr('support.reopen')),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            if (canCompose)
-              Flexible(
-                flex: 2,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsetsDirectional.fromSTEB(12, 4, 12, 12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (state.sendError != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text(context.tr('support.send_error')),
                         ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              key: const Key('support-message'),
-                              controller: _text,
-                              readOnly:
-                                  state.busy || _controller.hasPendingSend,
-                              minLines: 1,
-                              maxLines: 4,
-                              maxLength: 2000,
-                              textCapitalization: TextCapitalization.sentences,
-                              decoration: InputDecoration(
-                                hintText: context.tr('support.message'),
-                                counterText: '',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton.filled(
-                            key: const Key('support-send'),
-                            tooltip: context.tr(
-                              state.sendError != null
-                                  ? 'support.retry'
-                                  : 'support.send',
-                            ),
-                            onPressed: state.busy
-                                ? null
-                                : () async {
-                                    if (_text.text.trim().isEmpty) return;
-                                    final sent = await _controller.send(
-                                      _text.text,
-                                    );
-                                    if (mounted && sent) {
-                                      _text.clear();
-                                      if (_scroll.hasClients) _scroll.jumpTo(0);
-                                    }
-                                  },
-                            icon: state.busy
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(),
-                                  )
-                                : const Icon(Icons.send_rounded),
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
