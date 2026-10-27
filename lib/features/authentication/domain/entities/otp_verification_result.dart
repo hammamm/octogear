@@ -1,3 +1,5 @@
+import '../../../../core/storage/session_credentials.dart';
+
 /// Raw business result from verifying an OTP before the application decides
 /// what to persist. It never reaches a widget directly.
 sealed class OtpVerificationResult {
@@ -5,9 +7,10 @@ sealed class OtpVerificationResult {
 }
 
 class ExistingAccountOtpResult extends OtpVerificationResult {
-  const ExistingAccountOtpResult(this.accessToken);
+  const ExistingAccountOtpResult(this.credentials);
 
-  final String accessToken;
+  final SessionCredentials credentials;
+  String get accessToken => credentials.accessToken;
 }
 
 class NewAccountOtpResult extends OtpVerificationResult {

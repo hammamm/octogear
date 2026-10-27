@@ -4,6 +4,10 @@ import '../configuration/app_configuration.dart';
 import '../service/app_logger.dart';
 import 'api_envelope.dart';
 import 'api_failure.dart';
+import '../storage/app_storage.dart';
+import '../storage/session_credentials.dart';
+import 'session_credentials_dto.dart';
+import 'session_refresh.dart';
 
 typedef AccessTokenResolver = String? Function();
 typedef ApiLocaleResolver = String Function();
@@ -20,6 +24,8 @@ class ApiClient {
     AccessTokenResolver? accessTokenResolver,
     ApiLocaleResolver? localeResolver,
     Dio? dio,
+    SessionStorage? sessionStorage,
+    void Function()? onSessionExpired,
   }) : _accessTokenResolver = accessTokenResolver ?? _noAccessToken,
        _localeResolver = localeResolver ?? _arabicLocale,
        _dio =
@@ -42,16 +48,29 @@ class ApiClient {
                },
              ),
            ) {
+    _sessionRefresh = sessionStorage == null ? null : SessionRefresh(
+      storage: sessionStorage,
+      apiBaseUrl: _dio.options.baseUrl.replaceFirst(RegExp(r'/+$'), ''),
+      onExpired: onSessionExpired ?? () {},
+      request: (token, requestId) async {
+        final response = await post<SessionCredentials>('auth/refresh',
+          data: {'refresh_token': token, 'request_id': requestId},
+          decode: sessionCredentialsFromJson);
+        return response.data ?? (throw const ApiFailure.unexpected());
+      },
+    );
+    _sessionIdentityResolver = () => sessionStorage?.sessionIdentity ?? _accessTokenResolver();
     _dio.interceptors.add(
       InterceptorsWrapper(
-        onRequest: (options, handler) {
+        onRequest: (options, handler) async {
+          try {
           options.headers[Headers.acceptHeader] = Headers.jsonContentType;
           options.headers['Accept-Language'] = _localeResolver();
 
           if (options.extra[_requiresAuthenticationKey] == true) {
-            final token = _accessTokenResolver();
+            final identity = _sessionIdentityResolver();
             final expected = options.extra.remove(_expectedAccessTokenKey);
-            if (expected != null && token != expected) {
+            if (expected != null && identity != expected) {
               handler.reject(
                 DioException(
                   requestOptions: options,
@@ -61,6 +80,9 @@ class ApiClient {
               );
               return;
             }
+            final token = _sessionRefresh == null ? _accessTokenResolver() : await _sessionRefresh!.token();
+            if (identity != _sessionIdentityResolver()) throw const ApiFailure.unexpected();
+            options.extra[_requestIdentityKey] = identity;
             if (token != null && token.isNotEmpty) {
               options.headers[_authorizationHeader] = 'Bearer $token';
             }
@@ -69,6 +91,35 @@ class ApiClient {
           }
 
           handler.next(options);
+          } catch (error) {
+            handler.reject(DioException(requestOptions: options, error: error));
+          }
+        },
+        onError: (error, handler) async {
+          final options = error.requestOptions;
+          final identity = options.extra[_requestIdentityKey] as String?;
+          if (error.response?.statusCode != 401 || identity == null || identity != _sessionIdentityResolver() || _sessionRefresh == null) {
+            handler.next(error); return;
+          }
+          if (options.extra[_retriedKey] == true) {
+            await _sessionRefresh!.invalidate(identity);
+            handler.next(error); return;
+          }
+          try {
+            final rejected = (options.headers[_authorizationHeader] as String?)?.replaceFirst('Bearer ', '');
+            final token = await _sessionRefresh!.token(rejectedToken: rejected);
+            if (identity != _sessionIdentityResolver()) { handler.next(error); return; }
+            if (token == rejected) {
+              await _sessionRefresh!.invalidate(identity);
+              handler.next(error); return;
+            }
+            if (options.method != 'GET' && options.method != 'HEAD') { handler.next(error); return; }
+            options.extra[_retriedKey] = true;
+            options.extra[_expectedAccessTokenKey] = identity;
+            handler.resolve(await _dio.fetch<Object?>(options));
+          } catch (failure) {
+            handler.reject(failure is DioException ? failure : DioException(requestOptions: options, error: failure));
+          }
         },
       ),
     );
@@ -78,10 +129,32 @@ class ApiClient {
   static const _requiresAuthenticationKey = 'octogear.requiresAuthentication';
   static const _authorizationHeader = 'Authorization';
   static const _expectedAccessTokenKey = 'octogear.expectedAccessToken';
+  static const _requestIdentityKey = 'octogear.requestSession';
+  static const _retriedKey = 'octogear.accessRetried';
 
   final Dio _dio;
   final AccessTokenResolver _accessTokenResolver;
   final ApiLocaleResolver _localeResolver;
+  late final SessionRefresh? _sessionRefresh;
+  late final AccessTokenResolver _sessionIdentityResolver;
+
+  Future<Map<String, String>> freshAuthenticatedHeaders() async {
+    final identity = _sessionIdentityResolver();
+    final token = _sessionRefresh == null ? _accessTokenResolver() : await _sessionRefresh!.token();
+    if (identity != _sessionIdentityResolver()) throw const ApiFailure.unexpected();
+    return token == null ? const {} : {_authorizationHeader: 'Bearer $token'};
+  }
+
+  Future<void> revokeSession() async {
+    final storage = _sessionRefresh?.storage;
+    final record = storage is RefreshSessionStorage ? (storage as RefreshSessionStorage).storedSession : null;
+    if (record != null) {
+      if (record.apiBaseUrl != _dio.options.baseUrl.replaceFirst(RegExp(r'/+$'), '')) return;
+      await post<void>('auth/session/logout', data: {'refresh_token': record.credentials.refreshToken}, decode: (_) {});
+    } else {
+      await post<void>('auth/logout', requiresAuthentication: true, decode: (_) {});
+    }
+  }
 
   static String? _noAccessToken() => null;
   static String _arabicLocale() => 'ar';
@@ -257,6 +330,7 @@ class ApiClient {
       }
       return envelope;
     } on DioException catch (error) {
+      if (error.error is ApiFailure) throw error.error!;
       throw ApiFailure.fromDio(error);
     } on ApiFailure {
       rethrow;

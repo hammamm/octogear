@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'provider_order_filter_storage.dart';
 import '../localization/app_locale.dart';
 import '../configuration/api_configuration_loader.dart';
+import '../api/session_credentials_dto.dart';
+import 'session_credentials.dart';
 
 /// The narrow secure-session contract used by the application and tests.
 abstract interface class SessionStorage {
@@ -12,6 +16,12 @@ abstract interface class SessionStorage {
   Future<String?> readAccessToken();
   Future<void> saveAccessToken(String accessToken);
   Future<void> clearSession();
+}
+
+extension SessionIdentity on SessionStorage {
+  String? get sessionIdentity => this is RefreshSessionStorage
+      ? (this as RefreshSessionStorage).storedSession?.credentials.sessionId ?? cachedAccessToken
+      : cachedAccessToken;
 }
 
 /// The app-specific cache boundary for non-sensitive user data.
@@ -32,6 +42,7 @@ abstract interface class ProfileCacheStorage {
 class AppStorage
     implements
         SessionStorage,
+        RefreshSessionStorage,
         ProfileCacheStorage,
         ApiConfigurationCache,
         ProviderOrderFilterStorage {
@@ -42,6 +53,7 @@ class AppStorage
        _preferencesLoader = preferencesLoader ?? SharedPreferences.getInstance;
 
   static const _accessTokenKey = 'octogear.session.access_token';
+  static const _sessionKey = 'octogear.session.credentials.v2';
   static const _cachedProfileKey = 'octogear.session.profile';
   static const _localeKey = 'octogear.preferences.locale';
   static const _apiBaseUrlKey = 'octogear.configuration.api_base_url';
@@ -52,6 +64,17 @@ class AppStorage
   Future<void>? _initialization;
   SharedPreferences? _preferences;
   String? _cachedAccessToken;
+  StoredSession? _storedSession;
+  Future<void> _writes = Future<void>.value();
+
+  @override
+  StoredSession? get storedSession => _storedSession;
+
+  Future<T> _serialize<T>(Future<T> Function() action) {
+    final next = _writes.then((_) => action());
+    _writes = next.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+    return next;
+  }
   String? _cachedProfileJson;
   AppLocale _cachedLocale = AppLocale.arabic;
 
@@ -95,6 +118,19 @@ class AppStorage
 
     _preferences = preferences;
     _cachedAccessToken = _normaliseToken(accessToken);
+    final record = await _secureStorage.read(key: _sessionKey);
+    if (record != null) {
+      try {
+        final json = jsonDecode(record) as Map<String, dynamic>;
+        final base = json['api_base_url'] as String;
+        _storedSession = StoredSession(sessionCredentialsFromJson(json), base, requestId: json['request_id'] as String?);
+        _cachedAccessToken = _storedSession!.credentials.accessToken;
+      } catch (_) {
+        _cachedAccessToken = null;
+        await _secureStorage.delete(key: _sessionKey);
+        await _secureStorage.delete(key: _accessTokenKey);
+      }
+    }
     _cachedProfileJson = preferences.getString(_cachedProfileKey);
     _cachedLocale = AppLocale.fromCode(preferences.getString(_localeKey));
   }
@@ -113,8 +149,31 @@ class AppStorage
     }
 
     await initialize();
-    _cachedAccessToken = normalizedToken;
-    await _secureStorage.write(key: _accessTokenKey, value: normalizedToken);
+    if (_storedSession?.credentials.accessToken == normalizedToken) return;
+    await _serialize(() async {
+      await _secureStorage.delete(key: _sessionKey);
+      await _secureStorage.write(key: _accessTokenKey, value: normalizedToken);
+      _storedSession = null;
+      _cachedAccessToken = normalizedToken;
+    });
+  }
+
+  @override
+  Future<bool> saveSession(StoredSession session, {String? expectedRefreshToken}) async {
+    await initialize();
+    return _serialize(() async {
+      if (expectedRefreshToken != null && _storedSession?.credentials.refreshToken != expectedRefreshToken) return false;
+      await _secureStorage.write(key: _sessionKey, value: jsonEncode({
+        ...sessionCredentialsToJson(session.credentials),
+        'api_base_url': session.apiBaseUrl, 'request_id': session.requestId,
+      }));
+      // A logout may clear memory while the platform write is pending.
+      if (expectedRefreshToken != null && _storedSession?.credentials.refreshToken != expectedRefreshToken) return false;
+      _storedSession = session;
+      _cachedAccessToken = session.credentials.accessToken;
+      await _secureStorage.delete(key: _accessTokenKey);
+      return true;
+    });
   }
 
   @override
@@ -123,9 +182,13 @@ class AppStorage
     // Remove the in-memory value first, so no subsequent request can reuse an
     // invalid token even if the platform write reports an error.
     _cachedAccessToken = null;
+    _storedSession = null;
     _cachedProfileJson = null;
     await Future.wait<void>([
-      _secureStorage.delete(key: _accessTokenKey),
+      _serialize(() async {
+        await _secureStorage.delete(key: _sessionKey);
+        await _secureStorage.delete(key: _accessTokenKey);
+      }),
       _preferences!.remove(_cachedProfileKey).then<void>((_) {}),
     ]);
   }

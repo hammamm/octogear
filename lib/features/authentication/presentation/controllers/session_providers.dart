@@ -39,6 +39,7 @@ final verifyOtpUseCaseProvider = Provider<VerifyOtpUseCase>((ref) {
   return VerifyOtpUseCase(
     repository: ref.watch(authenticationRepositoryProvider),
     sessionStorage: ref.watch(sessionStorageProvider),
+    apiBaseUrl: ref.watch(appConfigurationProvider).apiBaseUrl,
   );
 });
 
@@ -46,6 +47,7 @@ final registerUseCaseProvider = Provider<RegisterUseCase>((ref) {
   return RegisterUseCase(
     repository: ref.watch(authenticationRepositoryProvider),
     sessionStorage: ref.watch(sessionStorageProvider),
+    apiBaseUrl: ref.watch(appConfigurationProvider).apiBaseUrl,
   );
 });
 
@@ -84,13 +86,7 @@ final signOutUseCaseProvider = Provider<SignOutUseCase>((ref) {
       await ref.read(pushDeliveryProvider)?.prepareSignOut();
       if (storage.cachedAccessToken == null) return;
       try {
-        await ref
-            .read(apiClientProvider)
-            .post<void>(
-              'auth/logout',
-              requiresAuthentication: true,
-              decode: (_) {},
-            );
+        await ref.read(apiClientProvider).revokeSession();
       } catch (_) {
         // Local sign-out must still work without connectivity.
       }

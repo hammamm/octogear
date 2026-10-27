@@ -22,5 +22,14 @@ final apiClientProvider = Provider<ApiClient>((ref) {
     accessTokenResolver: () =>
         ref.read(sessionStorageProvider).cachedAccessToken,
     localeResolver: () => ref.read(appLocaleProvider).code,
+    sessionStorage: ref.watch(sessionStorageProvider),
+    onSessionExpired: () => ref.read(sessionInvalidationProvider.notifier).invalidate(),
   );
 });
+
+final sessionInvalidationProvider = NotifierProvider<SessionInvalidation, int>(SessionInvalidation.new);
+class SessionInvalidation extends Notifier<int> {
+  @override
+  int build() => 0;
+  void invalidate() => state++;
+}

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/session_outcome.dart';
 import 'session_providers.dart';
+import '../../../../core/api/api_providers.dart';
 
 final sessionControllerProvider =
     AsyncNotifierProvider<SessionController, SessionOutcome>(
@@ -12,6 +13,9 @@ final sessionControllerProvider =
 class SessionController extends AsyncNotifier<SessionOutcome> {
   @override
   Future<SessionOutcome> build() {
+    ref.listen(sessionInvalidationProvider, (_, _) {
+      state = const AsyncData(SignedOutSession());
+    });
     return ref.read(restoreSessionUseCaseProvider).call();
   }
 

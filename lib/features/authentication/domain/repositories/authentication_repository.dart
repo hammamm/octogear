@@ -1,4 +1,5 @@
 import '../entities/app_user.dart';
+import '../../../../core/storage/session_credentials.dart';
 import '../entities/otp_verification_result.dart';
 import '../entities/saudi_mobile_number.dart';
 
@@ -9,7 +10,7 @@ abstract interface class AuthenticationRepository {
     required SaudiMobileNumber mobile,
     required String otp,
   });
-  Future<String> register({
+  Future<SessionCredentials> register({
     required String temporaryRegistrationToken,
     required String fullName,
     required int cityId,

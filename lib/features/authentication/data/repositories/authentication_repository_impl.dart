@@ -1,4 +1,5 @@
 import '../../../../core/api/api_failure.dart';
+import '../../../../core/storage/session_credentials.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/otp_verification_result.dart';
 import '../../domain/entities/saudi_mobile_number.dart';
@@ -29,7 +30,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
       );
       return dto.isNew
           ? NewAccountOtpResult(dto.temporaryRegistrationToken!)
-          : ExistingAccountOtpResult(dto.accessToken!);
+          : ExistingAccountOtpResult(dto.credentials!);
     } on ApiFailure {
       rethrow;
     } on FormatException {
@@ -38,7 +39,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   }
 
   @override
-  Future<String> register({
+  Future<SessionCredentials> register({
     required String temporaryRegistrationToken,
     required String fullName,
     required int cityId,
@@ -49,7 +50,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
         fullName: fullName.trim(),
         cityId: cityId,
       );
-      return dto.value;
+      return dto.credentials;
     } on ApiFailure {
       rethrow;
     } on FormatException {

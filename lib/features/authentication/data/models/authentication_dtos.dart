@@ -1,4 +1,6 @@
 import 'current_user_dto.dart';
+import '../../../../core/storage/session_credentials.dart';
+import '../../../../core/api/session_credentials_dto.dart';
 
 class CityPageDto {
   const CityPageDto({
@@ -17,11 +19,13 @@ class OtpVerificationDto {
     required this.isNew,
     this.accessToken,
     this.temporaryRegistrationToken,
+    this.credentials,
   });
 
   final bool isNew;
   final String? accessToken;
   final String? temporaryRegistrationToken;
+  final SessionCredentials? credentials;
 
   factory OtpVerificationDto.fromJson(Object? value) {
     final json = _jsonObject(value);
@@ -45,21 +49,19 @@ class OtpVerificationDto {
       isNew: isNew,
       accessToken: accessToken,
       temporaryRegistrationToken: temporaryRegistrationToken,
+      credentials: isNew ? null : sessionCredentialsFromJson(json),
     );
   }
 }
 
 class AccessTokenDto {
-  const AccessTokenDto(this.value);
+  const AccessTokenDto(this.credentials);
 
-  final String value;
+  final SessionCredentials credentials;
+  String get value => credentials.accessToken;
 
   factory AccessTokenDto.fromJson(Object? value) {
-    final token = _nonEmptyString(_jsonObject(value)['token']);
-    if (token == null) {
-      throw const FormatException('The response has no access token.');
-    }
-    return AccessTokenDto(token);
+    return AccessTokenDto(sessionCredentialsFromJson(value));
   }
 }
 
